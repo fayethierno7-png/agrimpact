@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgriImpact AI — Assistant Agrométéorologique Officiel</title>
+  <link rel="stylesheet" href="chatbot.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/logo/agrimpact-logo.svg">
+</head>
+<body>
+
+  <!-- Sidebar Conversations -->
+  <aside class="chat-sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" style="text-decoration: none; color: #0C2B1E; font-size: 0.85rem; font-weight: 800; display: flex; align-items: center; gap: 6px;">
+        <span>← Retour Site</span>
+      </a>
+      <span style="font-size: 0.72rem; font-weight: 800; color: #10B981;">● En ligne</span>
+    </div>
+
+    <button id="newChatBtn" class="btn-new-chat">
+      <span>＋ Nouveau chat</span>
+    </button>
+
+    <div class="search-input-box">
+      <input type="text" id="searchInput" placeholder="Rechercher...">
+    </div>
+
+    <div class="conv-list">
+      <div class="section-label">📌 Épinglés</div>
+      <div id="pinnedList"></div>
+
+      <div class="section-label">🕘 Récents</div>
+      <div id="recentList"></div>
+    </div>
+  </aside>
+
+  <!-- Zone Principale -->
+  <main class="chat-main">
+    <header class="chat-header">
+      <div>
+        <h2 id="chatTitle" class="chat-title">Assistant AgriImpact</h2>
+        <span style="font-size: 0.72rem; color: #6B7280;">Référentiels certifiés ISRA & ANACIM</span>
+      </div>
+      <div>
+        <a href="/assistant" style="font-size: 0.8rem; font-weight: 700; color: #0C2B1E; text-decoration: none; padding: 6px 12px; background: #F3F4F6; border-radius: 8px;">
+          Version SaaS ↗
+        </a>
+      </div>
+    </header>
+
+    <div class="chat-messages" id="chatMessages">
+      <!-- Les messages sont rendus par chatbot.js -->
+    </div>
+
+    <div class="chat-input-wrapper">
+      <form id="chatForm" class="chat-input-form">
+        <input type="text" id="chatInput" placeholder="Posez votre question (irrigation, mildiou, maïs...)" autocomplete="off">
+        <button type="submit" class="btn-send">➤</button>
+      </form>
+      <div class="disclaimer-text">
+        ⚠️ AgriImpact AI est un outil d'aide à la décision. Ne remplace pas l'avis d'un agronome de terrain ou de l'ANCAR.
+      </div>
+    </div>
+  </main>
+
+  <script src="chatbot.js"></script>
+</body>
+</html>

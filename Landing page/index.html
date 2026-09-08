@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgriImpact — Le 1er Copilote Décisionnel & Agrométéorologique au Sénégal</title>
+  <meta name="description" content="Plateforme agrométéorologique conçue pour les producteurs et coopératives du Sénégal. Prédictions climatiques à 14 jours, alertes mildiou et conseils agronomiques par stade phénologique.">
+  <meta name="keywords" content="agriculture Sénégal, agrométéo, mildiou tomate oignon, Niayes, conseil agronomique, irrigation, ANACIM, ISRA, Wave, Orange Money">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="AgriImpact — Copilote Décisionnel Agricole Sénégal">
+  <meta property="og:description" content="Transformez les données météo et les caractéristiques de vos parcelles en récoltes abondantes et rentables.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/images/hero.jpg">
+
+  <!-- Feuilles de style -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="icon" type="image/svg+xml" href="assets/logo/agrimpact-logo.svg">
+</head>
+<body>
+
+  <!-- 1. TOP TICKER CONTEXTE SÉNÉGAL -->
+  <aside class="top-ticker" aria-label="Informations territoriales">
+    <div class="container">
+      <div class="top-ticker-left">
+        <span class="badge-dot pulse-dot"></span>
+        <span>Sénégal • Réseau de prévision Open-Meteo & Référentiels ANACIM synchronisés</span>
+      </div>
+      <div class="top-ticker-right">
+        <span>Campagne Agricole 2026 en cours</span>
+        <span style="opacity: 0.3;">|</span>
+        <a href="tel:338001212" class="top-ticker-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          Assistance paysanne : 33 800 12 12
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 2. NAVBAR FLOTTANTE STYLE DRIBBLE (AGROVIA) -->
+  <div class="navbar-wrapper">
+    <header class="navbar-floating">
+      <a href="index.html" class="nav-brand" aria-label="Page d'accueil AgriImpact">
+        <div class="nav-brand-logo">
+          <img src="assets/logo/agrimpact-logo.svg" alt="Logo AgriImpact" width="38" height="38">
+        </div>
+        <div class="nav-brand-text">
+          <span class="nav-brand-title">AGRIMPACT</span>
+          <span class="nav-brand-tag">Sénégal • Terroir & Décision</span>
+        </div>
+      </a>
+
+      <!-- Menu pilule central -->
+      <nav class="nav-menu" aria-label="Navigation principale">
+        <a href="pages/solutions.html" class="nav-link">Solutions</a>
+        <a href="pages/agrimeteo.html" class="nav-link">AgriMétéo 14j</a>
+        <a href="pages/agriconseil.html" class="nav-link">AgriConseil</a>
+        <a href="#comment-ca-marche" class="nav-link">Comment ça marche</a>
+        <a href="pages/about.html" class="nav-link">Notre vision</a>
+        <a href="pages/contact.html" class="nav-link">Contact</a>
+      </nav>
+
+      <!-- Actions CTA -->
+      <div class="nav-actions">
+        <a href="../dashboard" class="btn btn-primary btn-sm">
+          <span>Découvrir AgriImpact</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+        </a>
+        <button class="nav-burger" aria-label="Ouvrir le menu mobile">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+      </div>
+    </header>
+  </div>
+
+  <!-- MENU MOBILE DRAWER -->
+  <div class="mobile-drawer" aria-hidden="true">
+    <div class="mobile-drawer-header">
+      <div class="nav-brand">
+        <div class="nav-brand-logo">
+          <img src="assets/logo/agrimpact-logo.svg" alt="AgriImpact" width="34" height="34">
+        </div>
+        <span class="nav-brand-title" style="color: #FFFFFF;">AGRIMPACT</span>
+      </div>
+      <button class="mobile-drawer-close" aria-label="Fermer le menu">&times;</button>
+    </div>
+    <div class="mobile-drawer-links">
+      <a href="index.html" class="mobile-drawer-link active">Accueil</a>
+      <a href="pages/solutions.html" class="mobile-drawer-link">Solutions par culture</a>
+      <a href="pages/agrimeteo.html" class="mobile-drawer-link">Moteur AgriMétéo 14j</a>
+      <a href="pages/agriconseil.html" class="mobile-drawer-link">AgriConseil & Stades</a>
+      <a href="#comment-ca-marche" class="mobile-drawer-link">Comment ça marche</a>
+      <a href="#tarifs" class="mobile-drawer-link">Forfaits Wave & Orange Money</a>
+      <a href="pages/about.html" class="mobile-drawer-link">Notre vision</a>
+      <a href="pages/contact.html" class="mobile-drawer-link">Rejoindre le pilote</a>
+    </div>
+    <div class="mobile-drawer-footer">
+      <a href="../dashboard" class="btn btn-primary" style="width: 100%;">Accéder au Tableau de bord</a>
+    </div>
+  </div>
+
+  <main>
+    <!-- 3. HERO SECTION IMMERSIVE (STYLE DRIBBBLE AGROVIA) -->
+    <section class="section-hero">
+      <div class="container container-wide">
+        <div class="hero-card">
+          <!-- Visuel immersif plein format -->
+          <div class="hero-bg-media">
+            <img src="assets/images/hero.jpg" alt="Cultures maraîchères et céréalières florissantes au lever du jour au Sénégal" class="media-kenburns">
+          </div>
+          <div class="hero-overlay"></div>
+
+          <!-- Cartes d'interface flottantes (données réelles) -->
+          <div class="hero-floating-widgets">
+            <!-- Carte 1 : Météo en direct Niayes -->
+            <div class="float-card">
+              <div class="float-card-header">
+                <span class="float-card-label">Station Niayes (Kayar)</span>
+                <span class="badge-dot badge-dot-green"></span>
+              </div>
+              <div class="float-metric">27°C <span style="font-size: 0.95rem; font-weight: 600; color: var(--text-muted);">• RH 84%</span></div>
+              <div class="float-desc">Vent 9 km/h (Calme) • Ciel voilé favorable aux cultures</div>
+            </div>
+
+            <!-- Carte 2 : Alerte sanitaire mildiou -->
+            <div class="float-card float-card-dark float-card-2">
+              <div class="float-card-header">
+                <span class="float-card-label" style="color: var(--lime-accent);">Vigilance Mildiou J+3</span>
+                <span style="font-size: 0.72rem; font-weight: 800; background: #EA580C; color: #FFF; padding: 2px 8px; border-radius: 99px;">ORANGE</span>
+              </div>
+              <div class="float-metric" style="color: #FFFFFF;">Risque 86%</div>
+              <div class="float-desc">Pression d'infection maximale prévue jeudi matin. Traiter avant la pluie.</div>
+            </div>
+
+            <!-- Carte 3 : Fenêtre d'intervention optimale -->
+            <div class="float-card">
+              <div class="float-card-header">
+                <span class="float-card-label">Créneau optimal</span>
+                <span style="color: #10B981; font-weight: 800; font-size: 0.75rem;">OPTIMAL ✓</span>
+              </div>
+              <div class="float-metric" style="font-size: 1.25rem;">Demain 06h00 – 09h30</div>
+              <div class="float-desc">Vent calme (&lt;10 km/h) • Zéro risque de lessivage à 24h</div>
+            </div>
+          </div>
+
+          <!-- Contenu principal du Hero -->
+          <div class="hero-content">
+            <div class="hero-top-badge" data-reveal>
+              <span class="badge-pill badge-pill-light">
+                <span class="badge-dot"></span>
+                Le 1er Copilote Décisionnel Agricole au Sénégal
+              </span>
+            </div>
+
+            <h1 class="hero-headline" data-reveal data-reveal-delay="100">
+              Mieux comprendre.<br>
+              Mieux décider.<br>
+              <em>Mieux cultiver.</em>
+            </h1>
+
+            <p class="hero-subtext" data-reveal data-reveal-delay="200">
+              AgriImpact transforme les données agro-climatiques locales et le stade exact de vos parcelles en recommandations concrètes : quand irriguer, quand traiter et comment sécuriser vos rendements.
+            </p>
+
+            <div class="hero-cta-group" data-reveal data-reveal-delay="300">
+              <a href="../dashboard" class="btn btn-primary">
+                <span>Découvrir AgriImpact</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+              </a>
+              <a href="#comment-ca-marche" class="btn btn-outline-light">
+                <span>Comprendre comment ça marche</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+              </a>
+            </div>
+
+            <!-- Bas de hero : réassurance & repères -->
+            <div class="hero-footer-bar" data-reveal data-reveal-delay="400">
+              <div class="hero-scroll-hint">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                <span>SCROLL POUR DÉCOUVRIR LE PRODUIT</span>
+              </div>
+              <div class="hero-meta-cluster">
+                <span>★ 4.9 sur le terroir sénégalais</span>
+                <span>•</span>
+                <span>Déploiement Campagne 2026</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. BANDEAU DE CONFIANCE & ÉCOSYSTÈME AGRICOLE SÉNÉGALAIS -->
+    <section class="trust-strip">
+      <div class="container">
+        <div class="trust-wrapper">
+          <div class="trust-caption">
+            Ancré dans l'écosystème agronomique & financier
+          </div>
+          <div class="trust-logos">
+            <div class="trust-item">
+              <span>🇸🇳 ANACIM</span>
+              <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;">Météorologie Nationale</span>
+            </div>
+            <div class="trust-item">
+              <span>🌾 ISRA</span>
+              <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;">Recherche Agricole</span>
+            </div>
+            <div class="trust-item">
+              <img src="assets/logo/wave.jpg" alt="Wave Sénégal">
+              <span>Wave Mobile Money</span>
+            </div>
+            <div class="trust-item">
+              <img src="assets/logo/orange-money.png" alt="Orange Money Sénégal">
+              <span>Orange Money</span>
+            </div>
+            <div class="trust-item">
+              <span>🌱 Terroirs des Niayes & Fleuve</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. SECTION PROBLÈME ÉDITORIALE -->
+    <section class="section" id="probleme">
+      <div class="container">
+        <div class="badge-pill" data-reveal>
+          <span class="badge-dot badge-dot-green"></span>
+          L'asymétrie d'information agricole
+        </div>
+        
+        <p class="statement-lead" data-reveal style="margin-top: 24px;">
+          L'agriculture sahélienne ne manque pas seulement de bras ou d'intrants. Elle souffre avant tout d'un <em>déficit d'informations précises</em> au moment clé où se joue la récolte.
+        </p>
+
+        <div class="problem-grid">
+          <!-- Problème 1 -->
+          <article class="problem-card" data-reveal data-reveal-delay="100">
+            <div>
+              <div class="problem-number">01 / DÉSYNCHRONISATION PLUVIOMÉTRIQUE</div>
+              <h3 class="problem-title">Traitements lessivés et intrants gaspillés</h3>
+              <p class="problem-desc">
+                Appliquer un traitement phytosanitaire 4 heures avant une averse torrentielle non anticipée détruit son efficacité, pollue les sols et coûte jusqu'à 35 000 FCFA par hectare en intrants perdus.
+              </p>
+            </div>
+            <div class="problem-impact-pill">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              Perte moyenne de 30% du capital intrant
+            </div>
+          </article>
+
+          <!-- Problème 2 -->
+          <article class="problem-card" data-reveal data-reveal-delay="200">
+            <div>
+              <div class="problem-number">02 / ÉPIDÉMIOLOGIE INVISIBLE</div>
+              <h3 class="problem-title">Les attaques de mildiou arrivent toujours trop tard</h3>
+              <p class="problem-desc">
+                Le champignon responsable du mildiou (Phytophthora ou Pseudoperonospora) incube en silence lors de nuits tièdes à forte hygrométrie (&gt;85%). Lorsque les taches jaunes apparaissent sur la tomate ou l'oignon, la perte de rendement est déjà irréversible.
+              </p>
+            </div>
+            <div class="problem-impact-pill">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              Jusqu'à 60% de perte brute de récolte
+            </div>
+          </article>
+
+          <!-- Problème 3 -->
+          <article class="problem-card" data-reveal data-reveal-delay="300">
+            <div>
+              <div class="problem-number">03 / GESTION DE L'EAU À L'AVEUGLE</div>
+              <h3 class="problem-title">Stress hydrique méconnu aux stades critiques</h3>
+              <p class="problem-desc">
+                Arroser de la même façon pendant le développement végétatif et pendant la nouaison ou la gynophorisation de l'arachide provoque soit l'asphyxie racinaire, soit l'avortement des fleurs sous la canicule.
+              </p>
+            </div>
+            <div class="problem-impact-pill">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              Chute de calibre et dépréciation marchande
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. SECTION SOLUTION & ARCHITECTURE DU PIPELINE DÉCISIONNEL -->
+    <section class="section section-warm" id="solution">
+      <div class="container">
+        <div style="text-align: center; max-width: 760px; margin: 0 auto;">
+          <div class="badge-pill badge-pill-lime" data-reveal>
+            <span class="badge-dot badge-dot-green"></span>
+            La Réponse AgriImpact
+          </div>
+          <h2 class="heading-section" style="margin-top: 18px;" data-reveal data-reveal-delay="100">
+            De la donnée satellite brute à la décision au champ
+          </h2>
+          <p class="heading-subtitle" style="margin: 16px auto 0 auto;" data-reveal data-reveal-delay="200">
+            Une architecture transparente et scientifique qui traduit des signaux météo complexes en consignes d'action limpides pour chaque exploitant.
+          </p>
+        </div>
+
+        <div class="pipeline-strip" data-reveal data-reveal-delay="300">
+          <div class="pipeline-step">
+            <div class="pipeline-num">01</div>
+            <h4 class="pipeline-title">Données Réelles</h4>
+            <p class="pipeline-text">Coordonnées GPS réelles de la parcelle, prévisions météo horaires Open-Meteo et référentiels ANACIM.</p>
+          </div>
+          <div class="pipeline-step">
+            <div class="pipeline-num">02</div>
+            <h4 class="pipeline-title">Modèle Biophysique</h4>
+            <p class="pipeline-text">Équations thermo-hygrométriques d'infection fongique et coefficients de sensibilité FAO (Doorenbos &amp; Kassam).</p>
+          </div>
+          <div class="pipeline-step">
+            <div class="pipeline-num">03</div>
+            <h4 class="pipeline-title">Contexte Parcelle</h4>
+            <p class="pipeline-text">Culture exacte (Tomate, Oignon, Arachide, Maïs), variété, jours depuis semis et mode d'irrigation.</p>
+          </div>
+          <div class="pipeline-step">
+            <div class="pipeline-num">04</div>
+            <h4 class="pipeline-title">Consigne Précise</h4>
+            <p class="pipeline-text">Alerte de vigilance, créneau horaire sans vent pour traiter et recommandation hydrique du jour.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. SECTION AGRIMÉTÉO 14 JOURS : FOCUS PRODUIT -->
+    <section class="section" id="agrimeteo">
+      <div class="container">
+        <div class="product-split">
+          <!-- Colonne gauche : Explications -->
+          <div data-reveal>
+            <div class="badge-pill">
+              <span class="badge-dot badge-dot-green"></span>
+              Composant 1 • AgriMétéo
+            </div>
+            <h2 class="heading-section" style="margin-top: 18px;">
+              Anticipez les risques fongiques sur 14 jours, pas seulement la météo générale.
+            </h2>
+            <p class="heading-subtitle" style="margin-top: 16px;">
+              Les bulletins météo télévisés parlent de pluie ou de soleil pour tout le pays. AgriMétéo calcule pour votre latitude exacte la combinaison critique de température, d'humidité saturée et de vent.
+            </p>
+
+            <div class="feature-list">
+              <div class="feature-item">
+                <div class="feature-icon-box">14j</div>
+                <div>
+                  <h4 class="feature-title">Projection Épidémiologique Continue</h4>
+                  <p class="feature-desc">Calcul quotidien de l'indice de risque d'infection fongique (0 à 100%) selon les lois thermiques et hygrométriques de la biologie végétale.</p>
+                </div>
+              </div>
+
+              <div class="feature-item">
+                <div class="feature-icon-box">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <div>
+                  <h4 class="feature-title">28 Fenêtres de Traitement Évaluées</h4>
+                  <p class="feature-desc">Deux créneaux analysés par jour (Matin 06h-10h et Soir 16h-19h) avec test strict du vent (&lt;15 km/h) et du risque d'averse.</p>
+                </div>
+              </div>
+
+              <div class="feature-item">
+                <div class="feature-icon-box">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                </div>
+                <div>
+                  <h4 class="feature-title">Chiffrage Économique en FCFA</h4>
+                  <p class="feature-desc">Simulation concrète des pertes de rendement projetées et du gain financier évitable par un traitement préventif au bon moment.</p>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 32px;">
+              <a href="pages/agrimeteo.html" class="btn btn-dark">
+                <span>Découvrir le moteur AgriMétéo en détail</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- Colonne droite : Widget Démo Interactif -->
+          <div data-reveal data-reveal-delay="200">
+            <div class="ui-mockup-card">
+              <!-- Top bar de la station -->
+              <div class="ui-mockup-topbar">
+                <div class="ui-station-badge">
+                  <div class="ui-station-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                  </div>
+                  <div>
+                    <div class="ui-station-title">Parcelle Niayes • Tomate Plein Champ (2.5 ha)</div>
+                    <div class="ui-station-coords">Lat: 14.8912° N • Lon: -17.0215° W • Données Open-Meteo &amp; ANACIM</div>
+                  </div>
+                </div>
+                <div style="text-align: right;">
+                  <span style="font-size: 0.68rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Pic 14j</span>
+                  <div id="agrometeoCurrentRisk" style="font-size: 1.4rem; font-weight: 800; color: #EA580C; line-height: 1;">86%</div>
+                </div>
+              </div>
+
+              <!-- Bannière de vigilance dynamique -->
+              <div class="ui-vigilance-banner orange" id="agrometeoBanner">
+                <div class="ui-vigilance-left">
+                  <span class="ui-vigilance-tag" id="agrometeoBannerTag">ORANGE</span>
+                  <span class="ui-vigilance-text" id="agrometeoBannerText">Jeudi 10 Sept. : Alerte Sanitaire : Risque d'infection critique à l'aube</span>
+                </div>
+              </div>
+
+              <!-- Graphique Courbe SVG 14 jours -->
+              <div class="ui-chart-box">
+                <div class="ui-chart-header">
+                  <span class="ui-chart-title">Courbe d'Infection Mildiou (14 Jours)</span>
+                  <div class="ui-chart-legend">
+                    <span style="color: #10B981;">• &lt;30% Calme</span>
+                    <span style="color: #F59E0B;">• &gt;50% Vigilance</span>
+                    <span style="color: #EF4444;">• &gt;80% Critique</span>
+                  </div>
+                </div>
+
+                <!-- SVG Graphique stylisé -->
+                <svg viewBox="0 0 500 120" style="width: 100%; height: 90px; overflow: visible;">
+                  <defs>
+                    <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#F97316" stop-opacity="0.35"/>
+                      <stop offset="100%" stop-color="#F97316" stop-opacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <!-- Lignes de seuils -->
+                  <line x1="0" y1="84" x2="500" y2="84" stroke="#E5E7EB" stroke-dasharray="3 3"/>
+                  <line x1="0" y1="48" x2="500" y2="48" stroke="#FED7AA" stroke-dasharray="3 3"/>
+                  <line x1="0" y1="24" x2="500" y2="24" stroke="#FEE2E2" stroke-dasharray="3 3"/>
+                  
+                  <!-- Zone sous la courbe -->
+                  <path d="M 10 90 Q 70 80, 130 55 T 250 18 T 370 65 T 490 85 L 490 115 L 10 115 Z" fill="url(#chartGrad)"/>
+                  <!-- Courbe principale -->
+                  <path d="M 10 90 Q 70 80, 130 55 T 250 18 T 370 65 T 490 85" fill="none" stroke="#F97316" stroke-width="3.5" stroke-linecap="round"/>
+                  <!-- Point culminant interactif -->
+                  <circle cx="250" cy="18" r="6" fill="#EA580C" stroke="#FFFFFF" stroke-width="2"/>
+                </svg>
+
+                <!-- Sélecteur de jour cliquable -->
+                <div class="ui-timeline-days" id="agrometeoDayPills">
+                  <!-- Injecté par dashboard.js -->
+                </div>
+              </div>
+
+              <!-- Créneaux Matin / Soir -->
+              <div class="ui-slots-grid">
+                <div class="ui-slot-card optimal" id="slotCardMatin">
+                  <!-- Dynamique via dashboard.js -->
+                </div>
+                <div class="ui-slot-card" id="slotCardSoir">
+                  <!-- Dynamique via dashboard.js -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. SECTION AGRICONSEIL : DU CLIMAT À LA DÉCISION CULTURALE -->
+    <section class="section section-warm" id="agriconseil">
+      <div class="container">
+        <div class="product-split reversed">
+          <!-- Colonne gauche : Carte interactive du conseil cultural -->
+          <div data-reveal>
+            <!-- Onglets de sélection des cultures du Sénégal -->
+            <div class="crop-tabs">
+              <button class="crop-tab-btn active" data-crop="oignon">🧅 Oignon (Violet de Galmi)</button>
+              <button class="crop-tab-btn" data-crop="tomate">🍅 Tomate (Mongal RZ)</button>
+              <button class="crop-tab-btn" data-crop="arachide">🥜 Arachide (55-437)</button>
+              <button class="crop-tab-btn" data-crop="mais">🌽 Maïs</button>
+            </div>
+
+            <div class="conseil-card-detail">
+              <div class="conseil-stage-meta">
+                <div>
+                  <h3 class="problem-title" id="cropStageTitle" style="margin-bottom: 2px;">Oignon (Violet de Galmi)</h3>
+                  <span style="font-size: 0.78rem; color: var(--text-muted);" id="cropCycleDesc">Cycle total : 120 jours • Système : Goutte-à-goutte</span>
+                </div>
+                <div class="stage-badge" id="cropStageBadge">Bulbaison active (J+52)</div>
+              </div>
+
+              <div class="conseil-action-box">
+                <div class="conseil-action-title" id="cropActionTitle">Réduction des apports azotés &amp; surveillance mildiou</div>
+                <p class="conseil-action-text" id="cropActionDesc">
+                  En phase de grossissement des bulbes, stoppez impérativement les apports d'azote pour éviter le pourrissement des collets. Maintenez une humidité racinaire régulière sans mouiller le feuillage.
+                </p>
+              </div>
+
+              <div>
+                <span style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em;">Consigne Sanitaire Immédiate</span>
+                <p style="font-size: 0.88rem; color: var(--text-main); font-weight: 600; margin-top: 6px;" id="cropSanitaryDesc">
+                  Humidité nocturne &gt; 90% prévue à J+3 : prévoyez un traitement préventif de contact avant mercredi 18h.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Colonne droite : Argumentaire -->
+          <div data-reveal data-reveal-delay="200">
+            <div class="badge-pill badge-pill-lime">
+              <span class="badge-dot badge-dot-green"></span>
+              Composant 2 • AgriConseil
+            </div>
+            <h2 class="heading-section" style="margin-top: 18px;">
+              AgriMétéo analyse le ciel.<br>AgriConseil décide au sol.
+            </h2>
+            <p class="heading-subtitle" style="margin-top: 16px;">
+              Savoir qu'il va faire 34°C ne suffit pas. Ce qui compte pour l'exploitant, c'est de savoir si cette température met en danger son oignon en pleine bulbaison ou s'il doit avancer son cycle d'irrigation goutte-à-goutte à 6h du matin.
+            </p>
+
+            <div class="feature-list">
+              <div class="feature-item">
+                <div class="feature-icon-box">🌱</div>
+                <div>
+                  <h4 class="feature-title">Sensibilité Phénologique Dynamique</h4>
+                  <p class="feature-desc">Chaque variété possède un coefficient de réponse hydrique et thermique ($K_s$) distinct selon son âge depuis le semis.</p>
+                </div>
+              </div>
+
+              <div class="feature-item">
+                <div class="feature-icon-box">💧</div>
+                <div>
+                  <h4 class="feature-title">Conseils Adaptés au Système d'Arrosage</h4>
+                  <p class="feature-desc">Recommandations différenciées selon que votre parcelle fonctionne au goutte-à-goutte, par aspersion, submersion ou arrosage manuel.</p>
+                </div>
+              </div>
+
+              <div class="feature-item">
+                <div class="feature-icon-box">✓</div>
+                <div>
+                  <h4 class="feature-title">Validation des Actions Prises</h4>
+                  <p class="feature-desc">Suivez l'application de chaque conseil dans votre journal cultural pour alimenter l'historique de votre exploitation.</p>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 32px;">
+              <a href="pages/agriconseil.html" class="btn btn-outline-dark">
+                <span>Comprendre la logique des stades culturaux</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9. SECTION COMMENT ÇA MARCHE (01 À 04) -->
+    <section class="section" id="comment-ca-marche">
+      <div class="container">
+        <div style="text-align: center; max-width: 720px; margin: 0 auto;">
+          <div class="badge-pill" data-reveal>
+            <span class="badge-dot badge-dot-green"></span>
+            Simplicité Opérationnelle
+          </div>
+          <h2 class="heading-section" style="margin-top: 18px;" data-reveal data-reveal-delay="100">
+            Quatre étapes pour sécuriser votre campagne
+          </h2>
+          <p class="heading-subtitle" style="margin: 16px auto 0 auto;" data-reveal data-reveal-delay="200">
+            Aucun matériel complexe à installer. Connectez vos parcelles en quelques clics depuis votre téléphone ou ordinateur.
+          </p>
+        </div>
+
+        <div class="steps-grid">
+          <div class="step-card" data-reveal data-reveal-delay="100">
+            <div class="step-number">01</div>
+            <h4 class="step-title">Créez votre exploitation</h4>
+            <p class="step-text">
+              Renseignez la localisation de vos terres au Sénégal (commune ou coordonnées GPS) et nommez votre exploitation.
+            </p>
+          </div>
+
+          <div class="step-card" data-reveal data-reveal-delay="200">
+            <div class="step-number">02</div>
+            <h4 class="step-title">Configurez vos parcelles</h4>
+            <p class="step-text">
+              Indiquez la culture (arachide, oignon, tomate, piment, maïs), la variété, la date de semis et la surface en hectares.
+            </p>
+          </div>
+
+          <div class="step-card" data-reveal data-reveal-delay="300">
+            <div class="step-number">03</div>
+            <h4 class="step-title">Calcul agrométéo continu</h4>
+            <p class="step-text">
+              Le moteur croise en continu les flux météo ouverts certifiés avec le stade de développement végétatif de chaque parcelle.
+            </p>
+          </div>
+
+          <div class="step-card" data-reveal data-reveal-delay="400">
+            <div class="step-number">04</div>
+            <h4 class="step-title">Décidez avec sérénité</h4>
+            <p class="step-text">
+              Consultez votre conseil du jour, évitez les lessivages d'intrants et suivez la rentabilité de votre récolte.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10. SECTION PRODUIT / APERÇU DASHBOARD SAAS -->
+    <section class="section section-dark" id="produit">
+      <div class="container container-wide">
+        <div style="text-align: center; max-width: 780px; margin: 0 auto;">
+          <div class="badge-pill badge-pill-light" data-reveal>
+            <span class="badge-dot"></span>
+            Interface Exploitant
+          </div>
+          <h2 class="heading-section heading-display-light" style="margin-top: 18px;" data-reveal data-reveal-delay="100">
+            Un tableau de bord pensé pour la clarté et la décision
+          </h2>
+          <p class="heading-subtitle heading-subtitle-light" style="margin: 16px auto 0 auto;" data-reveal data-reveal-delay="200">
+            Chaque information affichée a une justification agronomique ou financière. Fini les graphiques indéchiffrables.
+          </p>
+        </div>
+
+        <div class="dashboard-preview-frame" data-reveal data-reveal-delay="300">
+          <div class="dashboard-inner-mockup">
+            <!-- Header interne du mock dashboard -->
+            <div class="dashboard-mockup-header">
+              <div class="dash-user-pill">
+                <div class="dash-user-avatar">🌾</div>
+                <div>
+                  <span style="font-weight: 800; color: var(--green-deep);">Exploitation Maraîchère de Kayar</span>
+                  <span style="font-size: 0.72rem; color: var(--text-muted); display: block;">3 parcelles actives • Région de Thiès</span>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <span class="badge-pill" style="font-size: 0.72rem; background: #ECFDF5; color: #047857; border-color: #A7F3D0;">En ligne • Synchro 15 min</span>
+              </div>
+            </div>
+
+            <!-- Corps du mock dashboard -->
+            <div class="dashboard-mockup-body">
+              <!-- Colonne principale : Indicateurs ROI & Risque -->
+              <div style="display: flex; flex-direction: column; gap: 16px;">
+                <!-- 4 cartes ROI -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+                  <div style="background: #FFFFFF; padding: 16px; border-radius: 12px; border: 1px solid var(--border-subtle);">
+                    <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Perte Projetée</div>
+                    <div style="font-size: 1.4rem; font-weight: 800; color: #DC2626; margin-top: 4px;">18.4%</div>
+                    <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">~4 600 kg menacés</div>
+                  </div>
+                  <div style="background: #FFFFFF; padding: 16px; border-radius: 12px; border: 1px solid var(--border-subtle);">
+                    <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Exposition Brute</div>
+                    <div style="font-size: 1.4rem; font-weight: 800; color: var(--text-main); margin-top: 4px;">1 610 000 F</div>
+                    <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">Cours 350 FCFA/kg</div>
+                  </div>
+                  <div style="background: #FFFFFF; padding: 16px; border-radius: 12px; border: 1px solid var(--border-subtle);">
+                    <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Gain Évitable</div>
+                    <div style="font-size: 1.4rem; font-weight: 800; color: #059669; margin-top: 4px;">1 320 200 F</div>
+                    <div style="font-size: 0.72rem; color: #059669; margin-top: 2px;">82% de marge sauvée</div>
+                  </div>
+                  <div style="background: #FFFFFF; padding: 16px; border-radius: 12px; border: 1px solid var(--border-subtle);">
+                    <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Ratio ROI</div>
+                    <div style="font-size: 1.4rem; font-weight: 800; color: var(--green-forest); margin-top: 4px;">15.1 x</div>
+                    <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">Coût trait. 35k/ha</div>
+                  </div>
+                </div>
+
+                <!-- Simulation Graphique Mildiou -->
+                <div style="background: #FFFFFF; padding: 20px; border-radius: 14px; border: 1px solid var(--border-subtle);">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <span style="font-weight: 800; font-size: 0.92rem; color: var(--green-deep);">Courbe d'alerte agrométéorologique à 14 jours</span>
+                    <span style="font-size: 0.75rem; font-weight: 700; color: #EA580C; background: #FFEDD5; padding: 3px 8px; border-radius: 6px;">Pic jeudi à 86%</span>
+                  </div>
+                  <div style="height: 120px; background: var(--bg-sand); border-radius: 8px; display: flex; align-items: center; justify-content: center; position: relative;">
+                    <svg viewBox="0 0 600 100" style="width: 100%; height: 100%;">
+                      <path d="M 10 75 Q 120 70, 200 45 T 320 15 T 450 60 T 590 80" fill="none" stroke="#F97316" stroke-width="3"/>
+                      <circle cx="320" cy="15" r="5" fill="#EF4444"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Colonne latérale : Conseil du jour & Alertes -->
+              <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div style="background: #FFFFFF; padding: 20px; border-radius: 14px; border: 1px solid var(--border-subtle); display: flex; flex-direction: column; justify-content: space-between;">
+                  <div>
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--green-forest);">Conseil du Jour • Priorité Haute</div>
+                    <h4 style="font-size: 1.05rem; font-weight: 800; color: var(--green-deep); margin: 8px 0;">Reporter le traitement foliaire</h4>
+                    <p style="font-size: 0.82rem; color: var(--text-body); line-height: 1.5;">
+                      Une pluie forte est modélisée jeudi soir. Traiter maintenant entraînerait un lessivage direct. Fenêtre recommandée : mercredi matin entre 06h et 09h30.
+                    </p>
+                  </div>
+                  <div style="margin-top: 16px;">
+                    <button class="btn btn-primary btn-sm" style="width: 100%;">J'ai appliqué ce conseil ✓</button>
+                  </div>
+                </div>
+
+                <div style="background: #FFFBEB; border: 1px solid #FDE68A; padding: 16px; border-radius: 14px;">
+                  <div style="font-size: 0.72rem; font-weight: 800; color: #B45309;">VIGILANCE ANACIM</div>
+                  <p style="font-size: 0.78rem; color: #92400E; margin-top: 4px;">
+                    Rafales côtières prévues sur la frange nord des Niayes (Kayar - Mboro). Suspendre l'aspersion mobile.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 36px;">
+          <a href="../dashboard" class="btn btn-primary">
+            <span>Explorer la démo interactive du Tableau de bord</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11. SECTION EXPÉRIENCE MOBILE-FIRST -->
+    <section class="section" id="mobile">
+      <div class="container">
+        <div style="text-align: center; max-width: 720px; margin: 0 auto;">
+          <div class="badge-pill" data-reveal>
+            <span class="badge-dot badge-dot-green"></span>
+            Conçu pour le terrain
+          </div>
+          <h2 class="heading-section" style="margin-top: 18px;" data-reveal data-reveal-delay="100">
+            Une expérience pensée pour le smartphone au champ
+          </h2>
+          <p class="heading-subtitle" style="margin: 16px auto 0 auto;" data-reveal data-reveal-delay="200">
+            Interface ultra-légère, lisible en plein soleil, optimisée pour les réseaux mobiles 3G/4G du Sénégal avec synchronisation hors-ligne.
+          </p>
+        </div>
+
+        <div class="mobile-showcase" data-reveal data-reveal-delay="300">
+          <!-- Smartphone 1 : Météo & Risques -->
+          <div class="smartphone-mockup">
+            <div class="smartphone-notch"></div>
+            <div class="smartphone-screen">
+              <div class="smartphone-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
+                  <span style="font-weight: 800; font-size: 0.85rem; color: var(--green-deep);">AGRIMPACT</span>
+                  <span class="badge-dot badge-dot-green"></span>
+                </div>
+                <div style="background: var(--bg-sand); padding: 12px; border-radius: 12px;">
+                  <span style="font-size: 0.68rem; font-weight: 700; color: var(--text-muted);">Station Kayar</span>
+                  <div style="font-size: 1.6rem; font-weight: 800; color: var(--green-deep);">27°C</div>
+                  <span style="font-size: 0.72rem; color: var(--text-body);">Vent 9 km/h • Humidité 84%</span>
+                </div>
+                <div style="background: #FFF7ED; border: 1px solid #FED7AA; padding: 12px; border-radius: 12px;">
+                  <span style="font-size: 0.68rem; font-weight: 800; color: #EA580C;">VIGILANCE ORANGE</span>
+                  <div style="font-size: 0.82rem; font-weight: 700; color: #9A3412; margin-top: 4px;">Risque Mildiou 86% à J+3</div>
+                  <p style="font-size: 0.72rem; color: #9A3412; margin-top: 4px;">Fenêtre optimale : mercredi 06h-09h30.</p>
+                </div>
+                <div style="background: #F0FDF4; border: 1px solid #BBF7D0; padding: 12px; border-radius: 12px;">
+                  <span style="font-size: 0.68rem; font-weight: 800; color: #16A34A;">CONSEIL DU JOUR</span>
+                  <div style="font-size: 0.8rem; font-weight: 700; color: #14532D; margin-top: 2px;">Irrigation à la fraîche</div>
+                  <p style="font-size: 0.72rem; color: #14532D; margin-top: 2px;">2h de goutte-à-goutte avant 07h00.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Smartphone 2 : Fiche Parcelle Oignon -->
+          <div class="smartphone-mockup" style="margin-top: 24px;">
+            <div class="smartphone-notch"></div>
+            <div class="smartphone-screen">
+              <div class="smartphone-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
+                  <span style="font-weight: 800; font-size: 0.85rem; color: var(--green-deep);">Parcelle 02 • Oignon</span>
+                  <span style="font-size: 0.7rem; font-weight: 700; color: var(--green-forest);">1.5 Ha</span>
+                </div>
+                <div style="background: #FFFFFF; border: 1px solid var(--border-subtle); padding: 12px; border-radius: 12px;">
+                  <div style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted);">Stade phénologique</div>
+                  <div style="font-size: 1.1rem; font-weight: 800; color: var(--green-deep); margin: 2px 0;">Bulbaison (J+52)</div>
+                  <span style="font-size: 0.72rem; color: var(--text-body);">Sensibilité hydrique : Modérée</span>
+                </div>
+                <div style="background: var(--bg-sand); padding: 12px; border-radius: 12px;">
+                  <div style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted);">Projection Financière</div>
+                  <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+                    <span style="font-size: 0.75rem; color: var(--text-body);">Perte évitée :</span>
+                    <strong style="font-size: 0.75rem; color: #059669;">+850 000 FCFA</strong>
+                  </div>
+                </div>
+                <button class="btn btn-primary btn-sm" style="width: 100%; margin-top: 10px;">Valider intervention</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12. SECTION ANCRAGE SÉNÉGAL & TERROIRS SAHÉLIENS -->
+    <section class="section section-dark" id="terroirs">
+      <div class="container">
+        <div style="text-align: center; max-width: 760px; margin: 0 auto;">
+          <div class="badge-pill badge-pill-light" data-reveal>
+            <span class="badge-dot"></span>
+            Territoire &amp; Spécificités
+          </div>
+          <h2 class="heading-section heading-display-light" style="margin-top: 18px;" data-reveal data-reveal-delay="100">
+            Conçu pour les réalités agricoles du Sénégal
+          </h2>
+          <p class="heading-subtitle heading-subtitle-light" style="margin: 16px auto 0 auto;" data-reveal data-reveal-delay="200">
+            Du microclimat maritime des Niayes aux chaleurs continentales du Bassin Arachidier et de la Vallée du Fleuve, chaque zone dispose de paramètres agro-climatiques adaptés.
+          </p>
+        </div>
+
+        <div class="terroirs-grid" data-reveal data-reveal-delay="300">
+          <div class="terroir-card">
+            <div class="terroir-pin">📍</div>
+            <h4 class="terroir-name">La Grande Côte &amp; Les Niayes</h4>
+            <div class="terroir-crops">Oignon, Tomate, Piment, Pomme de terre</div>
+            <p class="terroir-desc">
+              Zone côtière à forte hygrométrie et brouillards matinaux. Pression de mildiou et d'alternariose très forte pendant l'hivernage et la contre-saison.
+            </p>
+          </div>
+
+          <div class="terroir-card">
+            <div class="terroir-pin">📍</div>
+            <h4 class="terroir-name">Le Bassin Arachidier</h4>
+            <div class="terroir-crops">Arachide, Mil, Niébé, Maïs</div>
+            <p class="terroir-desc">
+              Régions de Kaolack, Fatick, Kaffrine. Sensibilité aiguë à l'installation des pluies, aux poches de sécheresse et à la gynophorisation de l'arachide.
+            </p>
+          </div>
+
+          <div class="terroir-card">
+            <div class="terroir-pin">📍</div>
+            <h4 class="terroir-name">La Vallée du Fleuve Sénégal</h4>
+            <div class="terroir-crops">Riz irrigué, Tomate industrielle, Oignon</div>
+            <p class="terroir-desc">
+              Matam, Podor, Dagana, Saint-Louis. Températures caniculaires (&gt;38°C), évapotranspiration intense et gestion rigoureuse des canaux d'irrigation.
+            </p>
+          </div>
+
+          <div class="terroir-card">
+            <div class="terroir-pin">📍</div>
+            <h4 class="terroir-name">La Casamance &amp; Sud</h4>
+            <div class="terroir-crops">Arboriculture (Mangue, Anacarde), Riz pluvial</div>
+            <p class="terroir-desc">
+              Pluviométrie abondante, forte couverture végétale. Vigilance accrue sur les attaques fongiques post-pluie et la pourriture racinaire.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13. SECTION GRILLE TARIFAIRE TRANSPARENTE -->
+    <section class="section" id="tarifs">
+      <div class="container">
+        <div style="text-align: center; max-width: 720px; margin: 0 auto;">
+          <div class="badge-pill" data-reveal>
+            <span class="badge-dot badge-dot-green"></span>
+            Tarification Équitable &amp; Locale
+          </div>
+          <h2 class="heading-section" style="margin-top: 18px;" data-reveal data-reveal-delay="100">
+            Un abonnement pensé pour le pouvoir d'achat agricole
+          </h2>
+          <p class="heading-subtitle" style="margin: 16px auto 0 auto;" data-reveal data-reveal-delay="200">
+            Réglez en direct avec votre compte Wave ou Orange Money. Sans carte bancaire étrangère.
+          </p>
+
+          <!-- Toggle mensuel / annuel -->
+          <div style="display: inline-flex; align-items: center; gap: 12px; margin-top: 28px; background: #FFFFFF; padding: 6px 16px; border-radius: 99px; border: 1px solid var(--border-subtle);" data-reveal data-reveal-delay="250">
+            <span style="font-size: 0.84rem; font-weight: 700; color: var(--text-main);">Mensuel</span>
+            <label style="position: relative; display: inline-block; width: 44px; height: 24px; cursor: pointer;">
+              <input type="checkbox" id="billingToggle" style="opacity: 0; width: 0; height: 0;">
+              <span style="position: absolute; inset: 0; background: var(--green-deep); border-radius: 34px; transition: 0.3s;"></span>
+            </label>
+            <span style="font-size: 0.84rem; font-weight: 700; color: var(--green-forest);">
+              Annuel <span style="background: var(--lime-soft); color: var(--green-deep); padding: 2px 8px; border-radius: 99px; font-size: 0.72rem; font-weight: 800;">-20%</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="pricing-grid">
+          <!-- Formule 1 : Pilote Gratuit -->
+          <div class="pricing-card" data-reveal data-reveal-delay="100">
+            <div>
+              <div class="pricing-header">
+                <h3 class="pricing-title">Gratuit Pilote</h3>
+                <p class="pricing-desc">Pour tester AgriImpact sur votre première parcelle.</p>
+              </div>
+              <div class="pricing-price-box">
+                <span class="pricing-amount">0</span>
+                <span class="pricing-currency">FCFA / mois</span>
+              </div>
+              <ul class="pricing-features-list">
+                <li class="pricing-feature-item">
+                  <div class="pricing-feature-check">✓</div>
+                  <span>1 exploitation &amp; 1 parcelle configurée</span>
+                </li>
+                <li class="pricing-feature-item">
+                  <div class="pricing-feature-check">✓</div>
+                  <span>Météo locale en direct (Kayar, Podor, etc.)</span>
+                </li>
+                <li class="pricing-feature-item">
+                  <div class="pricing-feature-check">✓</div>
+                  <span>Conseil agronomique du jour</span>
+                </li>
+                <li class="pricing-feature-item" style="opacity: 0.4;">
+                  <div class="pricing-feature-check" style="background: #F3F4F6; color: #9CA3AF;">✕</div>
+                  <span>Projection épidémique 14 jours</span>
+                </li>
+                <li class="pricing-feature-item" style="opacity: 0.4;">
+                  <div class="pricing-feature-check" style="background: #F3F4F6; color: #9CA3AF;">✕</div>
+                  <span>Alertes d'urgence par SMS</span>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <a href="../signup" class="btn btn-outline-dark" style="width: 100%;">Démarrer gratuitement</a>
+            </div>
+          </div>
+
+          <!-- Formule 2 : Pro Producteur (Mis en avant) -->
+          <div class="pricing-card featured" data-reveal data-reveal-delay="200">
+            <div class="pricing-badge-popular">Recommandé Producteurs</div>
+            <div>
+              <div class="pricing-header">
+                <h3 class="pricing-title">Pro Producteur</h3>
+                <p class="pricing-desc">Le copilote complet pour rentabiliser vos cultures maraîchères.</p>
+              </div>
+              <div class="pricing-price-box">
+                <span class="pricing-amount" id="pricePro">5 900</span>
+                <span class="pricing-currency pricing-period-label">FCFA / mois</span>
+              </div>
+              <ul class="pricing-features-list">
+                <li class="pricing-feature-item">
+                  <div class="pricing-feature-check">✓</div>
+                  <span>Jusqu'à 10 parcelles individuelles</span>
+                </li>
+                <li class="pricing-feature-item">
+                  <div class="pricing-feature-check">✓</div>
+                  <span>Projection de mildiou &amp; risques à 14 jours</span>
+                </li>
+                <li class="pricing-feature-item">
+                  <div class="pricing-feature-check">✓</div>
+                  <span>28 fenêtres de traitement optimales / jour</span>
+                </li>
+                <li class="pricing-feature-item">
+                  <div class="pricing-feature-check">✓</div>
+                  <span>Chiffrage du gain évitable en FCFA</span>
+                </li>
+                <li class="pricing-feature-item">
+                  <div class="pricing-feature-check">✓</div>
+                  <span>Alertes météo critique par SMS au champ</span>
+                </li>
+                <li class="pricing-feature-item">
+                  <div class="pricing-feature-check">✓</div>
+                  <span>Export des rapports de saison</span>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <a href="../signup" class="btn btn-primary" style="width: 100%;">Sélectionner Pro Producteur</a>
+              <div class="pricing-payment-methods">
+                <span>Règlement :</span>
+                <strong>Wave</strong>
+                <span>•</span>
+                <strong>Orange Money</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Formule 3 : Coopérative & Business -->
+          <div class="pricing-card" data-reveal data-reveal-delay="300">
+            <div>
+              <div class="pricing-header">
+                <h3 class="pricing-title">Coopérative &amp; GIE</h3>
+                <p class="pricing-desc">Pour groupements de producteurs et gestionnaires de périmètres.</p>
+              </div>
+              <div class="pricing-price-box">
+                <span class="pricing-amount" id="priceCoop">54 900</span>
+                <span class="pricing-currency pricing-period-label">FCFA / mois</span>
+              </div>
+              <ul class="pricing-features-list">
+                <li class="pricing-feature-item">
+                  <div class="pricing-feature-check">✓</div>
+                  <span>Multi-exploitations &amp; parcelles illimitées</span>
+                </li>
+                <li class="pricing-feature-item">
+                  <div class="pricing-feature-check">✓</div>
+                  <span>Accès multi-utilisateurs (président, agronomes)</span>
+                </li>
+                <li class="pricing-feature-item">
+                  <div class="pricing-feature-check">✓</div>
+                  <span>Bilan agrométéo consolidé de la coopérative</span>
+                </li>
+                <li class="pricing-feature-item">
+                  <div class="pricing-feature-check">✓</div>
+                  <span>Diffusion groupée d'alertes sanitaires</span>
+                </li>
+                <li class="pricing-feature-item">
+                  <div class="pricing-feature-check">✓</div>
+                  <span>Support technique prioritaire dédié</span>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <a href="pages/contact.html" class="btn btn-outline-dark" style="width: 100%;">Contacter l'équipe pilote</a>
+              <div class="pricing-payment-methods">
+                <span>Facturation annuelle ou virement</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 14. SECTION NOTRE VISION & PHILOSOPHIE -->
+    <section class="section section-warm" id="vision">
+      <div class="container">
+        <div class="vision-quote-card" data-reveal>
+          <div style="font-size: 2.2rem; margin-bottom: 16px;">🌱</div>
+          <blockquote class="vision-quote-text">
+            « La technologie n'a de valeur que si elle protège le labeur de l'agriculteur et sécurise l'alimentation de nos communautés. AgriImpact est né de la conviction que la précision agronomique doit être accessible au producteur de Kayar comme à celui de Podor. »
+          </blockquote>
+          <div class="vision-author">L'Équipe Fondatrice AgriImpact</div>
+          <div class="vision-role">Dakar • Thiès • Saint-Louis — Démarche de validation 2026</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 15. SECTION CTA FINAL IMMERSIF -->
+    <section class="section">
+      <div class="container">
+        <div class="final-cta-card" data-reveal>
+          <div class="final-cta-content">
+            <div class="badge-pill badge-pill-light" style="margin-bottom: 20px;">
+              <span class="badge-dot"></span>
+              Campagne Agricole 2026
+            </div>
+            <h2 class="heading-display heading-display-light" style="font-size: clamp(2rem, 4vw, 3.2rem);">
+              Prêt à transformer vos données météo en récoltes abondantes ?
+            </h2>
+            <p class="heading-subtitle heading-subtitle-light" style="margin: 18px auto 32px auto;">
+              Rejoignez les exploitants pilotes au Sénégal. Testez gratuitement votre première parcelle sans engagement.
+            </p>
+            <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+              <a href="../dashboard" class="btn btn-primary">
+                <span>Accéder au Tableau de bord</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+              </a>
+              <a href="pages/contact.html" class="btn btn-outline-light">
+                <span>Participer au programme pilote</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 16. FOOTER COMPLET & PREMIUM -->
+  <footer class="footer-main">
+    <div class="container">
+      <div class="footer-grid">
+        <!-- Colonne 1 : Marque & Mission -->
+        <div>
+          <div class="nav-brand">
+            <div class="nav-brand-logo">
+              <img src="assets/logo/agrimpact-logo.svg" alt="AgriImpact" width="38" height="38">
+            </div>
+            <span class="nav-brand-title" style="color: #FFFFFF;">AGRIMPACT</span>
+          </div>
+          <p class="footer-brand-desc">
+            Le copilote agrométéorologique et décisionnel conçu pour sécuriser les récoltes et les marges des producteurs agricoles du Sénégal et du Sahel.
+          </p>
+          <div style="display: flex; gap: 12px;">
+            <span class="badge-pill badge-pill-light" style="font-size: 0.72rem;">🇸🇳 Conçu au Sénégal</span>
+          </div>
+        </div>
+
+        <!-- Colonne 2 : Solutions -->
+        <div>
+          <h4 class="footer-col-title">Solutions</h4>
+          <ul class="footer-links">
+            <li><a href="pages/solutions.html" class="footer-link">Maraîchage (Tomate &amp; Oignon)</a></li>
+            <li><a href="pages/solutions.html" class="footer-link">Grandes Cultures (Arachide &amp; Mil)</a></li>
+            <li><a href="pages/solutions.html" class="footer-link">Coopératives &amp; GIE</a></li>
+            <li><a href="pages/agrimeteo.html" class="footer-link">Détection Précoce Mildiou</a></li>
+          </ul>
+        </div>
+
+        <!-- Colonne 3 : Produit -->
+        <div>
+          <h4 class="footer-col-title">Produit</h4>
+          <ul class="footer-links">
+            <li><a href="pages/agrimeteo.html" class="footer-link">Moteur AgriMétéo 14j</a></li>
+            <li><a href="pages/agriconseil.html" class="footer-link">Moteur AgriConseil</a></li>
+            <li><a href="#tarifs" class="footer-link">Forfaits Wave &amp; OM</a></li>
+            <li><a href="../dashboard" class="footer-link">Démo Tableau de bord</a></li>
+          </ul>
+        </div>
+
+        <!-- Colonne 4 : Entreprise -->
+        <div>
+          <h4 class="footer-col-title">AgriImpact</h4>
+          <ul class="footer-links">
+            <li><a href="pages/about.html" class="footer-link">Notre Vision &amp; Éthique</a></li>
+            <li><a href="pages/contact.html" class="footer-link">Rejoindre le Pilote</a></li>
+            <li><a href="pages/contact.html" class="footer-link">Devenir Partenaire</a></li>
+            <li><a href="tel:338001212" class="footer-link">Assistance : 33 800 12 12</a></li>
+          </ul>
+        </div>
+
+        <!-- Colonne 5 : Légal & Terroir -->
+        <div>
+          <h4 class="footer-col-title">Conformité</h4>
+          <ul class="footer-links">
+            <li><span class="footer-link">Données Hébergées Supabase</span></li>
+            <li><span class="footer-link">Réseau Météo Ouvert</span></li>
+            <li><span class="footer-link">Paiements Sécurisés Wave &amp; OM</span></li>
+            <li><span class="footer-link">Campagne Agricole 2026</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Bas de footer -->
+      <div class="footer-bottom">
+        <div>
+          © 2026 AgriImpact Sénégal. Tous droits réservés.
+        </div>
+        <div style="display: flex; gap: 20px;">
+          <a href="pages/about.html" style="color: var(--text-on-dark-muted);">Mentions Légales</a>
+          <a href="pages/contact.html" style="color: var(--text-on-dark-muted);">Politique de Confidentialité</a>
+          <a href="pages/contact.html" style="color: var(--text-on-dark-muted);">Contact</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts JavaScript -->
+  <script src="js/main.js"></script>
+  <script src="js/animations.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

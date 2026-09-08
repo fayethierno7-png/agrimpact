@@ -1,0 +1,72 @@
+/* ==========================================================================
+   AGRIMPACT - ANIMATIONS ET MICRO-INTERACTIONS NATURELLES
+   ========================================================================== */
+
+/* --- RÉVÉLATION AU SCROLL --- */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+[data-reveal].revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+[data-reveal-delay="100"] { transition-delay: 0.1s; }
+[data-reveal-delay="200"] { transition-delay: 0.2s; }
+[data-reveal-delay="300"] { transition-delay: 0.3s; }
+[data-reveal-delay="400"] { transition-delay: 0.4s; }
+
+/* --- FLOTTEMENT LÉGER DES CARTES --- */
+@keyframes cardFloat {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-7px) rotate(0.4deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+.animate-float {
+  animation: cardFloat 7s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: cardFloat 8s ease-in-out infinite -3.5s;
+}
+
+/* --- EFFET BRILLANCE / LIME GLOW --- */
+.hover-glow {
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 32px rgba(200, 239, 86, 0.3);
+  transform: translateY(-2px);
+}
+
+/* --- PULSATION DISCRÈTE VIGILANCE --- */
+@keyframes pulseIndicator {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+  70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.pulse-green {
+  animation: pulseIndicator 2.2s infinite;
+}
+
+/* --- MICRO-TRANSITIONS TABS & BOUTONS --- */
+.tab-transition {
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+/* --- PARALLAXE FLUIDE LÉGÈRE SUR LES IMAGES --- */
+.media-kenburns {
+  transform: scale(1);
+  transition: transform 6s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.hero-card:hover .media-kenburns {
+  transform: scale(1.035);
+}

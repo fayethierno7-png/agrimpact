@@ -1,0 +1,138 @@
+import { UserPlan } from '../types';
+
+export interface PlanFeatureLimits {
+  maxFarms: number;
+  maxPlots: number;
+  fullHistoryAccess: boolean;
+  advancedAlerts: boolean;
+  smsAlerts: boolean;
+  multiUsers: boolean;
+  exportReports: boolean;
+  offlineSync: boolean;
+  name: string;
+  priceMonthlyCFA: number;
+}
+
+export const PLAN_LIMITS: Record<UserPlan, PlanFeatureLimits> = {
+  free: {
+    maxFarms: 1,
+    maxPlots: 1,
+    fullHistoryAccess: false, // Conseil du jour uniquement
+    advancedAlerts: false,
+    smsAlerts: false,
+    multiUsers: false,
+    exportReports: false,
+    offlineSync: true,
+    name: 'Gratuit Pilote',
+    priceMonthlyCFA: 0,
+  },
+  pro: {
+    maxFarms: 1,
+    maxPlots: 10,
+    fullHistoryAccess: true,
+    advancedAlerts: true,
+    smsAlerts: true,
+    multiUsers: false,
+    exportReports: true,
+    offlineSync: true,
+    name: 'Pro Producteur',
+    priceMonthlyCFA: 5900, // 5 900 FCFA / mois
+  },
+  business: {
+    maxFarms: 999,
+    maxPlots: 999,
+    fullHistoryAccess: true,
+    advancedAlerts: true,
+    smsAlerts: true,
+    multiUsers: true,
+    exportReports: true,
+    offlineSync: true,
+    name: 'Coopérative & Business',
+    priceMonthlyCFA: 54900, // 54 900 FCFA / mois
+  },
+};
+
+export type FeatureKey =
+  | 'multiple_plots'
+  | 'multiple_farms'
+  | 'full_history'
+  | 'advanced_alerts'
+  | 'sms_alerts'
+  | 'multi_users'
+  | 'export_reports';
+
+/**
+ * Fonction centrale de contrôle d'accès aux fonctionnalités par plan
+ * Utilisable côté serveur (API / Actions) et côté client (UI Badging / Modals)
+ */
+export function checkPlanAccess(
+  userPlan: UserPlan = 'free',
+  feature: FeatureKey,
+  currentCount?: { farmsCount?: number; plotsCount?: number }
+): { allowed: boolean; reason?: string; upgradeRequired?: UserPlan } {
+  const limits = PLAN_LIMITS[userPlan];
+
+  switch (feature) {
+    case 'multiple_plots':
+      if (currentCount && currentCount.plotsCount !== undefined) {
+        if (currentCount.plotsCount >= limits.maxPlots) {
+          return {
+            allowed: false,
+            reason: `Votre forfait ${limits.name} est limité à ${limits.maxPlots} parcelle(s).`,
+            upgradeRequired: 'pro',
+          };
+        }
+      }
+      return { allowed: userPlan !== 'free' || limits.maxPlots > 1, upgradeRequired: 'pro' };
+
+    case 'multiple_farms':
+      if (currentCount && currentCount.farmsCount !== undefined) {
+        if (currentCount.farmsCount >= limits.maxFarms) {
+          return {
+            allowed: false,
+            reason: `Votre forfait ${limits.name} est limité à ${limits.maxFarms} exploitation(s).`,
+            upgradeRequired: 'business',
+          };
+        }
+      }
+      return { allowed: limits.maxFarms > 1, upgradeRequired: 'business' };
+
+    case 'full_history':
+      return {
+        allowed: limits.fullHistoryAccess,
+        reason: limits.fullHistoryAccess ? undefined : 'L\'historique complet est réservé aux membres PRO.',
+        upgradeRequired: 'pro',
+      };
+
+    case 'advanced_alerts':
+      return {
+        allowed: limits.advancedAlerts,
+        reason: limits.advancedAlerts ? undefined : 'Les alertes phytosanitaires et vigilances avancées sont réservées aux membres PRO.',
+        upgradeRequired: 'pro',
+      };
+
+    case 'sms_alerts':
+      return {
+        allowed: limits.smsAlerts,
+        reason: limits.smsAlerts ? undefined : 'Les notifications SMS d\'urgence nécessitent un abonnement PRO.',
+        upgradeRequired: 'pro',
+      };
+
+    case 'multi_users':
+      return {
+        allowed: limits.multiUsers,
+        reason: limits.multiUsers ? undefined : 'L\'accès multi-comptes est réservé au forfait Business.',
+        upgradeRequired: 'business',
+      };
+
+    case 'export_reports':
+      return {
+        allowed: limits.exportReports,
+        reason: limits.exportReports ? undefined : 'L\'export de rapports agronomiques est réservé aux forfaits Pro & Business.',
+        upgradeRequired: 'pro',
+      };
+
+    default:
+      return { allowed: true };
+  }
+}

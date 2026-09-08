@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moteur AgriConseil — Stades Phénologiques & Décisions — AgriImpact</title>
+  <meta name="description" content="Découvrez le moteur décisionnel AgriConseil : recommandations personnalisées selon le stade végétatif, la variété et le type d'irrigation.">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/logo/agrimpact-logo.svg">
+</head>
+<body>
+
+  <div class="navbar-wrapper">
+    <header class="navbar-floating">
+      <a href="../index.html" class="nav-brand">
+        <div class="nav-brand-logo">
+          <img src="../assets/logo/agrimpact-logo.svg" alt="AgriImpact" width="38" height="38">
+        </div>
+        <div class="nav-brand-text">
+          <span class="nav-brand-title">AGRIMPACT</span>
+          <span class="nav-brand-tag">Sénégal • Terroir &amp; Décision</span>
+        </div>
+      </a>
+
+      <nav class="nav-menu">
+        <a href="solutions.html" class="nav-link">Solutions</a>
+        <a href="agrimeteo.html" class="nav-link">AgriMétéo 14j</a>
+        <a href="agriconseil.html" class="nav-link active">AgriConseil</a>
+        <a href="../index.html#comment-ca-marche" class="nav-link">Comment ça marche</a>
+        <a href="about.html" class="nav-link">Notre vision</a>
+        <a href="contact.html" class="nav-link">Contact</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="../../dashboard" class="btn btn-primary btn-sm">
+          <span>Découvrir la démo</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+        </a>
+      </div>
+    </header>
+  </div>
+
+  <main>
+    <section class="section" style="padding-top: 60px; padding-bottom: 60px;">
+      <div class="container">
+        <div style="max-width: 840px;">
+          <div class="badge-pill badge-pill-lime">
+            <span class="badge-dot badge-dot-green"></span>
+            Agronomie Appliquée
+          </div>
+          <h1 class="heading-display" style="margin-top: 18px;">
+            AgriConseil : Du diagnostic météo à la <em>décision culturale</em>.
+          </h1>
+          <p class="heading-subtitle" style="margin-top: 16px;">
+            Les plantes ne réagissent pas toutes de la même manière à la même météo. AgriConseil intègre l'âge exact de votre culture (jours depuis semis) pour calculer sa sensibilité réelle et prescrire les interventions requises.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- LES STADES PHÉNOLOGIQUES -->
+    <section class="section section-warm">
+      <div class="container">
+        <h2 class="heading-section" style="margin-bottom: 36px;">
+          Les 5 stades clés suivis par AgriConseil
+        </h2>
+
+        <div class="problem-grid">
+          <div class="problem-card">
+            <div class="problem-number">STADE 01 • LEVÉE &amp; ENRACINEMENT</div>
+            <h3 class="problem-title">J+0 à J+15 : Fragilité Initiale</h3>
+            <p class="problem-desc">
+              Surveillance du dessèchement de surface. Arrosages courts et fréquents pour ne pas tasser la terre sableuse des Niayes ni noyer les plantules.
+            </p>
+          </div>
+
+          <div class="problem-card">
+            <div class="problem-number">STADE 02 • CROISSANCE VÉGÉTATIVE</div>
+            <h3 class="problem-title">J+15 à J+40 : Mise en Place Foliaire</h3>
+            <p class="problem-desc">
+              Besoins azotés modérés. Surveillance de l'humidité relative nocturne pour empêcher l'installation des premières colonies fongiques.
+            </p>
+          </div>
+
+          <div class="problem-card">
+            <div class="problem-number">STADE 03 • FLORAISON &amp; NOUAISON</div>
+            <h3 class="problem-title">Sensibilité Maximale (Ks = 1.25 à 1.40)</h3>
+            <p class="problem-desc">
+              Stade le plus critique du cycle. Tout stress hydrique ou coup de chaleur (&gt;35°C) entraîne l'avortement irréversible des fleurs.
+            </p>
+          </div>
+
+          <div class="problem-card">
+            <div class="problem-number">STADE 04 • GROSSISSEMENT DES BULBES/FRUITS</div>
+            <h3 class="problem-title">Calibre &amp; Rendement</h3>
+            <p class="problem-desc">
+              Consommation d'eau maximale. Équilibrage potassique et arrêt strict des excès d'azote pour éviter le pourrissement des collets d'oignon.
+            </p>
+          </div>
+
+          <div class="problem-card">
+            <div class="problem-number">STADE 05 • MATURATION &amp; RÉCOLTE</div>
+            <h3 class="problem-title">Séchage &amp; Conservation</h3>
+            <p class="problem-desc">
+              Arrêt progressif de l'irrigation pour favoriser la dormance et l'arrachage dans des conditions sèches idéales pour le stockage.
+            </p>
+          </div>
+
+          <div class="problem-card" style="background: var(--green-deep); color: #FFFFFF; border-color: var(--green-primary);">
+            <div class="problem-number" style="color: var(--lime-accent);">MODÈLE DÉTERMINISTE</div>
+            <h3 class="problem-title" style="color: #FFFFFF;">Zéro Boîte Noire</h3>
+            <p class="problem-desc" style="color: var(--text-on-dark-muted);">
+              Toutes les règles appliquées proviennent de manuels de recherche agronomique certifiés (ISRA, FAO, CIRAD), adaptées aux variétés locales.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION CTA -->
+    <section class="section" style="text-align: center;">
+      <div class="container">
+        <h2 class="heading-section">Prêt à tester sur votre culture ?</h2>
+        <p class="heading-subtitle" style="margin: 16px auto 32px auto;">
+          Configurez votre première parcelle en 2 minutes et recevez votre recommandation personnalisée.
+        </p>
+        <a href="../../dashboard" class="btn btn-primary">Tester gratuitement</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer-main">
+    <div class="container">
+      <div class="footer-bottom">
+        <div>© 2026 AgriImpact Sénégal. Tous droits réservés.</div>
+        <div><a href="../index.html" style="color: var(--lime-accent);">← Retour à l'accueil</a></div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../js/main.js"></script>
+  <script src="../js/animations.js"></script>
+</body>
+</html>
