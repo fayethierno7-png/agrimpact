@@ -228,7 +228,7 @@ function SignupContent() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="ex: amadou.sow@gmail.com"
-                className="w-full px-3.5 py-3 bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 rounded-xl text-xs text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:bg-white focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-700 transition-all font-medium"
+                className="w-full px-3.5 py-3 bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 rounded-xl text-xs text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:bg-white dark:focus:bg-stone-900 focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-700 transition-all font-medium"
                 required
                 autoFocus
               />
@@ -245,7 +245,7 @@ function SignupContent() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Minimum 6 caractères"
-                  className="w-full pl-3.5 pr-10 py-3 bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 rounded-xl text-xs text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:bg-white focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-700 transition-all font-medium"
+                  className="w-full pl-3.5 pr-10 py-3 bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 rounded-xl text-xs text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:bg-white dark:focus:bg-stone-900 focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-700 transition-all font-medium"
                   required
                   minLength={6}
                 />
@@ -271,7 +271,7 @@ function SignupContent() {
                   value={nom}
                   onChange={(e) => setNom(e.target.value)}
                   placeholder="Ex: Moussa Sow"
-                  className="w-full px-3.5 py-2.5 bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 rounded-xl text-xs text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:bg-white focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-700 transition-all"
+                  className="w-full px-3.5 py-2.5 bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 rounded-xl text-xs text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:bg-white dark:focus:bg-stone-900 focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-700 transition-all"
                 />
               </div>
 
@@ -288,7 +288,7 @@ function SignupContent() {
                     value={telephone}
                     onChange={(e) => setTelephone(e.target.value.replace(/\D/g, '').slice(0, 9))}
                     placeholder="77 000 00 00"
-                    className="w-full pl-12 pr-3.5 py-2.5 bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 rounded-xl text-xs text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:bg-white focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-700 transition-all font-mono"
+                    className="w-full pl-12 pr-3.5 py-2.5 bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 rounded-xl text-xs text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:bg-white dark:focus:bg-stone-900 focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-700 transition-all font-mono"
                   />
                 </div>
               </div>

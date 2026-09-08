@@ -31,6 +31,66 @@
     background-color: #0c0a09;
     color: #f5f5f4;
   }
+
+  /* Règle globale stricte pour tous les champs de saisie (lisibilité universelle texte / placeholder / autofill) */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="file"]):not([type="range"]),
+  textarea,
+  select {
+    color: #1c1917; /* stone-900 : lisibilité maximale */
+    caret-color: #0c2b1e;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="file"]):not([type="range"])::placeholder,
+  textarea::placeholder {
+    color: #78716c; /* stone-500 : contraste supérieur aux gris clairs (WCAG AA) */
+    opacity: 1;
+  }
+
+  /* Thème sombre : texte clair sur fond sombre garanti */
+  html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="file"]):not([type="range"]),
+  html.dark textarea,
+  html.dark select {
+    color: #f5f5f4; /* stone-100 */
+    caret-color: #c8ef56;
+  }
+
+  html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="file"]):not([type="range"])::placeholder,
+  html.dark textarea::placeholder {
+    color: #a8a29e; /* stone-400 */
+    opacity: 1;
+  }
+
+  /* Prise en charge explicite de l'autofill navigateur pour éviter le texte blanc sur fond blanc ou jaune */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    -webkit-text-fill-color: #1c1917 !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  html.dark input:-webkit-autofill,
+  html.dark input:-webkit-autofill:hover,
+  html.dark input:-webkit-autofill:focus,
+  html.dark textarea:-webkit-autofill,
+  html.dark select:-webkit-autofill {
+    -webkit-text-fill-color: #f5f5f4 !important;
+    -webkit-box-shadow: 0 0 0 1000px #1c1917 inset !important;
+    box-shadow: 0 0 0 1000px #1c1917 inset !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  /* Lisibilité des listes déroulantes native select et options */
+  select option {
+    background-color: #ffffff;
+    color: #1c1917;
+  }
+
+  html.dark select option {
+    background-color: #1c1917;
+    color: #f5f5f4;
+  }
 }
 
 /* Typographie Éditoriale */
