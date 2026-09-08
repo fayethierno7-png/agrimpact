@@ -3,7 +3,15 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { userId, role = 'producteur', email, nom } = body;
+    const {
+      userId,
+      role = 'producteur',
+      email,
+      nom,
+      statut_compte = 'actif',
+      statut_abonnement = 'actif',
+      date_limite_grace = null,
+    } = body;
 
     if (!userId) {
       return NextResponse.json(
@@ -17,6 +25,9 @@ export async function POST(req: NextRequest) {
       email: email || '',
       nom: nom || '',
       role,
+      statut_compte,
+      statut_abonnement,
+      date_limite_grace,
       createdAt: new Date().toISOString(),
     };
 
@@ -26,7 +37,7 @@ export async function POST(req: NextRequest) {
       session: sessionPayload,
     });
 
-    // Encodage base64 léger et propre pour le cookie de session
+    // Encodage base64 léger et propre pour le cookie de session httpOnly
     const sessionToken = Buffer.from(JSON.stringify(sessionPayload)).toString('base64url');
 
     // Déposer le cookie de session serveur sécurisé (7 jours)
@@ -38,7 +49,7 @@ export async function POST(req: NextRequest) {
       sameSite: 'lax',
     });
 
-    // Cookie de rôle pour navigation UI
+    // Cookie de rôle informatif (non suffisant seul pour autoriser l'admin)
     response.cookies.set('agri_user_role', role, {
       path: '/',
       maxAge: 60 * 60 * 24 * 7,

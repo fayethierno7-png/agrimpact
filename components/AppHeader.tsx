@@ -135,22 +135,21 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             <span>{statusText}</span>
           </div>
 
-          {/* Console Admin Bouton Unique */}
-          <Link
-            href="/admin"
-            onClick={() => {
-              document.cookie = 'agri_user_role=admin; path=/; max-age=604800; SameSite=Lax';
-            }}
-            className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs ${
-              pathname === '/admin' || pathname?.startsWith('/admin')
-                ? 'bg-purple-700 text-white border-purple-800 shadow-purple-900/20 ring-2 ring-purple-300'
-                : 'bg-purple-50 hover:bg-purple-100 text-purple-900 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800 hover:shadow-sm'
-            }`}
-            title="Accéder à la Console d'Administration"
-          >
-            <ShieldCheck className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0" />
-            <span className="hidden md:inline font-bold">Console Admin</span>
-          </Link>
+          {/* Console Admin Bouton (Réservé exclusivement aux administrateurs certifiés) */}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs ${
+                pathname === '/admin' || pathname?.startsWith('/admin')
+                  ? 'bg-purple-700 text-white border-purple-800 shadow-purple-900/20 ring-2 ring-purple-300'
+                  : 'bg-purple-50 hover:bg-purple-100 text-purple-900 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800 hover:shadow-sm'
+              }`}
+              title="Accéder à la Console d'Administration"
+            >
+              <ShieldCheck className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0" />
+              <span className="hidden md:inline font-bold">Console Admin</span>
+            </Link>
+          )}
 
           {/* User Info Chip -> mène vers /profile */}
           <Link

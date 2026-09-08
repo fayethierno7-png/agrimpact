@@ -6,102 +6,145 @@ export async function middleware(request: NextRequest) {
 
   // Récupération des jetons et cookies d'authentification
   const sessionCookie = request.cookies.get('agri_session')?.value;
-  const roleCookie = request.cookies.get('agri_user_role')?.value;
   const tokenCookie =
     request.cookies.get('sb-access-token')?.value ||
     request.cookies.get('supabase-auth-token')?.value;
   const authHeader = request.headers.get('authorization');
 
-  const isAuthenticated = Boolean(sessionCookie || tokenCookie || authHeader);
+  // Décodage sécurisé de la session serveur httpOnly
+  let sessionData: any = null;
+  if (sessionCookie) {
+    try {
+      const raw = Buffer.from(sessionCookie, 'base64url').toString('utf-8');
+      sessionData = JSON.parse(raw);
+    } catch {}
+  }
 
-  // 1. Contrôle des routes de la console admin
+  const isAuthenticated = Boolean(sessionData?.userId || tokenCookie || authHeader);
+
+  // 1. CONTRÔLE D'ACCÈS RBAC DE LA CONSOLE ADMIN (Point 9)
+  // Aucun bypass par simple cookie client n'est toléré : seule la session serveur ou Supabase fait foi.
   if (pathname.startsWith('/admin')) {
-    if (roleCookie === 'admin') {
-      return NextResponse.next();
-    }
+    let isAdmin = sessionData?.role === 'admin';
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    // Vérification de secours Supabase si un jeton Supabase direct est présent
+    if (!isAdmin && tokenCookie) {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    if (tokenCookie && supabaseUrl && supabaseAnonKey) {
-      try {
-        const authRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
-          headers: {
-            Authorization: `Bearer ${tokenCookie}`,
-            apikey: supabaseAnonKey,
-          },
-          signal: AbortSignal.timeout(1000),
-        });
+      if (supabaseUrl && supabaseAnonKey) {
+        try {
+          const authRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
+            headers: {
+              Authorization: `Bearer ${tokenCookie}`,
+              apikey: supabaseAnonKey,
+            },
+            signal: AbortSignal.timeout(1500),
+          });
 
-        if (authRes.ok) {
-          const user = await authRes.json();
-          if (user?.id) {
-            const profileRes = await fetch(
-              `${supabaseUrl}/rest/v1/profiles?user_id=eq.${user.id}&select=role`,
-              {
-                headers: {
-                  Authorization: `Bearer ${tokenCookie}`,
-                  apikey: supabaseAnonKey,
-                },
-                signal: AbortSignal.timeout(1000),
-              }
-            );
+          if (authRes.ok) {
+            const user = await authRes.json();
+            if (user?.id) {
+              const profileRes = await fetch(
+                `${supabaseUrl}/rest/v1/profiles?user_id=eq.${user.id}&select=role`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${tokenCookie}`,
+                    apikey: supabaseAnonKey,
+                  },
+                  signal: AbortSignal.timeout(1500),
+                }
+              );
 
-            if (profileRes.ok) {
-              const profiles = await profileRes.json();
-              const role = profiles?.[0]?.role;
-
-              if (role === 'admin') {
-                const response = NextResponse.next();
-                response.cookies.set('agri_user_role', 'admin', {
-                  path: '/',
-                  maxAge: 60 * 60 * 24 * 7,
-                  sameSite: 'lax',
-                });
-                return response;
+              if (profileRes.ok) {
+                const profiles = await profileRes.json();
+                if (profiles?.[0]?.role === 'admin') {
+                  isAdmin = true;
+                }
               }
             }
           }
+        } catch (err) {
+          console.error('Erreur vérification RBAC admin Supabase:', err);
         }
-      } catch (err) {
-        console.error('Erreur vérification token Supabase dans middleware admin:', err);
       }
     }
 
-    // Si non admin mais connecté, retour vers dashboard
+    if (isAdmin) {
+      return NextResponse.next();
+    }
+
+    // Si non admin mais connecté : redirection immédiate vers le dashboard
     if (isAuthenticated) {
       const redirectUrl = new URL('/dashboard', request.url);
       redirectUrl.searchParams.set('error', 'unauthorized_admin');
       return NextResponse.redirect(redirectUrl);
     }
 
-    // Non connecté du tout
+    // Non connecté : redirection vers login
     const redirectUrl = new URL('/login', request.url);
     redirectUrl.searchParams.set('redirect', pathname);
     redirectUrl.searchParams.set('reason', 'admin_required');
     return NextResponse.redirect(redirectUrl);
   }
 
-  // 2. Contrôle strict côté serveur des routes privées du SaaS
+  // 2. CONTRÔLE DES COMPTES EN ATTENTE DE VALIDATION ADMIN (Point 13)
+  if (sessionData?.statut_compte === 'en_attente') {
+    // Si l'utilisateur est en attente, il n'a le droit de naviguer que sur /en-attente, /tarifs, /login ou l'accueil
+    const isAllowedPendingPage =
+      pathname.startsWith('/en-attente') ||
+      pathname === '/' ||
+      pathname.startsWith('/tarifs') ||
+      pathname.startsWith('/api/settings') ||
+      pathname.startsWith('/api/auth');
+
+    if (!isAllowedPendingPage) {
+      const redirectUrl = new URL('/en-attente', request.url);
+      return NextResponse.redirect(redirectUrl);
+    }
+    return NextResponse.next();
+  }
+
+  // 3. CONTRÔLE DE SUSPENSION APRÈS DÉLAI DE GRÂCE 3 JOURS D'IMPAYÉ (Point 11)
+  if (sessionData?.statut_abonnement === 'impaye' && sessionData?.date_limite_grace) {
+    const graceLimit = new Date(sessionData.date_limite_grace).getTime();
+    if (Date.now() > graceLimit) {
+      // Période de grâce de 3 jours échue : redirection obligatoire vers le règlement
+      const isAllowedUnpaidPage =
+        pathname.startsWith('/payment') ||
+        pathname.startsWith('/tarifs') ||
+        pathname === '/' ||
+        pathname.startsWith('/api/');
+
+      if (!isAllowedUnpaidPage) {
+        const redirectUrl = new URL('/payment', request.url);
+        redirectUrl.searchParams.set('reason', 'grace_expired');
+        return NextResponse.redirect(redirectUrl);
+      }
+    }
+  }
+
+  // 4. CONTRÔLE D'AUTHENTIFICATION DES PAGES & APIS PRIVÉES
   const isPrivatePage =
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/alerts') ||
     pathname.startsWith('/history') ||
     pathname.startsWith('/parametres') ||
     pathname.startsWith('/profile') ||
-    pathname.startsWith('/payment') ||
     pathname.startsWith('/signalements') ||
     pathname.startsWith('/assistant');
 
   const isPrivateApi =
+    pathname.startsWith('/api/assistant/chat') ||
     pathname.startsWith('/api/farms') ||
+    pathname.startsWith('/api/wallet') ||
     pathname.startsWith('/api/simulator/save') ||
     pathname.startsWith('/api/simulator/history');
 
   if (!isAuthenticated) {
     if (isPrivateApi) {
       return NextResponse.json(
-        { success: false, error: 'Session invalide ou non authentifiée.' },
+        { success: false, error: 'Session non authentifiée. Veuillez vous connecter.' },
         { status: 401 }
       );
     }
@@ -137,7 +180,10 @@ export const config = {
     '/signalements/:path*',
     '/assistant',
     '/assistant/:path*',
+    '/en-attente',
+    '/api/assistant/chat',
     '/api/farms/:path*',
+    '/api/wallet',
     '/api/simulator/save',
     '/api/simulator/history',
   ],

@@ -19,19 +19,22 @@ import {
   Check,
   Settings,
   Flag,
+  Building2,
 } from 'lucide-react';
 import { AppHeader } from '../../components/AppHeader';
 import { BottomNav } from '../../components/BottomNav';
 import { PaymentModal } from '../../components/PaymentModal';
+import EditFarmModal from '../../components/farm/EditFarmModal';
 import { useAgri } from '../../lib/context/AgriContext';
 import { PLAN_LIMITS } from '../../lib/billing/planLimits';
 import { UserPlan } from '../../lib/types';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { profile, farm, plot, logout, updatePlan } = useAgri();
+  const { profile, farm, plot, logout, updatePlan, updateFarmAndPlot } = useAgri();
   const [selectedPlan, setSelectedPlan] = useState<UserPlan>(profile?.plan || 'pro');
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isEditFarmOpen, setIsEditFarmOpen] = useState(false);
   const [targetCheckoutPlan, setTargetCheckoutPlan] = useState<UserPlan>('pro');
   const [paymentSuccessMessage, setPaymentSuccessMessage] = useState<string | null>(null);
 
@@ -118,7 +121,16 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 mt-3">
+              <button
+                type="button"
+                onClick={() => setIsEditFarmOpen(true)}
+                className="w-full mt-2.5 py-2 px-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span>Modifier l&apos;exploitation</span>
+              </button>
+
+              <div className="grid grid-cols-2 gap-2 mt-2.5">
                 <Link
                   href="/parametres"
                   className="py-2 px-3 rounded-xl border border-stone-200 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
@@ -136,18 +148,17 @@ export default function ProfilePage() {
                 </Link>
               </div>
 
-              <div className="mt-2.5">
-                <Link
-                  href="/admin"
-                  onClick={() => {
-                    document.cookie = 'agri_user_role=admin; path=/; max-age=604800; SameSite=Lax';
-                  }}
-                  className="w-full py-2.5 px-3 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer ring-2 ring-purple-300"
-                >
-                  <ShieldCheck className="w-4 h-4 text-purple-200" />
-                  <span>Console d&apos;Administration</span>
-                </Link>
-              </div>
+              {profile?.role === 'admin' && (
+                <div className="mt-2.5">
+                  <Link
+                    href="/admin"
+                    className="w-full py-2.5 px-3 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer ring-2 ring-purple-300"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-purple-200" />
+                    <span>Console d&apos;Administration</span>
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Reassurance Wave & Orange Money */}
@@ -532,6 +543,18 @@ export default function ProfilePage() {
         userPhone={profile?.telephone_contact || ''}
         userName={profile?.nom || 'Producteur'}
         userId={profile?.user_id || 'usr-anonymous'}
+      />
+
+      {/* MODAL DE MODIFICATION DE L'EXPLOITATION (Point 5) */}
+      <EditFarmModal
+        isOpen={isEditFarmOpen}
+        onClose={() => setIsEditFarmOpen(false)}
+        farm={farm}
+        plot={plot}
+        onSuccess={(updatedFarm, updatedPlot) => {
+          updateFarmAndPlot(updatedFarm, updatedPlot);
+          setPaymentSuccessMessage('Fiche exploitation et parcelle mises à jour avec succès.');
+        }}
       />
 
       <BottomNav />

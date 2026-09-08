@@ -30,15 +30,43 @@ import { AgrometeoPredictiveModule } from '../../components/AgrometeoPredictiveM
 import { getWeatherData, CurrentWeatherReport } from '../../lib/weather/openMeteo';
 import { calculateCropStage, evaluateAgronomicRules } from '../../lib/engine/recommendationEngine';
 import AiTokenGauge from '../../components/billing/AiTokenGauge';
+import DailyAdviceCard from '../../components/dashboard/DailyAdviceCard';
+import EditFarmModal from '../../components/farm/EditFarmModal';
+import ContactSupportBanner from '../../components/common/ContactSupportBanner';
 
 export default function DashboardPage() {
-  const { profile, farm, plot, markRecommendationApplied, recommendations, alerts } = useAgri();
+  const { profile, farm, plot, markRecommendationApplied, recommendations, alerts, updateFarmAndPlot } = useAgri();
 
   const [weather, setWeather] = useState<CurrentWeatherReport | null>(null);
   const [isApplied, setIsApplied] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
+  const [isEditFarmOpen, setIsEditFarmOpen] = useState(false);
   const [toast, setToast] = useState<ToastMessage | null>(null);
+
+  // État réel du portefeuille IA (Point 4)
+  const [walletData, setWalletData] = useState({
+    tokensRemaining: 45000,
+    monthlyQuota: 60000,
+    permanentTokens: 0,
+    planName: 'Pro Producteur',
+  });
+
+  useEffect(() => {
+    fetch('/api/wallet')
+      .then((r) => r.json())
+      .then((json) => {
+        if (json?.success && json.wallet) {
+          setWalletData({
+            tokensRemaining: json.wallet.tokensRemaining,
+            monthlyQuota: json.wallet.monthlyQuota,
+            permanentTokens: json.wallet.permanentTokens,
+            planName: 'Pro Producteur',
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // État de vigilance prédictive synchro depuis le module AgrometeoPredictiveModule
   const [predictionVigilance, setPredictionVigilance] = useState<string | null>(null);
@@ -232,6 +260,29 @@ export default function DashboardPage() {
               </div>
             )}
 
+            {/* POINT 11 : Avertissement Période de grâce 3 jours avant coupure */}
+            {Boolean((profile as any)?.statut_abonnement === 'impaye') && (
+              <div className="p-4 rounded-2xl bg-[#963e1b]/10 border border-[#963e1b]/30 text-[#963e1b] dark:text-amber-300 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="w-5 h-5 shrink-0 text-[#963e1b] animate-pulse" />
+                  <div>
+                    <span className="text-xs font-black uppercase tracking-wider block">
+                      Période de grâce active — Renouvellement requis
+                    </span>
+                    <p className="text-xs mt-0.5 text-stone-700 dark:text-stone-300">
+                      Votre abonnement est en attente de règlement. Veuillez régulariser votre souscription avant la suspension complète de vos accès aux outils d&apos;aide à la décision.
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href="/tarifs"
+                  className="px-3.5 py-1.5 bg-[#963e1b] hover:bg-[#7f3214] text-white rounded-xl text-xs font-bold shrink-0 shadow-xs transition-colors"
+                >
+                  Régulariser mon forfait
+                </Link>
+              </div>
+            )}
+
             {/* Bandeau Alerte Météo Prioritaire (Conditionnel Réel) */}
             {activeAlert ? (
               <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/80 shadow-xs relative overflow-hidden">
@@ -385,6 +436,9 @@ export default function DashboardPage() {
             {/* Module d'Analyse Prédictive Avancée 14j & Rentabilité ROI */}
             {currentPlot && cropStage ? (
               <>
+                {/* POINT 3 : Conseil du jour visible, dynamique et contextuel */}
+                <DailyAdviceCard plot={currentPlot} farm={farm} weather={currentWeather} />
+
                 <AgrometeoPredictiveModule
                   plot={currentPlot}
                   latitude={latitude}
@@ -466,17 +520,22 @@ export default function DashboardPage() {
 
           {/* COLONNE LATÉRALE DESKTOP (4 Cols sur Desktop, sous la colonne principale sur Mobile) */}
           <div className="lg:col-span-4 space-y-5">
-            {/* Jauge IA & Tokens AgriImpact */}
+            {/* Jauge IA & Tokens AgriImpact (Point 4) */}
             <AiTokenGauge
-              tokensRemaining={45200}
-              monthlyQuota={60000}
-              permanentTokens={10000}
-              planName="Pro Producteur"
-              renewalDate="1er du mois prochain"
+              tokensRemaining={walletData.tokensRemaining}
+              monthlyQuota={walletData.monthlyQuota}
+              permanentTokens={walletData.permanentTokens}
+              planName={walletData.planName}
               variant="dashboard"
+              onTopUpSuccess={(pack) => {
+                setWalletData((prev) => ({
+                  ...prev,
+                  permanentTokens: prev.permanentTokens + pack.nb_tokens,
+                }));
+              }}
             />
 
-            {/* Carte Exploitation & Parcelles */}
+            {/* Carte Exploitation & Parcelles (Point 5) */}
             <div className="p-5 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-xs">
               <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800">
                 <div className="flex items-center gap-2">
@@ -485,9 +544,13 @@ export default function DashboardPage() {
                     Fiche Exploitation
                   </h3>
                 </div>
-                <Link href="/profile" className="text-xs text-emerald-700 dark:text-emerald-400 hover:underline font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setIsEditFarmOpen(true)}
+                  className="text-xs text-emerald-700 dark:text-emerald-400 hover:underline font-semibold cursor-pointer"
+                >
                   {currentPlot ? 'Modifier' : 'Configurer'}
-                </Link>
+                </button>
               </div>
 
               {currentPlot ? (
@@ -641,6 +704,11 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* Coordonnées de contact administrables (Point 14) */}
+        <div className="mt-6">
+          <ContactSupportBanner />
+        </div>
       </main>
 
       {/* Modal de Signalement */}
@@ -664,6 +732,23 @@ export default function DashboardPage() {
       <AgriCalendarModal
         isOpen={isCalendarModalOpen}
         onClose={() => setIsCalendarModalOpen(false)}
+      />
+
+      {/* Modal de Modification d'Exploitation (Point 5) */}
+      <EditFarmModal
+        isOpen={isEditFarmOpen}
+        onClose={() => setIsEditFarmOpen(false)}
+        farm={farm}
+        plot={currentPlot}
+        onSuccess={(updatedFarm, updatedPlot) => {
+          updateFarmAndPlot(updatedFarm, updatedPlot);
+          setToast({
+            id: `${Date.now()}`,
+            type: 'success',
+            title: 'Exploitation mise à jour',
+            message: 'Vos modifications d\'exploitation ont été enregistrées avec succès.',
+          });
+        }}
       />
 
       {/* Toast de Notification */}

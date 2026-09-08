@@ -34,6 +34,7 @@ interface AgriContextType {
   setPlot: (plot: Plot | null) => void;
   setRole: (role: 'admin' | 'producteur') => Promise<void>;
   saveSimulationResult: (simResult: any) => Promise<boolean>;
+  updateFarmAndPlot: (farm: Farm, plot: Plot) => void;
 }
 
 const AgriContext = createContext<AgriContextType | undefined>(undefined);
@@ -424,6 +425,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
         nom: finalNom,
         telephone_contact: selectedPhone,
         plan: 'free',
+        statut_compte: 'en_attente',
         created_at: new Date().toISOString(),
       };
 
@@ -462,7 +464,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
           newProfile.id = supabaseUserId;
           newFarm.user_id = supabaseUserId;
 
-          await supabase.from('profiles').insert([{ ...newProfile, user_id: supabaseUserId }]);
+          await supabase.from('profiles').insert([{ ...newProfile, user_id: supabaseUserId, statut_compte: 'en_attente' }]);
           await supabase.from('farms').insert([{ ...newFarm, user_id: supabaseUserId }]);
           await supabase.from('plots').insert([{ ...newPlot, farm_id: newFarmId }]);
         }
@@ -481,7 +483,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('agrimpact_alerts');
       localStorage.removeItem('agrimpact_logged_out');
 
-      // 1. Initialisation persistante du cookie de session serveur
+      // 1. Initialisation persistante du cookie de session serveur avec statut en attente
       try {
         await fetch('/api/auth/session', {
           method: 'POST',
@@ -491,6 +493,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
             email: data.email,
             nom: newProfile.nom,
             role: 'producteur',
+            statut_compte: 'en_attente',
           }),
         });
       } catch {}
@@ -681,6 +684,15 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateFarmAndPlot = (updatedFarm: Farm, updatedPlot: Plot) => {
+    setFarm(updatedFarm);
+    setPlot(updatedPlot);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('agrimpact_farm', JSON.stringify(updatedFarm));
+      localStorage.setItem('agrimpact_plot', JSON.stringify(updatedPlot));
+    }
+  };
+
   return (
     <AgriContext.Provider
       value={{
@@ -702,6 +714,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setPlot,
         setRole,
         saveSimulationResult,
+        updateFarmAndPlot,
       }}
     >
       {children}

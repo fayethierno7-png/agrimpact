@@ -31,7 +31,7 @@ const SEED_CONVERSATIONS: Conversation[] = [
     title: 'Conseil maïs & fertilisation',
     createdAt: '2026-09-06T14:30:00.000Z',
     updatedAt: '2026-09-06T14:35:00.000Z',
-    isPinned: true,
+    isPinned: false,
     messages: [
       {
         id: 'msg-1',
@@ -58,7 +58,7 @@ const SEED_CONVERSATIONS: Conversation[] = [
     title: 'Vigilance Mildiou Oignon (Kayar)',
     createdAt: '2026-09-05T09:15:00.000Z',
     updatedAt: '2026-09-05T09:20:00.000Z',
-    isPinned: true,
+    isPinned: false,
     messages: [
       {
         id: 'msg-3',

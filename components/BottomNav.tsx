@@ -44,12 +44,16 @@ export const BottomNav: React.FC = () => {
       icon: User,
       isActive: pathname === '/profile',
     },
-    {
-      label: 'Admin',
-      href: '/admin',
-      icon: ShieldCheck,
-      isActive: pathname === '/admin' || pathname?.startsWith('/admin'),
-    },
+    ...(isAdmin
+      ? [
+          {
+            label: 'Admin',
+            href: '/admin',
+            icon: ShieldCheck,
+            isActive: pathname === '/admin' || pathname?.startsWith('/admin'),
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -62,11 +66,6 @@ export const BottomNav: React.FC = () => {
           <Link
             key={item.href}
             href={item.href}
-            onClick={() => {
-              if (item.href === '/admin') {
-                document.cookie = 'agri_user_role=admin; path=/; max-age=604800; SameSite=Lax';
-              }
-            }}
             className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all relative ${
               active
                 ? 'text-emerald-800 dark:text-emerald-300 font-semibold scale-105'

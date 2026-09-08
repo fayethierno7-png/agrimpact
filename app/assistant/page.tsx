@@ -15,6 +15,13 @@ import {
   X,
   Sparkles,
   Zap,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
+  Activity,
+  Check,
+  Radio,
 } from 'lucide-react';
 import {
   Conversation,
@@ -34,6 +41,7 @@ import ChatMessageItem from '../../components/assistant/ChatMessageItem';
 import EmptyStateSuggestions from '../../components/assistant/EmptyStateSuggestions';
 import AiTokenGauge from '../../components/billing/AiTokenGauge';
 import TokenTopUpModal from '../../components/billing/TokenTopUpModal';
+import AiUsageDiagnosticModal from '../../components/assistant/AiUsageDiagnosticModal';
 
 export default function AssistantPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -43,17 +51,79 @@ export default function AssistantPage() {
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Gestion du portefeuille de tokens IA (Quota mensuel + Tokens permanents)
-  const [tokensRemaining, setTokensRemaining] = useState(8500);
-  const [monthlyQuota] = useState(60000); // Quota du forfait Pro Producteur
+  // Gestion du portefeuille de tokens IA (chargé dynamiquement depuis la base de données)
+  const [tokensRemaining, setTokensRemaining] = useState(8000);
+  const [monthlyQuota, setMonthlyQuota] = useState(8000);
   const [permanentTokens, setPermanentTokens] = useState(0);
   const [isTopUpOpen, setIsTopUpOpen] = useState(false);
+  const [isDiagnosticOpen, setIsDiagnosticOpen] = useState(false);
+
+  // Partage de conversation (Point 8)
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareSuccessUrl, setShareSuccessUrl] = useState<string | null>(null);
+
+  // Mode vocal 100% mains-libres & STT / TTS (Point 15)
+  const [isListening, setIsListening] = useState(false);
+  const [voiceModeActive, setVoiceModeActive] = useState(false);
+  const [continuousVoice, setContinuousVoice] = useState(false);
+  const [isTtsSpeaking, setIsTtsSpeaking] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const continuousVoiceRef = useRef(continuousVoice);
+  continuousVoiceRef.current = continuousVoice;
 
   const totalTokensAvailable = Math.max(0, tokensRemaining) + Math.max(0, permanentTokens);
   const isDepleted = totalTokensAvailable <= 0;
 
-  // Initialisation
+  // Charger le solde réel depuis l'API Wallet
+  const refreshWallet = async () => {
+    try {
+      const res = await fetch('/api/wallet');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.wallet) {
+          setTokensRemaining(data.wallet.tokensRemaining);
+          setMonthlyQuota(data.wallet.monthlyQuota);
+          setPermanentTokens(data.wallet.permanentTokens);
+        }
+      }
+    } catch (e) {
+      console.warn('Erreur rafraîchissement wallet:', e);
+    }
+  };
+
+  // Initialisation STT Web Speech API
   useEffect(() => {
+    refreshWallet();
+
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'fr-FR';
+
+        recognition.onresult = (event: any) => {
+          const transcript = event.results?.[0]?.[0]?.transcript;
+          if (transcript && transcript.trim()) {
+            setIsListening(false);
+            handleSendMessage(transcript.trim());
+          }
+        };
+
+        recognition.onerror = (e: any) => {
+          console.warn('Reconnaissance vocale erreur:', e);
+          setIsListening(false);
+        };
+
+        recognition.onend = () => {
+          setIsListening(false);
+        };
+
+        recognitionRef.current = recognition;
+      }
+    }
+
     const stored = getStoredConversations();
     setConversations(stored);
 
@@ -79,7 +149,56 @@ export default function AssistantPage() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [activeConv?.messages]);
+  }, [activeConv?.messages, loading]);
+
+  // Contrôle du micro
+  const startListening = () => {
+    if (!recognitionRef.current) {
+      alert('La reconnaissance vocale n\'est pas supportée sur ce navigateur.');
+      return;
+    }
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      setIsTtsSpeaking(false);
+    }
+    try {
+      recognitionRef.current.start();
+      setIsListening(true);
+    } catch (err) {
+      console.warn('Erreur démarrage écoute:', err);
+    }
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {}
+      setIsListening(false);
+    }
+  };
+
+  const toggleListening = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening();
+    }
+  };
+
+  const toggleVoiceMode = () => {
+    const next = !voiceModeActive;
+    setVoiceModeActive(next);
+    if (!next) {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      setIsTtsSpeaking(false);
+      stopListening();
+    } else {
+      startListening();
+    }
+  };
 
   const handleSelectConversation = (id: string) => {
     setActiveConvId(id);
@@ -117,9 +236,14 @@ export default function AssistantPage() {
     const query = (textToSend || inputVal).trim();
     if (!query || loading || !activeConvId) return;
 
+    if (isDepleted) {
+      setIsTopUpOpen(true);
+      return;
+    }
+
     setInputVal('');
 
-    // Message utilisateur
+    // Message utilisateur avec horodatage ISO complet
     const userMsg: ChatMessage = {
       id: 'msg-' + Date.now(),
       role: 'user',
@@ -139,30 +263,63 @@ export default function AssistantPage() {
       const res = await fetch('/api/assistant/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: currentHistory }),
+        body: JSON.stringify({
+          messages: currentHistory,
+          conversationId: activeConvId,
+        }),
       });
 
       const json = await res.json();
+
+      if (res.status === 402 || json.code === 'TOKENS_EXHAUSTED') {
+        setTokensRemaining(0);
+        setPermanentTokens(0);
+        setIsTopUpOpen(true);
+        throw new Error('Votre solde de tokens IA est épuisé. Veuillez recharger pour continuer.');
+      }
+
       if (json.success && json.reply) {
         const assistantMsg: ChatMessage = {
           id: 'msg-' + (Date.now() + 1),
           role: 'assistant',
           content: json.reply,
-          timestamp: new Date().toISOString(),
+          timestamp: json.created_at || new Date().toISOString(),
           model: json.model,
         };
+
         const convWithReply = addMessageToConversation(activeConvId, assistantMsg);
         if (convWithReply) {
           setConversations((prev) => prev.map((c) => (c.id === activeConvId ? convWithReply : c)));
         }
 
-        // Décrémenter les tokens consommés par l'échange
-        setTokensRemaining((prevRem) => {
-          if (prevRem >= 500) return prevRem - 500;
-          const deficit = 500 - prevRem;
-          setPermanentTokens((prevPerm) => Math.max(0, prevPerm - deficit));
-          return 0;
-        });
+        // Mettre à jour les compteurs en direct
+        if (json.tokensRemaining !== undefined) {
+          setTokensRemaining(json.tokensRemaining);
+        }
+        if (json.permanentTokens !== undefined) {
+          setPermanentTokens(json.permanentTokens);
+        }
+
+        // POINT 15 : Réponse Vocale TTS si Mode Vocal Activé
+        if (voiceModeActive && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const cleanText = json.reply.replace(/[*_#`]/g, '');
+          const utterance = new SpeechSynthesisUtterance(cleanText);
+          utterance.lang = 'fr-FR';
+          utterance.rate = 1.0;
+          utterance.onstart = () => setIsTtsSpeaking(true);
+          utterance.onend = () => {
+            setIsTtsSpeaking(false);
+            // Mode continu : relancer l'écoute automatique dès la fin de la réponse
+            if (continuousVoiceRef.current) {
+              setTimeout(() => {
+                startListening();
+              }, 700);
+            }
+          };
+          utterance.onerror = () => setIsTtsSpeaking(false);
+          window.speechSynthesis.speak(utterance);
+        }
       } else {
         throw new Error(json.error || 'Erreur réponse');
       }
@@ -170,7 +327,7 @@ export default function AssistantPage() {
       const errorMsg: ChatMessage = {
         id: 'msg-err-' + Date.now(),
         role: 'assistant',
-        content: `Désolé, une difficulté technique est survenue : ${err.message || 'erreur réseau'}.`,
+        content: `Difficulté technique : ${err.message || 'erreur réseau'}.`,
         timestamp: new Date().toISOString(),
       };
       addMessageToConversation(activeConvId, errorMsg);
@@ -194,14 +351,35 @@ export default function AssistantPage() {
     }
   };
 
-  const handleShare = () => {
-    if (!activeConv) return;
-    const text = activeConv.messages.map((m) => `${m.role === 'user' ? 'Moi' : 'AgriImpact AI'}: ${m.content}`).join('\n\n');
-    if (navigator.share) {
-      navigator.share({ title: activeConv.title, text }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(text);
-      alert('Conversation copiée dans le presse-papier !');
+  // POINT 8 : Partage de conversation via route API sécurisée
+  const handleShare = async () => {
+    if (!activeConv || activeConv.messages.length === 0) {
+      alert('Cette conversation est vide.');
+      return;
+    }
+    setShareLoading(true);
+    try {
+      const res = await fetch('/api/assistant/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: activeConv.title,
+          messages: activeConv.messages,
+          farmName: 'Mon Exploitation AgriImpact',
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.shareUrl) {
+        await navigator.clipboard.writeText(data.shareUrl);
+        setShareSuccessUrl(data.shareUrl);
+        setTimeout(() => setShareSuccessUrl(null), 6000);
+      } else {
+        alert(data.error || 'Erreur lors du partage.');
+      }
+    } catch {
+      alert('Erreur réseau lors de la génération du lien.');
+    } finally {
+      setShareLoading(false);
     }
   };
 
@@ -209,16 +387,17 @@ export default function AssistantPage() {
     <div className="flex h-screen w-full bg-[#FAF9F5] dark:bg-stone-950 text-stone-900 dark:text-stone-100 overflow-hidden">
       {/* 1. SIDEBAR DESKTOP */}
       <aside className="hidden md:flex flex-col w-72 lg:w-80 bg-white dark:bg-stone-900 border-r border-stone-200 dark:border-stone-800 shrink-0">
-        {/* En-tête Sidebar */}
         <div className="p-4 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-2 text-xs font-bold text-stone-600 dark:text-stone-300 hover:text-emerald-800 transition-colors">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 text-xs font-bold text-stone-600 dark:text-stone-300 hover:text-emerald-800 transition-colors"
+          >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Retour Dashboard</span>
           </Link>
           <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_#10B981]" />
         </div>
 
-        {/* Liste des conversations & recherche */}
         <ConversationSidebar
           conversations={conversations}
           activeId={activeConvId}
@@ -265,10 +444,9 @@ export default function AssistantPage() {
         {/* Top Header du Chat */}
         <header className="px-4 sm:px-6 py-3.5 bg-white dark:bg-stone-900 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between shadow-2xs">
           <div className="flex items-center gap-3 overflow-hidden">
-            {/* Bouton burger mobile pour ouvrir la sidebar */}
             <button
               onClick={() => setSidebarMobileOpen(true)}
-              className="md:hidden p-1.5 text-stone-700 dark:text-stone-300 hover:bg-stone-100 rounded-lg"
+              className="md:hidden p-1.5 text-stone-700 dark:text-stone-300 hover:bg-stone-100 rounded-lg cursor-pointer"
             >
               <Menu className="w-4 h-4" />
             </button>
@@ -282,7 +460,7 @@ export default function AssistantPage() {
                   {activeConv?.title || 'Nouvelle conversation'}
                 </h1>
                 <span className="text-[10px] text-stone-500 font-bold block">
-                  AgriImpact AI • Référentiels ISRA &amp; ANACIM
+                  AgriImpact AI • Llama 3.3 70B &amp; ANACIM
                 </span>
               </div>
             </div>
@@ -290,11 +468,36 @@ export default function AssistantPage() {
 
           {/* Actions globales */}
           <div className="flex items-center gap-2">
+            {/* Toggle Mode Vocal 100% (Point 15) */}
+            <button
+              onClick={toggleVoiceMode}
+              className={`p-2 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                voiceModeActive
+                  ? 'bg-amber-500 text-white border-amber-600 shadow-[0_0_10px_#F59E0B]'
+                  : 'border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-50'
+              }`}
+              title={voiceModeActive ? 'Désactiver le mode vocal' : 'Activer le mode vocal mains-libres'}
+            >
+              {voiceModeActive ? <Volume2 className="w-3.5 h-3.5 animate-pulse" /> : <Mic className="w-3.5 h-3.5" />}
+              <span className="hidden lg:inline">{voiceModeActive ? 'Vocal Activé' : 'Mode Vocal'}</span>
+            </button>
+
+            {/* Diagnostic Usage Tokens (Point 4) */}
+            <button
+              onClick={() => setIsDiagnosticOpen(true)}
+              className="p-2 rounded-xl border border-stone-200 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Consulter le diagnostic d'usage IA"
+            >
+              <Activity className="w-3.5 h-3.5 text-[#963e1b]" />
+              <span className="hidden lg:inline">Diagnostic</span>
+            </button>
+
+            {/* Partage Sécurisé (Point 8) */}
             {activeConv && (
               <>
                 <button
                   onClick={() => handleTogglePin(activeConv.id)}
-                  className={`p-2 rounded-xl border border-stone-200 dark:border-stone-700 text-xs font-bold flex items-center gap-1.5 transition-colors ${
+                  className={`p-2 rounded-xl border border-stone-200 dark:border-stone-700 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
                     activeConv.isPinned
                       ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-300'
                       : 'hover:bg-stone-50 text-stone-600 dark:text-stone-300'
@@ -307,10 +510,11 @@ export default function AssistantPage() {
 
                 <button
                   onClick={handleShare}
-                  className="p-2 rounded-xl border border-stone-200 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-300 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                  disabled={shareLoading}
+                  className="p-2 rounded-xl border border-stone-200 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
                   title="Partager cette conversation"
                 >
-                  <Share2 className="w-3.5 h-3.5" />
+                  {shareLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Share2 className="w-3.5 h-3.5" />}
                   <span className="hidden sm:inline">Partager</span>
                 </button>
               </>
@@ -340,6 +544,55 @@ export default function AssistantPage() {
           </div>
         </header>
 
+        {/* Notification Toast de partage copié */}
+        {shareSuccessUrl && (
+          <div className="bg-emerald-600 text-white px-4 py-2.5 text-xs font-bold flex items-center justify-between shadow-md">
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4" />
+              <span>Lien de partage généré et copié dans le presse-papier !</span>
+            </div>
+            <a
+              href={shareSuccessUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="underline text-emerald-100 hover:text-white text-[11px]"
+            >
+              Tester le lien
+            </a>
+          </div>
+        )}
+
+        {/* Bannière Mode Vocal Actif */}
+        {voiceModeActive && (
+          <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-bold">
+              <Radio className="w-4 h-4 text-amber-600 animate-pulse" />
+              <span>Mode Vocal 100% Actif</span>
+              {isListening && <span className="text-[11px] text-amber-600 font-normal animate-pulse">— À votre écoute...</span>}
+              {isTtsSpeaking && <span className="text-[11px] text-emerald-600 font-normal">— Réponse vocale en cours...</span>}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-1.5 text-[11px] text-stone-600 dark:text-stone-300 font-semibold cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={continuousVoice}
+                  onChange={(e) => setContinuousVoice(e.target.checked)}
+                  className="rounded text-amber-600 focus:ring-amber-500"
+                />
+                <span>Mode Continu</span>
+              </label>
+
+              <button
+                onClick={toggleVoiceMode}
+                className="text-[10px] text-red-600 hover:underline font-bold"
+              >
+                Couper le son
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Corps des Messages Scrollables */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3">
           <div className="max-w-3xl mx-auto">
@@ -356,7 +609,6 @@ export default function AssistantPage() {
               <EmptyStateSuggestions onSelectPrompt={(p) => handleSendMessage(p)} />
             )}
 
-            {/* Indicateur de calcul de l'assistant */}
             {loading && (
               <div className="flex items-center gap-2.5 p-3.5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl w-fit text-xs text-stone-700 dark:text-stone-300 shadow-xs animate-pulse">
                 <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
@@ -383,7 +635,7 @@ export default function AssistantPage() {
               }}
             />
 
-            {/* Formulaire de saisie - Bloqué si quota épuisé */}
+            {/* Formulaire de saisie - Bloqué si quota épuisé (Point 12) */}
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -399,11 +651,37 @@ export default function AssistantPage() {
                   : 'bg-[#FAF9F5] dark:bg-stone-800 border-stone-200 dark:border-stone-700 focus-within:border-[#0C2B1E]'
               }`}
             >
+              {/* Bouton Microphone pour dictée vocale (Point 15) */}
+              <button
+                type="button"
+                onClick={toggleListening}
+                disabled={isDepleted}
+                title={isListening ? 'Arrêter la dictée' : 'Parler au micro'}
+                className={`p-2.5 rounded-xl transition-all cursor-pointer shrink-0 ${
+                  isListening
+                    ? 'bg-red-500 text-white animate-pulse shadow-[0_0_8px_#EF4444]'
+                    : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-200/60 dark:hover:bg-stone-700'
+                }`}
+              >
+                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              </button>
+
+              {/* Animation Onde Sonore quand le micro écoute */}
+              {isListening && (
+                <div className="flex items-center gap-1 px-1">
+                  <span className="w-1 h-3 bg-red-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                  <span className="w-1 h-5 bg-red-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                  <span className="w-1 h-4 bg-red-500 rounded-full animate-bounce" />
+                </div>
+              )}
+
               <input
                 type="text"
                 placeholder={
                   isDepleted
-                    ? 'Quota IA épuisé — Rechargez vos tokens pour poser une question'
+                    ? 'Quota IA épuisé — Renouvellement prochainement ou rechargez vos tokens'
+                    : isListening
+                    ? 'Parlez maintenant... AgriImpact écoute'
                     : 'Posez votre question (irrigation, mildiou, météo à Kayar, arachide...)'
                 }
                 value={inputVal}
@@ -411,6 +689,7 @@ export default function AssistantPage() {
                 className="flex-1 px-3 py-2 bg-transparent text-xs sm:text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:outline-hidden disabled:cursor-not-allowed"
                 disabled={loading || isDepleted}
               />
+
               {isDepleted ? (
                 <button
                   type="button"
@@ -438,20 +717,30 @@ export default function AssistantPage() {
                   AgriImpact AI est un outil d&apos;aide à la décision certifié sur les données ANACIM &amp; ISRA.
                 </span>
               </div>
-              <Link href="/tarifs" className="text-[#963e1b] hover:underline font-bold">
-                Voir les forfaits &amp; limites
-              </Link>
+              <button
+                type="button"
+                onClick={() => setIsDiagnosticOpen(true)}
+                className="text-[#963e1b] hover:underline font-bold cursor-pointer"
+              >
+                Diagnostic d&apos;usage IA
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Modal de recharge */}
+        {/* Modales */}
         <TokenTopUpModal
           isOpen={isTopUpOpen}
           onClose={() => setIsTopUpOpen(false)}
           onPurchaseSuccess={(pack) => {
             setPermanentTokens((prev) => prev + pack.nb_tokens);
           }}
+        />
+
+        <AiUsageDiagnosticModal
+          isOpen={isDiagnosticOpen}
+          onClose={() => setIsDiagnosticOpen(false)}
+          onOpenTopUp={() => setIsTopUpOpen(true)}
         />
       </main>
     </div>

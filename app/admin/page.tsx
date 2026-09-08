@@ -60,7 +60,7 @@ import {
 } from '../../lib/services/adminService';
 import { REPORT_TYPE_LABELS, REPORT_STATUS_LABELS } from '../../lib/services/reportService';
 
-type AdminTab = 'users' | 'revenue' | 'funnel' | 'audit' | 'refunds' | 'reports';
+type AdminTab = 'users' | 'revenue' | 'funnel' | 'audit' | 'refunds' | 'reports' | 'settings';
 
 export default function AdminConsolePage() {
   const router = useRouter();
@@ -68,6 +68,20 @@ export default function AdminConsolePage() {
 
   // Onglet actif
   const [activeTab, setActiveTab] = useState<AdminTab>('users');
+
+  // État des coordonnées de contact administrables (Point 14)
+  const [contactSettings, setContactSettings] = useState({
+    support_phone: '+221 33 800 12 12',
+    support_phone_visible: true,
+    contact_email: 'contact@agrimpact.sn',
+    contact_email_visible: true,
+    whatsapp_link: 'https://wa.me/221771234567',
+    whatsapp_visible: true,
+    social_link: 'https://facebook.com/agrimpact',
+    social_visible: true,
+    global_visible: true,
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
 
   // Filtre de période global réutilisable
   const [period, setPeriod] = useState<PeriodFilterValue>(() => computePeriodDates('30d'));
@@ -262,6 +276,44 @@ export default function AdminConsolePage() {
     }
   };
 
+  // Chargement des coordonnées de contact (Point 14)
+  useEffect(() => {
+    fetch('/api/settings/contact')
+      .then((res) => res.json())
+      .then((json) => {
+        if (json?.success && json.settings) {
+          setContactSettings(json.settings);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleSaveContactSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    try {
+      const res = await fetch('/api/settings/contact', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(contactSettings),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(
+          'success',
+          'Coordonnées de contact mises à jour et répercutées immédiatement sur le site.',
+          'Paramètres enregistrés'
+        );
+      } else {
+        showToast('error', data.error || 'Erreur lors de la sauvegarde des paramètres.');
+      }
+    } catch {
+      showToast('error', 'Erreur réseau lors de la mise à jour.');
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
   const navTabs: { key: AdminTab; label: string; icon: any; countBadge?: number }[] = [
     { key: 'users', label: '1. Utilisateurs', icon: Users },
     { key: 'revenue', label: '2. Revenus (MRR/ARR)', icon: TrendingUp },
@@ -269,6 +321,7 @@ export default function AdminConsolePage() {
     { key: 'audit', label: '4. Audit Log', icon: ShieldCheck },
     { key: 'refunds', label: '5. Remboursements', icon: RotateCcw },
     { key: 'reports', label: '6. Signalements', icon: Flag },
+    { key: 'settings', label: '7. Coordonnées Contact', icon: Sliders },
   ];
 
   return (
@@ -361,6 +414,7 @@ export default function AdminConsolePage() {
               {activeTab === 'audit' && '4. Journal d\'Audit & Sécurité'}
               {activeTab === 'refunds' && '5. Gestion des Remboursements'}
               {activeTab === 'reports' && '6. Traitement des Signalements Utilisateurs'}
+              {activeTab === 'settings' && '7. Paramètres & Coordonnées de Contact Administrables'}
             </h2>
             <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
               Période sélectionnée : <span className="font-semibold text-emerald-700 dark:text-emerald-400">{period.label}</span>
@@ -456,23 +510,45 @@ export default function AdminConsolePage() {
                           <td className="py-3.5 px-4 text-stone-500 font-mono text-[11px]">
                             {new Date(u.created_at).toLocaleDateString('fr-FR')}
                           </td>
-                          <td className="py-3.5 px-4 text-right space-x-2">
-                            {u.statut_compte !== 'actif' && (
-                              <button
-                                type="button"
-                                onClick={() => handleUserStatusChange(u, 'actif')}
-                                className="px-2.5 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-bold shadow-xs transition-colors"
-                              >
-                                Valider
-                              </button>
+                          <td className="py-3.5 px-4 text-right space-x-1.5">
+                            {u.statut_compte === 'en_attente' && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUserStatusChange(u, 'actif')}
+                                  className="px-2.5 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-bold shadow-xs transition-colors cursor-pointer"
+                                  title="Valider et activer l'accès au SaaS"
+                                >
+                                  Valider
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUserStatusChange(u, 'suspendu')}
+                                  className="px-2.5 py-1 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-950/60 dark:text-red-300 text-[11px] font-bold transition-colors cursor-pointer"
+                                  title="Refuser ce compte"
+                                >
+                                  Refuser
+                                </button>
+                              </>
                             )}
-                            {u.statut_compte !== 'suspendu' && (
+
+                            {u.statut_compte === 'actif' && (
                               <button
                                 type="button"
                                 onClick={() => handleUserStatusChange(u, 'suspendu')}
-                                className="px-2.5 py-1 rounded-lg border border-red-200 dark:border-red-900/60 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 text-[11px] font-semibold transition-colors"
+                                className="px-2.5 py-1 rounded-lg border border-red-200 dark:border-red-900/60 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 text-[11px] font-semibold transition-colors cursor-pointer"
                               >
                                 Suspendre
+                              </button>
+                            )}
+
+                            {u.statut_compte === 'suspendu' && (
+                              <button
+                                type="button"
+                                onClick={() => handleUserStatusChange(u, 'actif')}
+                                className="px-2.5 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-bold shadow-xs transition-colors cursor-pointer"
+                              >
+                                Réactiver
                               </button>
                             )}
                           </td>
@@ -1005,6 +1081,165 @@ export default function AdminConsolePage() {
                     );
                   })
               )}
+            </div>
+          </div>
+        )}
+
+        {/* ------------------------------------------------------------- */}
+        {/* SECTION 7 : COORDONNÉES DE CONTACT ADMINISTRABLES (Point 14)  */}
+        {/* ------------------------------------------------------------- */}
+        {activeTab === 'settings' && (
+          <div className="space-y-6 animate-fade-in">
+            <div className="bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 shadow-sm p-6 sm:p-8">
+              <div className="max-w-2xl">
+                <h3 className="text-base font-black text-stone-900 dark:text-stone-100 mb-1">
+                  Coordonnées d&apos;Assistance &amp; Canaux Publics
+                </h3>
+                <p className="text-xs text-stone-500 dark:text-stone-400 mb-6">
+                  Configurez les canaux officiels d&apos;AgriImpact. Chaque coordonnée peut être activée ou masquée individuellement sur l&apos;ensemble du site public (footer, pages d&apos;accueil et de support).
+                </p>
+
+                <form onSubmit={handleSaveContactSettings} className="space-y-5">
+                  {/* Téléphone Support */}
+                  <div className="p-4 bg-stone-50 dark:bg-stone-800/50 rounded-2xl border border-stone-200 dark:border-stone-800 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-black text-stone-800 dark:text-stone-200 uppercase tracking-wider">
+                        Téléphone Support Client
+                      </label>
+                      <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={contactSettings.support_phone_visible}
+                          onChange={(e) =>
+                            setContactSettings({ ...contactSettings, support_phone_visible: e.target.checked })
+                          }
+                          className="rounded text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <span className="text-[11px] text-stone-600 dark:text-stone-400">Afficher sur le site</span>
+                      </label>
+                    </div>
+                    <input
+                      type="text"
+                      value={contactSettings.support_phone}
+                      onChange={(e) => setContactSettings({ ...contactSettings, support_phone: e.target.value })}
+                      placeholder="+221 33 800 12 12"
+                      className="w-full px-3.5 py-2.5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-xs sm:text-sm font-mono"
+                    />
+                  </div>
+
+                  {/* Email Support */}
+                  <div className="p-4 bg-stone-50 dark:bg-stone-800/50 rounded-2xl border border-stone-200 dark:border-stone-800 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-black text-stone-800 dark:text-stone-200 uppercase tracking-wider">
+                        Email Officiel de Contact
+                      </label>
+                      <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={contactSettings.contact_email_visible}
+                          onChange={(e) =>
+                            setContactSettings({ ...contactSettings, contact_email_visible: e.target.checked })
+                          }
+                          className="rounded text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <span className="text-[11px] text-stone-600 dark:text-stone-400">Afficher sur le site</span>
+                      </label>
+                    </div>
+                    <input
+                      type="email"
+                      value={contactSettings.contact_email}
+                      onChange={(e) => setContactSettings({ ...contactSettings, contact_email: e.target.value })}
+                      placeholder="contact@agrimpact.sn"
+                      className="w-full px-3.5 py-2.5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-xs sm:text-sm font-mono"
+                    />
+                  </div>
+
+                  {/* WhatsApp */}
+                  <div className="p-4 bg-stone-50 dark:bg-stone-800/50 rounded-2xl border border-stone-200 dark:border-stone-800 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-black text-stone-800 dark:text-stone-200 uppercase tracking-wider">
+                        Lien WhatsApp Direct
+                      </label>
+                      <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={contactSettings.whatsapp_visible}
+                          onChange={(e) =>
+                            setContactSettings({ ...contactSettings, whatsapp_visible: e.target.checked })
+                          }
+                          className="rounded text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <span className="text-[11px] text-stone-600 dark:text-stone-400">Afficher sur le site</span>
+                      </label>
+                    </div>
+                    <input
+                      type="text"
+                      value={contactSettings.whatsapp_link}
+                      onChange={(e) => setContactSettings({ ...contactSettings, whatsapp_link: e.target.value })}
+                      placeholder="https://wa.me/221771234567"
+                      className="w-full px-3.5 py-2.5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-xs sm:text-sm font-mono"
+                    />
+                  </div>
+
+                  {/* Réseau Social */}
+                  <div className="p-4 bg-stone-50 dark:bg-stone-800/50 rounded-2xl border border-stone-200 dark:border-stone-800 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-black text-stone-800 dark:text-stone-200 uppercase tracking-wider">
+                        Page / Réseau Social
+                      </label>
+                      <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={contactSettings.social_visible}
+                          onChange={(e) =>
+                            setContactSettings({ ...contactSettings, social_visible: e.target.checked })
+                          }
+                          className="rounded text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <span className="text-[11px] text-stone-600 dark:text-stone-400">Afficher sur le site</span>
+                      </label>
+                    </div>
+                    <input
+                      type="text"
+                      value={contactSettings.social_link}
+                      onChange={(e) => setContactSettings({ ...contactSettings, social_link: e.target.value })}
+                      placeholder="https://facebook.com/agrimpact"
+                      className="w-full px-3.5 py-2.5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-xs sm:text-sm font-mono"
+                    />
+                  </div>
+
+                  {/* Visibilité Globale */}
+                  <div className="p-4 bg-amber-50/60 dark:bg-amber-950/30 rounded-2xl border border-amber-200/60 dark:border-amber-900/40 flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-bold text-[#963e1b] dark:text-amber-300 block">
+                        Affichage Global des Canaux de Support
+                      </span>
+                      <span className="text-[11px] text-stone-500 dark:text-stone-400">
+                        Active ou désactive la section de contact sur l&apos;ensemble de la plateforme
+                      </span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={contactSettings.global_visible}
+                      onChange={(e) =>
+                        setContactSettings({ ...contactSettings, global_visible: e.target.checked })
+                      }
+                      className="h-4 w-4 rounded text-[#963e1b] focus:ring-[#963e1b]"
+                    />
+                  </div>
+
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={savingSettings}
+                      className="px-6 py-3 bg-[#0C2B1E] hover:bg-[#154230] text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {savingSettings ? <Loader2 className="w-4 h-4 animate-spin text-[#C8EF56]" /> : <Check className="w-4 h-4 text-[#C8EF56]" />}
+                      <span>Enregistrer les coordonnées</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         )}

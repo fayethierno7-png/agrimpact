@@ -12,6 +12,8 @@ import {
   Sprout,
   User,
   Pin,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { ChatMessage } from '../../lib/assistant/assistantStorage';
 
@@ -23,8 +25,45 @@ interface ChatMessageItemProps {
 
 export default function ChatMessageItem({ message, onFeedback, onRetry }: ChatMessageItemProps) {
   const isAssistant = message.role === 'assistant';
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [copied, setCopied] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Helper pour formater l'horodatage exact
+  function formatMessageDate(dateStr?: string): string {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+    const time = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    if (isToday) return `Aujourd'hui à ${time}`;
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    if (d.toDateString() === yesterday.toDateString()) return `Hier à ${time}`;
+    return `${d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })} à ${time}`;
+  }
+
+  const handleSpeakToggle = () => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      alert('La synthèse vocale n\'est pas supportée par votre navigateur.');
+      return;
+    }
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    } else {
+      window.speechSynthesis.cancel();
+      const cleanText = message.content.replace(/[*_#`]/g, '');
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.lang = 'fr-FR';
+      utterance.rate = 1.0;
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+      window.speechSynthesis.speak(utterance);
+      setIsSpeaking(true);
+    }
+  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
@@ -107,9 +146,27 @@ export default function ChatMessageItem({ message, onFeedback, onRetry }: ChatMe
           {renderFormattedContent(message.content)}
         </div>
 
+        {/* Horodatage précis (Point 7) */}
+        {message.timestamp && (
+          <span className={`text-[10px] text-stone-400 dark:text-stone-500 mt-1 px-1 font-medium select-none ${!isAssistant ? 'text-right' : 'text-left'}`}>
+            {formatMessageDate(message.timestamp)}
+          </span>
+        )}
+
         {/* Barre d'actions (uniquement pour les réponses de l'IA) */}
         {isAssistant && (
           <div className="flex items-center gap-1.5 mt-1.5 text-stone-400 text-xs">
+            {/* Écoute vocale TTS (Point 15) */}
+            <button
+              onClick={handleSpeakToggle}
+              title={isSpeaking ? 'Arrêter la lecture vocale' : 'Écouter cette réponse'}
+              className={`p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors cursor-pointer ${
+                isSpeaking ? 'text-[#963e1b] font-bold bg-amber-50 dark:bg-amber-950/40 animate-pulse' : ''
+              }`}
+            >
+              {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+            </button>
+
             {/* Like */}
             <button
               onClick={() => onFeedback && onFeedback('like')}

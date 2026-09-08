@@ -115,8 +115,8 @@ function SignupContent() {
         }).catch(() => {});
       } catch {}
 
-      // Redirection immédiate sans redemander de mot de passe
-      router.push(redirectParam);
+      // Point 13 : Redirection vers la page dédiée d'attente de validation administrateur
+      router.push('/en-attente');
     } else {
       setErrorMessage(res.error || "Erreur lors de la création du compte.");
     }
