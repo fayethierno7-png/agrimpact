@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bell, Sprout, Wifi, Home, History, User, Settings, Flag, ChevronLeft, ShieldCheck, LayoutDashboard } from 'lucide-react';
+import { Bell, Sprout, Wifi, Home, History, User, Settings, Flag, ChevronLeft, ShieldCheck, LayoutDashboard, CreditCard } from 'lucide-react';
 import { useAgri } from '../lib/context/AgriContext';
 
 interface AppHeaderProps {
@@ -29,6 +29,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     { label: 'Historique', href: '/history', icon: History, isActive: pathname === '/history' },
     { label: 'Alertes', href: '/alerts', icon: Bell, badge: activeAlertsCount, isActive: pathname === '/alerts' },
     { label: 'Signalements', href: '/signalements', icon: Flag, isActive: pathname === '/signalements' },
+    { label: 'Tarifs', href: '/tarifs', icon: CreditCard, isActive: pathname === '/tarifs' },
   ];
 
   if (variant === 'connexion') {

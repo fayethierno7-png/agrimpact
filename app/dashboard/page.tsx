@@ -29,6 +29,7 @@ import { Toast, ToastMessage } from '../../components/Toast';
 import { AgrometeoPredictiveModule } from '../../components/AgrometeoPredictiveModule';
 import { getWeatherData, CurrentWeatherReport } from '../../lib/weather/openMeteo';
 import { calculateCropStage, evaluateAgronomicRules } from '../../lib/engine/recommendationEngine';
+import AiTokenGauge from '../../components/billing/AiTokenGauge';
 
 export default function DashboardPage() {
   const { profile, farm, plot, markRecommendationApplied, recommendations, alerts } = useAgri();
@@ -465,6 +466,16 @@ export default function DashboardPage() {
 
           {/* COLONNE LATÉRALE DESKTOP (4 Cols sur Desktop, sous la colonne principale sur Mobile) */}
           <div className="lg:col-span-4 space-y-5">
+            {/* Jauge IA & Tokens AgriImpact */}
+            <AiTokenGauge
+              tokensRemaining={45200}
+              monthlyQuota={60000}
+              permanentTokens={10000}
+              planName="Pro Producteur"
+              renewalDate="1er du mois prochain"
+              variant="dashboard"
+            />
+
             {/* Carte Exploitation & Parcelles */}
             <div className="p-5 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-xs">
               <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800">
