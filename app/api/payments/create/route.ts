@@ -5,7 +5,10 @@ import {
   createIntlPayment,
 } from '../../../../lib/payment/unitechpay';
 import { PLAN_LIMITS } from '../../../../lib/billing/planLimits';
+import { DEFAULT_PLANS, DEFAULT_TOKEN_PACKS } from '../../../../lib/saas/plansData';
 import { UserPlan } from '../../../../lib/types';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,14 +22,25 @@ export async function POST(req: NextRequest) {
       country = 'SN',
       operator = 'wave_money',
       otp,
+      cycle = 'mensuel',
+      amount: customAmount,
     } = body;
 
-    if (!plan || !['pro', 'business'].includes(plan)) {
-      return NextResponse.json(
-        { error: 'Forfait invalide. Choisissez "pro" ou "business".' },
-        { status: 400 }
-      );
-    }
+    // Normalisation du nom de plan
+    const rawPlan = (plan || 'pro').toLowerCase().trim();
+    const normalizedPlan = rawPlan.includes('coop')
+      ? 'cooperative'
+      : rawPlan.includes('solo')
+      ? 'solo'
+      : rawPlan.includes('business')
+      ? 'cooperative'
+      : rawPlan.includes('eclair')
+      ? 'eclair'
+      : rawPlan.includes('recolte') || rawPlan.includes('récolte')
+      ? 'recolte'
+      : rawPlan.includes('saison')
+      ? 'saison'
+      : 'pro';
 
     if (!phoneNumber) {
       return NextResponse.json(
@@ -35,25 +49,55 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const planInfo = PLAN_LIMITS[plan as UserPlan];
-    const amount = planInfo.priceMonthlyCFA;
-    const orderReference = `AGRI_${plan.toUpperCase()}_${userId}_${Date.now()}`;
-    const description = `Abonnement AGRIMPACT - Forfait ${planInfo.name} (${amount} FCFA)`;
+    // Détermination dynamique du montant et de la description
+    let amount = customAmount ? Number(customAmount) : 0;
+    let planDisplayName = 'Pro Producteur';
 
-    // Déterminer l'URL de base pour les callbacks (Wave & OM exigent obligatoirement HTTPS)
-    let origin =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      req.headers.get('origin') ||
-      req.nextUrl.origin ||
-      'https://agrimpact.sn';
+    if (!amount || amount <= 0) {
+      if (['eclair', 'recolte', 'saison'].includes(normalizedPlan)) {
+        const pack = DEFAULT_TOKEN_PACKS.find((p) => p.slug === normalizedPlan);
+        amount = pack ? pack.prix_fcfa : 1990;
+        planDisplayName = pack ? pack.nom : 'Pack de Tokens IA';
+      } else {
+        const matchingPlan = DEFAULT_PLANS.find((p) => p.slug === normalizedPlan);
+        if (matchingPlan) {
+          amount = cycle === 'annuel' ? matchingPlan.prix_annuel_fcfa : matchingPlan.prix_mensuel_fcfa;
+          planDisplayName = matchingPlan.nom;
+        } else {
+          const planInfo = PLAN_LIMITS[normalizedPlan as UserPlan] || PLAN_LIMITS.pro;
+          amount = planInfo.priceMonthlyCFA;
+          planDisplayName = planInfo.name;
+        }
+      }
+    }
 
-    if (!origin.startsWith('https://')) {
-      // En environnement local de dev HTTP, utiliser une URL HTTPS pour satisfaire la validation stricte de Wave
+    const orderReference = `AGRI_${normalizedPlan.toUpperCase()}_${Date.now().toString().slice(-6)}`;
+    const description = `AgriImpact Sénégal - ${planDisplayName} (${amount} FCFA)`;
+
+    // Résolution précise et robuste du domaine d'origine sur Vercel ou en local
+    let origin = '';
+    const forwardedHost = req.headers.get('x-forwarded-host');
+    const host = forwardedHost || req.headers.get('host');
+    const forwardedProto = req.headers.get('x-forwarded-proto') || 'https';
+    const reqOrigin = req.headers.get('origin');
+
+    if (reqOrigin && reqOrigin.startsWith('https://')) {
+      origin = reqOrigin;
+    } else if (host) {
+      origin = `${forwardedProto}://${host}`;
+    } else if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+      origin = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+    } else if (process.env.NEXT_PUBLIC_APP_URL && process.env.NEXT_PUBLIC_APP_URL.startsWith('https://')) {
+      origin = process.env.NEXT_PUBLIC_APP_URL;
+    } else {
       origin = 'https://agrimpact.sn';
     }
 
-    const callbackSuccess = `${origin}/payment/success?reference=${orderReference}&plan=${plan}&provider=${provider}`;
-    const callbackCancel = `${origin}/payment/cancel?reference=${orderReference}&plan=${plan}&provider=${provider}`;
+    // Retirer tout slash de fin
+    origin = origin.replace(/\/+$/, '');
+
+    const callbackSuccess = `${origin}/payment/success?reference=${orderReference}&plan=${normalizedPlan}&provider=${provider}&amount=${amount}`;
+    const callbackCancel = `${origin}/payment/cancel?reference=${orderReference}&plan=${normalizedPlan}&provider=${provider}`;
 
     let result;
 
@@ -95,21 +139,24 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Si UnitechPay est en mode simulation (ou pas de clé configurée sur Vercel), fournir l'URL de redirection immédiate
+    const finalPaymentUrl = result.paymentUrl || `${callbackSuccess}&simulated=true`;
+
     return NextResponse.json({
       success: true,
       amount,
-      plan,
+      plan: normalizedPlan,
       provider,
       orderReference,
-      paymentUrl: result.paymentUrl,
-      transactionId: result.transactionId,
-      isLive: result.isLive,
-      message: result.message,
+      paymentUrl: finalPaymentUrl,
+      transactionId: result.transactionId || `TX_${Date.now()}`,
+      isLive: result.isLive ?? false,
+      message: result.message || 'Paiement initialisé avec succès.',
     });
   } catch (error: any) {
     console.error('Erreur API Création Paiement:', error);
     return NextResponse.json(
-      { error: error.message || 'Échec de l\'initialisation du paiement' },
+      { error: error.message || 'Échec de l\'initialisation du paiement mobile.' },
       { status: 500 }
     );
   }

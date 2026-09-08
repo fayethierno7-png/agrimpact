@@ -1,4 +1,4 @@
-export type UserPlan = 'free' | 'pro' | 'business';
+export type UserPlan = 'solo' | 'pro' | 'cooperative' | 'business' | 'free';
 export type UserTheme = 'light' | 'dark' | 'system';
 export type UserRole = 'producteur' | 'admin';
 export type AccountStatus = 'actif' | 'suspendu' | 'en_attente';

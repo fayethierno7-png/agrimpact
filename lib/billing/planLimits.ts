@@ -14,17 +14,17 @@ export interface PlanFeatureLimits {
 }
 
 export const PLAN_LIMITS: Record<UserPlan, PlanFeatureLimits> = {
-  free: {
+  solo: {
     maxFarms: 1,
-    maxPlots: 1,
-    fullHistoryAccess: false, // Conseil du jour uniquement
+    maxPlots: 3,
+    fullHistoryAccess: false,
     advancedAlerts: false,
-    smsAlerts: false,
+    smsAlerts: true,
     multiUsers: false,
     exportReports: false,
     offlineSync: true,
-    name: 'Gratuit Pilote',
-    priceMonthlyCFA: 0,
+    name: 'Solo',
+    priceMonthlyCFA: 1490, // 1 490 FCFA / mois
   },
   pro: {
     maxFarms: 1,
@@ -38,17 +38,41 @@ export const PLAN_LIMITS: Record<UserPlan, PlanFeatureLimits> = {
     name: 'Pro Producteur',
     priceMonthlyCFA: 5900, // 5 900 FCFA / mois
   },
-  business: {
-    maxFarms: 999,
-    maxPlots: 999,
+  cooperative: {
+    maxFarms: 15,
+    maxPlots: 100,
     fullHistoryAccess: true,
     advancedAlerts: true,
     smsAlerts: true,
     multiUsers: true,
     exportReports: true,
     offlineSync: true,
-    name: 'Coopérative & Business',
-    priceMonthlyCFA: 54900, // 54 900 FCFA / mois
+    name: 'Coopérative & GIE',
+    priceMonthlyCFA: 49900, // 49 900 FCFA / mois
+  },
+  business: {
+    maxFarms: 15,
+    maxPlots: 100,
+    fullHistoryAccess: true,
+    advancedAlerts: true,
+    smsAlerts: true,
+    multiUsers: true,
+    exportReports: true,
+    offlineSync: true,
+    name: 'Coopérative & GIE',
+    priceMonthlyCFA: 49900, // Alias pour rétrocompatibilité
+  },
+  free: {
+    maxFarms: 1,
+    maxPlots: 3,
+    fullHistoryAccess: false,
+    advancedAlerts: false,
+    smsAlerts: false,
+    multiUsers: false,
+    exportReports: false,
+    offlineSync: true,
+    name: 'Solo (Initial)',
+    priceMonthlyCFA: 1490,
   },
 };
 

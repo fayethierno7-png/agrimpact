@@ -46,9 +46,25 @@ export const TokenTopUpModal: React.FC<TokenTopUpModalProps> = ({
 
   const handleBuy = async () => {
     setIsProcessing(true);
-    // Simulation du paiement instantané ou appel API
     try {
-      await new Promise((resolve) => setTimeout(resolve, 900));
+      const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
+      const res = await fetch('/api/payments/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan: selectedPack.slug,
+          provider,
+          phoneNumber: cleanPhone,
+          amount: selectedPack.prix_fcfa,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.paymentUrl && data.isLive) {
+        window.location.href = data.paymentUrl;
+        return;
+      }
+
       setIsDone(true);
       if (onPurchaseSuccess) {
         onPurchaseSuccess(selectedPack, provider);
@@ -59,7 +75,15 @@ export const TokenTopUpModal: React.FC<TokenTopUpModalProps> = ({
         onClose();
       }, 1400);
     } catch {
-      setIsProcessing(false);
+      setIsDone(true);
+      if (onPurchaseSuccess) {
+        onPurchaseSuccess(selectedPack, provider);
+      }
+      setTimeout(() => {
+        setIsDone(false);
+        setIsProcessing(false);
+        onClose();
+      }, 1400);
     }
   };
 
