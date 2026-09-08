@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserProfile, Farm, Plot, AgriAlert, Recommendation, UserPlan, UserTheme } from '../types';
+import { UserProfile, Farm, Plot, AgriAlert, Recommendation, UserPlan, UserTheme, UserRole } from '../types';
 import { supabase, isSupabaseConfigured } from '../supabase/client';
 import { SENEGAL_REGIONS } from '../constants/senegal';
 
@@ -32,7 +32,7 @@ interface AgriContextType {
   markRecommendationApplied: (recId: string) => void;
   updatePlan: (newPlan: UserPlan) => void;
   setPlot: (plot: Plot | null) => void;
-  setRole: (role: 'admin' | 'producteur') => Promise<void>;
+  setRole: (role: UserRole) => Promise<void>;
   saveSimulationResult: (simResult: any) => Promise<boolean>;
   updateFarmAndPlot: (farm: Farm, plot: Plot) => void;
 }
@@ -672,7 +672,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { success: true };
   };
 
-  const setRole = async (newRole: 'admin' | 'producteur') => {
+  const setRole = async (newRole: UserRole) => {
     syncRoleCookie(newRole);
     if (profile) {
       const updated = { ...profile, role: newRole };

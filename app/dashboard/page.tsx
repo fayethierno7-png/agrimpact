@@ -194,14 +194,16 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {profile?.role === 'admin' && (
+            {(profile?.role === 'admin' || profile?.role === 'superadmin') && (
               <Link
                 href="/admin"
                 className="px-4 py-2 rounded-full bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold shadow-xs flex items-center gap-2 transition-all hover:scale-105 cursor-pointer ring-2 ring-purple-300"
                 title="Accéder à la Console d'Administration"
               >
                 <ShieldCheck className="w-4 h-4 text-purple-200" />
-                <span className="whitespace-nowrap">Console Admin</span>
+                <span className="whitespace-nowrap">
+                  {profile?.role === 'superadmin' ? 'Console SuperAdmin' : 'Console Admin'}
+                </span>
               </Link>
             )}
 

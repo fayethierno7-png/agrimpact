@@ -22,7 +22,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const pathname = usePathname();
   const { profile, farm, alerts } = useAgri();
   const activeAlertsCount = alerts.filter((a) => a.statut === 'active').length;
-  const isAdmin = profile?.role === 'admin';
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin';
+  const isSuperAdmin = profile?.role === 'superadmin';
 
   const navLinks = [
     { label: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard, isActive: pathname === '/dashboard' },
@@ -147,7 +148,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               title="Accéder à la Console d'Administration"
             >
               <ShieldCheck className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0" />
-              <span className="hidden md:inline font-bold whitespace-nowrap">Console Admin</span>
+              <span className="hidden md:inline font-bold whitespace-nowrap">
+                {isSuperAdmin ? 'Console SuperAdmin' : 'Console Admin'}
+              </span>
             </Link>
           )}
 

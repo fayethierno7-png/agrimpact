@@ -240,12 +240,18 @@ export default function ParametresPage() {
                 </h2>
                 <span
                   className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                    profile?.role === 'admin'
+                    profile?.role === 'superadmin'
+                      ? 'bg-amber-100 dark:bg-amber-950 text-amber-900 dark:text-amber-200 ring-1 ring-amber-400'
+                      : profile?.role === 'admin'
                       ? 'bg-purple-200 dark:bg-purple-900 text-purple-900 dark:text-purple-200'
                       : 'bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300'
                   }`}
                 >
-                  {profile?.role === 'admin' ? 'Rôle Administrateur Actif' : 'Rôle Producteur'}
+                  {profile?.role === 'superadmin'
+                    ? 'Super Administrateur Actif'
+                    : profile?.role === 'admin'
+                    ? 'Rôle Administrateur Actif'
+                    : 'Rôle Producteur'}
                 </span>
               </div>
               <p className="text-xs text-purple-700 dark:text-purple-300 mt-0.5">
@@ -255,7 +261,7 @@ export default function ParametresPage() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {profile?.role !== 'admin' && (
+            {profile?.role !== 'superadmin' && profile?.role !== 'admin' && (
               <button
                 type="button"
                 onClick={async () => {
@@ -272,14 +278,15 @@ export default function ParametresPage() {
             <Link
               href="/admin"
               onClick={() => {
-                document.cookie = 'agri_user_role=admin; path=/; max-age=604800; SameSite=Lax';
-                if (profile?.role !== 'admin') {
+                const targetRole = profile?.role === 'superadmin' ? 'superadmin' : 'admin';
+                document.cookie = `agri_user_role=${targetRole}; path=/; max-age=604800; SameSite=Lax`;
+                if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
                   setRole('admin');
                 }
               }}
               className="px-4 py-2.5 bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 shadow-xs transition-all hover:scale-105 cursor-pointer ring-2 ring-purple-300"
             >
-              <span>Accéder à la Console Admin</span>
+              <span>{profile?.role === 'superadmin' ? 'Accéder Console SuperAdmin' : 'Accéder à la Console Admin'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>

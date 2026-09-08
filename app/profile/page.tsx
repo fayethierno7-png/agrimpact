@@ -148,14 +148,16 @@ export default function ProfilePage() {
                 </Link>
               </div>
 
-              {profile?.role === 'admin' && (
+              {(profile?.role === 'admin' || profile?.role === 'superadmin') && (
                 <div className="mt-2.5">
                   <Link
                     href="/admin"
                     className="w-full py-2.5 px-3 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer ring-2 ring-purple-300"
                   >
                     <ShieldCheck className="w-4 h-4 text-purple-200" />
-                    <span>Console d&apos;Administration</span>
+                    <span>
+                      {profile?.role === 'superadmin' ? 'Console SuperAdmin' : "Console d'Administration"}
+                    </span>
                   </Link>
                 </div>
               )}
