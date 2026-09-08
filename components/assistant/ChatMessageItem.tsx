@@ -148,7 +148,7 @@ export default function ChatMessageItem({ message, onFeedback, onRetry }: ChatMe
 
         {/* Horodatage précis (Point 7) */}
         {message.timestamp && (
-          <span className={`text-[10px] text-stone-400 dark:text-stone-500 mt-1 px-1 font-medium select-none ${!isAssistant ? 'text-right' : 'text-left'}`}>
+          <span className={`text-[10px] text-stone-500 dark:text-stone-400 mt-1 px-1 font-medium select-none ${!isAssistant ? 'text-right' : 'text-left'}`}>
             {formatMessageDate(message.timestamp)}
           </span>
         )}

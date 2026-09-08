@@ -574,6 +574,15 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch {}
       return updated;
     });
+
+    // Synchronisation en base de données Supabase
+    if (isSupabaseConfigured && supabase) {
+      supabase
+        .from('recommendations')
+        .update({ statut: 'applied' })
+        .eq('id', recId)
+        .then(() => {}, (err) => console.warn('Erreur synchro recommandation:', err));
+    }
   };
 
   const updatePlan = (newPlan: UserPlan) => {

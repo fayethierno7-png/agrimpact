@@ -102,23 +102,23 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </div>
 
         {/* Center: Desktop Navigation Bar */}
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-1 shrink-0">
           {navLinks.map((item) => {
             const Icon = item.icon;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors relative ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors relative whitespace-nowrap shrink-0 ${
                   item.isActive
                     ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-300 font-bold'
                     : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-100 dark:hover:bg-stone-800'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${item.isActive ? 'text-emerald-700 dark:text-emerald-400' : 'text-stone-500 dark:text-stone-400'}`} />
-                <span>{item.label}</span>
+                <Icon className={`w-4 h-4 shrink-0 ${item.isActive ? 'text-emerald-700 dark:text-emerald-400' : 'text-stone-500 dark:text-stone-400'}`} />
+                <span className="whitespace-nowrap">{item.label}</span>
                 {item.badge ? (
-                  <span className="ml-0.5 bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">
+                  <span className="ml-0.5 bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full shrink-0">
                     {item.badge}
                   </span>
                 ) : null}
@@ -128,18 +128,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </nav>
 
         {/* Right: Status indicator, alerts & user chip */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {/* Online badge */}
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/70 dark:border-emerald-800/60 text-[11px] font-semibold text-emerald-800 dark:text-emerald-300">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>{statusText}</span>
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/70 dark:border-emerald-800/60 text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 whitespace-nowrap shrink-0">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span className="whitespace-nowrap">{statusText}</span>
           </div>
 
           {/* Console Admin Bouton (Réservé exclusivement aux administrateurs certifiés) */}
           {isAdmin && (
             <Link
               href="/admin"
-              className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs ${
+              className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs whitespace-nowrap shrink-0 ${
                 pathname === '/admin' || pathname?.startsWith('/admin')
                   ? 'bg-purple-700 text-white border-purple-800 shadow-purple-900/20 ring-2 ring-purple-300'
                   : 'bg-purple-50 hover:bg-purple-100 text-purple-900 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800 hover:shadow-sm'
@@ -147,15 +147,15 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               title="Accéder à la Console d'Administration"
             >
               <ShieldCheck className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0" />
-              <span className="hidden md:inline font-bold">Console Admin</span>
+              <span className="hidden md:inline font-bold whitespace-nowrap">Console Admin</span>
             </Link>
           )}
 
           {/* User Info Chip -> mène vers /profile */}
           <Link
             href="/profile"
-            className="hidden lg:flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full border border-stone-200 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors text-xs text-stone-700 dark:text-stone-300"
-            title="Profil & Exploitation"
+            className="hidden lg:flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full border border-stone-200 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors text-xs text-stone-700 dark:text-stone-300 whitespace-nowrap shrink-0"
+            title="Profil & Forfaits"
           >
             <div className="w-6 h-6 rounded-full bg-emerald-800 text-white font-bold text-[10px] flex items-center justify-center overflow-hidden shrink-0">
               {profile?.avatar_url ? (
@@ -165,8 +165,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               )}
             </div>
             <div className="text-left leading-tight hidden xl:block">
-              <span className="font-bold text-stone-900 dark:text-stone-100 block">{profile?.nom || 'Producteur'}</span>
-              <span className="text-[10px] text-stone-500 dark:text-stone-400 block">{farm?.region || 'Sénégal'}</span>
+              <span className="font-bold text-stone-900 dark:text-stone-100 block whitespace-nowrap">{profile?.nom || 'Producteur'}</span>
+              <span className="text-[10px] text-stone-500 dark:text-stone-400 block whitespace-nowrap">{farm?.region || 'Sénégal'}</span>
             </div>
           </Link>
 

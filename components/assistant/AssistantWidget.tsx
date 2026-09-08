@@ -3,14 +3,25 @@
 import React, { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { MessageSquareText, Sparkles } from 'lucide-react';
+import { useAgri } from '../../lib/context/AgriContext';
 import AssistantDrawer from './AssistantDrawer';
 
 export default function AssistantWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const { profile } = useAgri();
 
-  // Ne pas afficher le widget flottant sur la page dédiée /assistant
-  if (pathname === '/assistant') {
+  // Point 13 : L'assistant flottant interactif est STRICTEMENT réservé aux utilisateurs connectés du SaaS.
+  // Aucun affichage sur la landing page ('/'), ni sur les pages de tarification ou d'authentification.
+  if (
+    pathname === '/' ||
+    pathname === '/assistant' ||
+    pathname === '/tarifs' ||
+    pathname === '/login' ||
+    pathname === '/signup' ||
+    pathname === '/en-attente' ||
+    !profile
+  ) {
     return null;
   }
 

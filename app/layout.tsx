@@ -7,15 +7,22 @@ export const metadata: Metadata = {
   description: 'Le copilote de votre exploitation agricole au Sénégal. Recommandations agronomiques actionnables et météo en temps réel.',
   manifest: '/manifest.json',
   icons: {
-    icon: '/icon.png',
-    apple: '/icon.png',
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#1b5e20',
+  themeColor: '#0C2B1E',
 };
 
 import AssistantWidget from '../components/assistant/AssistantWidget';

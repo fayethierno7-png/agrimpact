@@ -25,6 +25,7 @@ import {
   Layers,
   Smartphone,
   Check,
+  Lock,
 } from 'lucide-react';
 import { useAgri } from '../lib/context/AgriContext';
 import { AgriSimulator } from '../components/simulator/AgriSimulator';
@@ -210,45 +211,45 @@ export default function SaaSLandingPage() {
           </Link>
 
           {/* Navigation centrale en pilule */}
-          <nav className="hidden lg:flex items-center gap-1 bg-[#123C2B]/5 px-2 py-1 rounded-full border border-[#123C2B]/5 text-xs font-bold text-stone-600">
-            <a href="#simulateur" className="px-3.5 py-1.5 rounded-full bg-white text-[#0C2B1E] shadow-xs font-black">
+          <nav className="hidden lg:flex items-center gap-1 bg-[#123C2B]/5 px-2 py-1 rounded-full border border-[#123C2B]/5 text-xs font-bold text-stone-600 shrink-0">
+            <a href="#simulateur" className="px-3.5 py-1.5 rounded-full bg-white text-[#0C2B1E] shadow-xs font-black whitespace-nowrap shrink-0">
               ⚡ Simulateur
             </a>
-            <a href="#agrimeteo" className="px-3.5 py-1.5 rounded-full hover:bg-white hover:text-[#0C2B1E] transition-all">
+            <a href="#agrimeteo" className="px-3.5 py-1.5 rounded-full hover:bg-white hover:text-[#0C2B1E] transition-all whitespace-nowrap shrink-0">
               AgriMétéo 14j
             </a>
-            <a href="#agriconseil" className="px-3.5 py-1.5 rounded-full hover:bg-white hover:text-[#0C2B1E] transition-all">
+            <a href="#agriconseil" className="px-3.5 py-1.5 rounded-full hover:bg-white hover:text-[#0C2B1E] transition-all whitespace-nowrap shrink-0">
               AgriConseil
             </a>
-            <a href="#comment-ca-marche" className="px-3.5 py-1.5 rounded-full hover:bg-white hover:text-[#0C2B1E] transition-all">
+            <a href="#comment-ca-marche" className="px-3.5 py-1.5 rounded-full hover:bg-white hover:text-[#0C2B1E] transition-all whitespace-nowrap shrink-0">
               Comment ça marche
             </a>
-            <a href="#tarifs" className="px-3.5 py-1.5 rounded-full hover:bg-white hover:text-[#0C2B1E] transition-all">
+            <a href="#tarifs" className="px-3.5 py-1.5 rounded-full hover:bg-white hover:text-[#0C2B1E] transition-all whitespace-nowrap shrink-0">
               Tarifs Wave & OM
             </a>
-            <a href="#terroirs" className="px-3.5 py-1.5 rounded-full hover:bg-white hover:text-[#0C2B1E] transition-all">
+            <a href="#terroirs" className="px-3.5 py-1.5 rounded-full hover:bg-white hover:text-[#0C2B1E] transition-all whitespace-nowrap shrink-0">
               Nos Terroirs
             </a>
           </nav>
 
           {/* Boutons d'action */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <Link
               href="/login"
-              className="text-xs font-bold text-stone-700 hover:text-[#0C2B1E] px-3 py-2 transition-colors hidden sm:inline-block"
+              className="text-xs font-bold text-stone-700 hover:text-[#0C2B1E] px-3 py-2 transition-colors hidden sm:inline-block whitespace-nowrap shrink-0"
             >
               Se connecter
             </Link>
             <Link
               href={saasDestination}
-              className="px-4 py-2 bg-[#C8EF56] hover:bg-[#B8DF44] text-[#0C2B1E] text-xs font-black rounded-full shadow-[0_4px_14px_rgba(200,239,86,0.35)] hover:shadow-[0_6px_20px_rgba(200,239,86,0.5)] transition-all flex items-center gap-1.5"
+              className="px-4 py-2 bg-[#C8EF56] hover:bg-[#B8DF44] text-[#0C2B1E] text-xs font-black rounded-full shadow-[0_4px_14px_rgba(200,239,86,0.35)] hover:shadow-[0_6px_20px_rgba(200,239,86,0.5)] transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0"
             >
-              <span>{profile ? 'Tableau de bord' : 'Accéder au SaaS'}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span className="whitespace-nowrap">{profile ? 'Tableau de bord' : 'Accéder au SaaS'}</span>
+              <ArrowRight className="w-3.5 h-3.5 shrink-0" />
             </Link>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 text-[#0C2B1E] hover:bg-stone-100 rounded-full"
+              className="lg:hidden p-2 text-[#0C2B1E] hover:bg-stone-100 rounded-full shrink-0"
               aria-label="Menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -960,6 +961,102 @@ export default function SaaSLandingPage() {
               <p className="text-xs text-stone-600 leading-relaxed">
                 Consultez votre conseil du jour, évitez les lessivages d&apos;intrants et suivez la rentabilité de votre récolte.
               </p>
+            </div>
+          </div>
+        </section>
+
+        {/* 9 BIS. SECTION MARKETING VITRINE : ASSISTANT IA 24/7 (Point 13) */}
+        <section className="py-20 px-4 sm:px-6 w-full bg-[#FAF9F5] border-y border-stone-200/80 scroll-mt-20" id="assistant-ia">
+          <div className="max-w-7xl mx-auto space-y-12">
+            <div className="text-center max-w-2xl mx-auto space-y-3">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0C2B1E] text-[#C8EF56] text-xs font-black uppercase tracking-wider shadow-xs">
+                <Sparkles className="w-3.5 h-3.5 text-[#C8EF56]" />
+                <span>Copilote Agronomique • Disponible 24/7</span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-black text-[#0C2B1E] tracking-tight">
+                Une IA entraînée sur les terroirs sénégalais
+              </h2>
+              <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
+                Réservée exclusivement aux producteurs abonnés à AgriImpact. Interrogez votre copilote à tout moment pour sécuriser vos arbitrages agronomiques et naviguer dans votre espace.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Carte 1 : Diagnostic */}
+              <div className="p-6 rounded-3xl bg-white border border-stone-200/80 shadow-xs hover:border-emerald-600 hover:-translate-y-1 transition-all space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-800 flex items-center justify-center font-black text-xl">
+                  🔬
+                </div>
+                <h3 className="text-base font-bold text-stone-900">Diagnostic &amp; Posologies</h3>
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  Identification des ravageurs (chenille légionnaire, cercosporiose, thrips) et calcul exact des dosages d&apos;intrants selon votre superficie.
+                </p>
+              </div>
+
+              {/* Carte 2 : Fenêtres d'intervention */}
+              <div className="p-6 rounded-3xl bg-white border border-stone-200/80 shadow-xs hover:border-emerald-600 hover:-translate-y-1 transition-all space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-sky-50 text-sky-800 flex items-center justify-center font-black text-xl">
+                  🌦️
+                </div>
+                <h3 className="text-base font-bold text-stone-900">Fenêtres Météo 14 Jours</h3>
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  Anticipation des créneaux de pulvérisation sans risque de lessivage par la pluie et gestion préventive du stress hydrique.
+                </p>
+              </div>
+
+              {/* Carte 3 : Navigation SaaS */}
+              <div className="p-6 rounded-3xl bg-white border border-stone-200/80 shadow-xs hover:border-emerald-600 hover:-translate-y-1 transition-all space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-800 flex items-center justify-center font-black text-xl">
+                  ⚡
+                </div>
+                <h3 className="text-base font-bold text-stone-900">Navigation &amp; Copilote SaaS</h3>
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  Demandez à l&apos;IA de vous guider dans le simulateur, d&apos;ajuster votre fiche d&apos;exploitation ou d&apos;analyser votre historique de récolte.
+                </p>
+              </div>
+
+              {/* Carte 4 : Mode 100% Vocal */}
+              <div className="p-6 rounded-3xl bg-white border border-stone-200/80 shadow-xs hover:border-emerald-600 hover:-translate-y-1 transition-all space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-800 flex items-center justify-center font-black text-xl">
+                  🎙️
+                </div>
+                <h3 className="text-base font-bold text-stone-900">100% Mains-Libres au Champ</h3>
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  Dictez vos interrogations en marchant dans vos parcelles et écoutez les recommandations via la synthèse vocale intégrée.
+                </p>
+              </div>
+            </div>
+
+            {/* Bandeau d'accès restreint avec CTA */}
+            <div className="p-6 rounded-3xl bg-[#0C2B1E] text-white flex flex-col sm:flex-row items-center justify-between gap-6 shadow-md">
+              <div className="space-y-1 text-center sm:text-left">
+                <div className="flex items-center justify-center sm:justify-start gap-2 text-xs font-black uppercase text-[#C8EF56]">
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Accès Réservé au SaaS Connecté</span>
+                </div>
+                <h4 className="text-base sm:text-lg font-bold text-white">
+                  Prêt à activer votre assistant agronomique personnel ?
+                </h4>
+                <p className="text-xs text-stone-300">
+                  L&apos;assistant IA s&apos;initialise automatiquement avec les coordonnées et les cultures de votre exploitation.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center gap-3 shrink-0">
+                <Link
+                  href="/signup"
+                  className="px-5 py-3 bg-[#C8EF56] hover:bg-[#B8DF44] text-[#0C2B1E] text-xs font-black rounded-full shadow-md transition-all flex items-center gap-2 whitespace-nowrap"
+                >
+                  <span>Créer mon compte exploitant</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+                <a
+                  href="#tarifs"
+                  className="px-5 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-full transition-colors whitespace-nowrap"
+                >
+                  Voir les formules
+                </a>
+              </div>
             </div>
           </div>
         </section>

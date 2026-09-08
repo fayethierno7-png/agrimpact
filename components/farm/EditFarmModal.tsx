@@ -34,6 +34,8 @@ export default function EditFarmModal({
   const [region, setRegion] = useState(farm?.region || 'Thiès');
   const [nomParcelle, setNomParcelle] = useState(plot?.nom || 'Parcelle Principale');
   const [culture, setCulture] = useState(plot?.culture || 'Oignon');
+  const [isCustomCrop, setIsCustomCrop] = useState(false);
+  const [customCropText, setCustomCropText] = useState('');
   const [surfaceHa, setSurfaceHa] = useState<string>(String(plot?.surface_ha || '1.0'));
   const [typeIrrigation, setTypeIrrigation] = useState(plot?.type_irrigation || 'goutte-a-goutte');
 
@@ -46,7 +48,15 @@ export default function EditFarmModal({
       setNomExploitation(farm?.nom || '');
       setRegion(farm?.region || 'Thiès');
       setNomParcelle(plot?.nom || 'Parcelle Principale');
-      setCulture(plot?.culture || 'Oignon');
+      const curCulture = plot?.culture || 'Oignon';
+      setCulture(curCulture);
+      if (!Object.keys(CROPS_PRESETS).includes(curCulture)) {
+        setIsCustomCrop(true);
+        setCustomCropText(curCulture);
+      } else {
+        setIsCustomCrop(false);
+        setCustomCropText('');
+      }
       setSurfaceHa(String(plot?.surface_ha || '1.0'));
       setTypeIrrigation(plot?.type_irrigation || 'goutte-a-goutte');
       setErrorMessage(null);
@@ -75,6 +85,7 @@ export default function EditFarmModal({
     setLoading(true);
 
     try {
+      const finalCulture = isCustomCrop && customCropText.trim() ? customCropText.trim() : culture;
       const res = await fetch('/api/farms/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -83,7 +94,7 @@ export default function EditFarmModal({
           nomExploitation,
           region,
           nomParcelle,
-          culture,
+          culture: finalCulture,
           surfaceHa: numSurface,
           typeIrrigation,
         }),
@@ -198,17 +209,41 @@ export default function EditFarmModal({
               <div className="relative">
                 <Sprout className="w-4 h-4 text-stone-400 absolute left-3 top-3" />
                 <select
-                  value={culture}
-                  onChange={(e) => setCulture(e.target.value)}
+                  value={isCustomCrop ? 'autre' : culture}
+                  onChange={(e) => {
+                    if (e.target.value === 'autre') {
+                      setIsCustomCrop(true);
+                    } else {
+                      setIsCustomCrop(false);
+                      setCulture(e.target.value);
+                    }
+                  }}
                   className="w-full pl-9 pr-3 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl text-xs sm:text-sm text-stone-900 dark:text-stone-100 focus:outline-hidden focus:border-[#0C2B1E]"
                 >
                   {Object.keys(CROPS_PRESETS).map((crop) => (
-                    <option key={crop} value={crop}>
+                    <option key={crop} value={crop} className="text-stone-900 dark:text-stone-100">
                       {crop}
                     </option>
                   ))}
+                  <option value="autre" className="text-stone-900 dark:text-stone-100 font-bold">
+                    + Autre (saisie libre)
+                  </option>
                 </select>
               </div>
+
+              {isCustomCrop && (
+                <div className="mt-2 animate-fade-in">
+                  <input
+                    type="text"
+                    value={customCropText}
+                    onChange={(e) => setCustomCropText(e.target.value)}
+                    placeholder="Nom de la culture (ex: Pastèque, Niébé...)"
+                    className="w-full px-3 py-2 bg-white dark:bg-stone-800 border-2 border-emerald-600 rounded-xl text-xs text-stone-900 dark:text-stone-100 placeholder-stone-400 font-medium"
+                    required
+                    autoFocus
+                  />
+                </div>
+              )}
             </div>
 
             <div>

@@ -6,273 +6,159 @@ import Link from 'next/link';
 import {
   ArrowLeft,
   Sparkles,
-  Zap,
   ShieldCheck,
   Smartphone,
-  ChevronRight,
-  HelpCircle,
-  TrendingUp,
-  Layers,
-  Info,
+  CheckCircle2,
+  Lock,
+  PhoneCall,
+  Sprout,
+  AlertTriangle,
 } from 'lucide-react';
 import PricingTable from '../../components/billing/PricingTable';
-import AiTokenGauge from '../../components/billing/AiTokenGauge';
-import LimitReached from '../../components/billing/LimitReached';
-import TokenTopUpModal from '../../components/billing/TokenTopUpModal';
+import { useAgri } from '../../lib/context/AgriContext';
 import { PlanSlug } from '../../lib/saas/types';
 
 function TarifsContent() {
   const searchParams = useSearchParams();
   const planQuery = searchParams.get('plan') as PlanSlug | null;
+  const isPaywallRequested = searchParams.get('paywall') === 'true' || searchParams.get('blocked') === 'true';
+  const reasonParam = searchParams.get('reason');
 
-  // Démonstration interactive de la jauge IA
-  const [demoGaugeState, setDemoGaugeState] = useState<'normal' | 'low' | 'depleted'>('normal');
-  const [simulatedTokens, setSimulatedTokens] = useState({
-    remaining: 42500,
-    quota: 60000,
-    permanent: 15000,
-  });
+  const { profile } = useAgri();
+  const isUnpaidOrExpired =
+    (profile as any)?.statut_abonnement === 'impaye' ||
+    (profile as any)?.statut_compte === 'en_attente';
 
-  // Démonstration du Paywall LimitReached
-  const [activePaywallDemo, setActivePaywallDemo] = useState<null | {
-    feature: 'parcelles' | 'sms' | 'utilisateurs';
-    current: number;
-    max: number;
-    planName: string;
-  }>(null);
-
-  const [topUpModalOpen, setTopUpModalOpen] = useState(false);
-
-  // Mise à jour de la démo jauge
-  const handleSetGaugeState = (state: 'normal' | 'low' | 'depleted') => {
-    setDemoGaugeState(state);
-    if (state === 'normal') {
-      setSimulatedTokens({ remaining: 42500, quota: 60000, permanent: 15000 });
-    } else if (state === 'low') {
-      setSimulatedTokens({ remaining: 4500, quota: 60000, permanent: 0 }); // < 15% (7.5%)
-    } else {
-      setSimulatedTokens({ remaining: 0, quota: 60000, permanent: 0 }); // 0 tokens (épuisé)
-    }
-  };
+  const isBlockingPaywall = isPaywallRequested || isUnpaidOrExpired;
 
   return (
-    <div className="min-h-screen bg-[#F5F3EB] text-stone-900 flex flex-col selection:bg-[#963e1b]/20 selection:text-[#963e1b]">
-      {/* Navigation supérieure de retour */}
-      <header className="sticky top-0 z-40 bg-[#F5F3EB]/90 backdrop-blur-md border-b border-stone-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-2 text-xs sm:text-sm font-extrabold text-stone-700 hover:text-[#0C2B1E] transition"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Retour au Tableau de Bord</span>
-        </Link>
-
+    <div className="min-h-screen bg-[#FAF9F5] text-stone-900 flex flex-col selection:bg-[#963e1b]/20 selection:text-[#963e1b]">
+      {/* Barre de navigation */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-2xs">
         <div className="flex items-center gap-3">
-          {/* Exemple de jauge compacte dans le header */}
-          <AiTokenGauge
-            tokensRemaining={simulatedTokens.remaining}
-            monthlyQuota={simulatedTokens.quota}
-            permanentTokens={simulatedTokens.permanent}
-            variant="compact"
-          />
+          {!isBlockingPaywall ? (
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 text-xs sm:text-sm font-extrabold text-stone-700 hover:text-[#0C2B1E] transition whitespace-nowrap shrink-0"
+            >
+              <ArrowLeft className="w-4 h-4 shrink-0" />
+              <span>Retour au Tableau de Bord</span>
+            </Link>
+          ) : (
+            <div className="flex items-center gap-2 text-xs font-black text-[#963e1b] uppercase tracking-wider whitespace-nowrap shrink-0">
+              <Lock className="w-4 h-4 text-[#963e1b] shrink-0" />
+              <span>Accès Restreint • Activation Requise</span>
+            </div>
+          )}
+        </div>
 
+        <div className="flex items-center gap-2.5 shrink-0">
           <Link
-            href="/assistant"
-            className="px-3.5 py-1.5 rounded-full bg-[#0C2B1E] text-white text-xs font-bold hover:bg-[#123C2B] transition"
+            href="/"
+            className="flex items-center gap-2 group text-xs font-bold text-stone-600 hover:text-stone-900"
           >
-            Assistant IA
+            <div className="w-7 h-7 rounded-lg bg-[#0C2B1E] flex items-center justify-center text-white shadow-xs">
+              <Sprout className="w-4 h-4 text-[#C8EF56]" />
+            </div>
+            <span className="hidden sm:inline font-extrabold text-[#0C2B1E]">AGRIMPACT</span>
           </Link>
         </div>
       </header>
 
-      {/* COMPOSANT 1 : TABLE DE TARIFICATION OFFICIELLE AGRIMPACT */}
-      <main className="flex-1">
-        <PricingTable preselectedPlan={planQuery || 'pro'} />
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full space-y-10">
+        {/* BANNIÈRE DE BLOCAGE PAYWALL DÉDIÉE (Point 10) */}
+        {isBlockingPaywall && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-[#0C2B1E] to-[#164733] text-white border-2 border-[#C8EF56]/40 shadow-xl relative overflow-hidden animate-fade-in">
+            <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div className="space-y-2 max-w-2xl">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#C8EF56]/20 text-[#C8EF56] text-xs font-black uppercase tracking-wider border border-[#C8EF56]/30">
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Abonnement Agricole Requis</span>
+                </div>
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight">
+                  {reasonParam === 'expired'
+                    ? 'Votre période d’évaluation est arrivée à échéance'
+                    : reasonParam === 'unpaid'
+                    ? 'Renouvellement requis pour maintenir vos accès'
+                    : 'Activez votre forfait pour débloquer votre exploitation'}
+                </h1>
+                <p className="text-xs sm:text-sm text-stone-200 leading-relaxed">
+                  AgriImpact est un service professionnel d&apos;aide à la décision agronomique 100% dédié aux producteurs sénégalais. Choisissez l&apos;un de nos 3 paliers ci-dessous pour débloquer instantanément les prévisions météo 14j, les alertes sanitaires et l&apos;assistant agronomique IA.
+                </p>
+              </div>
 
-        {/* SECTION DÉMONSTRATION INTERACTIVE : COMPOSANTS 2 & 3 */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-stone-300/70">
-          <div className="text-center max-w-2xl mx-auto mb-10">
-            <span className="text-[11px] font-black uppercase tracking-wider text-[#963e1b] bg-[#963e1b]/10 px-3 py-1 rounded-full">
-              Démonstrateur Interactif Senior
-            </span>
-            <h3 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight mt-3">
-              Jauge de Consommation IA & Paywall Réutilisable
-            </h3>
-            <p className="text-xs sm:text-sm text-stone-600 mt-2">
-              Testez en conditions réelles les 3 états de la jauge (normal, alerte &lt;15%,
-              vide avec blocage) et le comportement du paywall orienté valorisation.
+              <div className="flex flex-col gap-2 shrink-0 bg-white/10 p-4 rounded-2xl border border-white/10 text-xs">
+                <div className="flex items-center gap-2 text-white font-bold">
+                  <Smartphone className="w-4 h-4 text-[#C8EF56]" />
+                  <span>Paiement direct Wave &amp; OM</span>
+                </div>
+                <div className="flex items-center gap-2 text-stone-300 text-[11px]">
+                  <ShieldCheck className="w-4 h-4 text-emerald-300" />
+                  <span>Activation instantanée sans délai</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TABLE DE TARIFICATION OFFICIELLE (Composant 1) */}
+        <section className="space-y-6">
+          {!isBlockingPaywall && (
+            <div className="text-center max-w-2xl mx-auto space-y-2">
+              <span className="text-[11px] font-black uppercase tracking-widest text-[#963e1b] bg-[#963e1b]/10 px-3 py-1 rounded-full">
+                Forfaits &amp; Abonnements
+              </span>
+              <h1 className="text-2xl sm:text-4xl font-black text-stone-900 tracking-tight">
+                Tarification transparente, adaptée au cycle cultural
+              </h1>
+              <p className="text-xs sm:text-sm text-stone-600">
+                Paiement mobile sécurisé par Wave ou Orange Money. Aucun frais caché, aucun engagement.
+              </p>
+            </div>
+          )}
+
+          <PricingTable preselectedPlan={planQuery || 'pro'} showHeader={!isBlockingPaywall} />
+        </section>
+
+        {/* GARANTIES & SÉCURITÉ */}
+        <section className="pt-8 border-t border-stone-200 grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-stone-700">
+          <div className="p-5 rounded-2xl bg-white border border-stone-200/80 shadow-2xs space-y-2">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center font-black">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <h3 className="font-extrabold text-stone-900 text-sm">Activation Mobile Immédiate</h3>
+            <p className="text-stone-600 leading-relaxed">
+              Dès la confirmation du paiement sur votre téléphone Wave ou Orange Money, vos accès sont débloqués en temps réel.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-            {/* 1. Démonstration de la jauge IA */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-black text-stone-900 uppercase tracking-wide">
-                  Composant 2 : Jauge IA (3 états réactifs)
-                </h4>
-                <div className="flex items-center gap-1.5 p-1 bg-stone-200/80 rounded-xl text-xs">
-                  <button
-                    type="button"
-                    onClick={() => handleSetGaugeState('normal')}
-                    className={`px-2.5 py-1 rounded-lg font-bold transition cursor-pointer ${
-                      demoGaugeState === 'normal'
-                        ? 'bg-white text-emerald-800 shadow-2xs'
-                        : 'text-stone-600 hover:text-stone-900'
-                    }`}
-                  >
-                    Normal (70%)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSetGaugeState('low')}
-                    className={`px-2.5 py-1 rounded-lg font-bold transition cursor-pointer ${
-                      demoGaugeState === 'low'
-                        ? 'bg-[#963e1b] text-white shadow-2xs'
-                        : 'text-stone-600 hover:text-stone-900'
-                    }`}
-                  >
-                    &lt; 15% (Alerte)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSetGaugeState('depleted')}
-                    className={`px-2.5 py-1 rounded-lg font-bold transition cursor-pointer ${
-                      demoGaugeState === 'depleted'
-                        ? 'bg-stone-800 text-white shadow-2xs'
-                        : 'text-stone-600 hover:text-stone-900'
-                    }`}
-                  >
-                    0 tokens (Vide)
-                  </button>
-                </div>
-              </div>
-
-              {/* Rendu de la Jauge format Dashboard */}
-              <AiTokenGauge
-                tokensRemaining={simulatedTokens.remaining}
-                monthlyQuota={simulatedTokens.quota}
-                permanentTokens={simulatedTokens.permanent}
-                planName="Pro Producteur"
-                renewalDate="1er du mois prochain"
-                variant="dashboard"
-                onTopUpSuccess={(pack) => {
-                  setSimulatedTokens((prev) => ({
-                    ...prev,
-                    permanent: prev.permanent + pack.nb_tokens,
-                  }));
-                }}
-              />
-
-              {/* Rendu de la Jauge format Chat-Bar */}
-              <div className="mt-4">
-                <div className="text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-2">
-                  Aperçu dans le chat assistant :
-                </div>
-                <AiTokenGauge
-                  tokensRemaining={simulatedTokens.remaining}
-                  monthlyQuota={simulatedTokens.quota}
-                  permanentTokens={simulatedTokens.permanent}
-                  planName="Pro Producteur"
-                  variant="chat-bar"
-                  onTopUpSuccess={(pack) => {
-                    setSimulatedTokens((prev) => ({
-                      ...prev,
-                      permanent: prev.permanent + pack.nb_tokens,
-                    }));
-                  }}
-                />
-              </div>
+          <div className="p-5 rounded-2xl bg-white border border-stone-200/80 shadow-2xs space-y-2">
+            <div className="w-9 h-9 rounded-xl bg-sky-50 text-sky-800 flex items-center justify-center font-black">
+              <Smartphone className="w-5 h-5" />
             </div>
+            <h3 className="font-extrabold text-stone-900 text-sm">Zéro Frais Bancaires</h3>
+            <p className="text-stone-600 leading-relaxed">
+              Vous payez exactement le montant affiché en Francs CFA (XOF) sans surcoût opérateur ni prélèvement imprévu.
+            </p>
+          </div>
 
-            {/* 2. Démonstration du Paywall LimitReached */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-black text-stone-900 uppercase tracking-wide">
-                Composant 3 : Paywall Générique Réutilisable
-              </h4>
-
-              <div className="p-4 rounded-2xl bg-white border border-stone-200/80 shadow-2xs text-xs space-y-3">
-                <p className="text-stone-600 leading-relaxed">
-                  Déclencheur universel à appeler dès qu&apos;une action utilisateur excède un
-                  plafond contractuel (parcelles, SMS, etc.).
-                </p>
-
-                <div className="flex flex-wrap gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setActivePaywallDemo({
-                        feature: 'parcelles',
-                        current: 10,
-                        max: 10,
-                        planName: 'Pro Producteur',
-                      })
-                    }
-                    className="px-3 py-2 rounded-xl bg-[#0C2B1E] text-white font-bold hover:bg-[#123C2B] transition cursor-pointer flex items-center gap-1.5"
-                  >
-                    <Layers className="w-3.5 h-3.5 text-[#C8EF56]" />
-                    <span>Dépasser 10 parcelles (Modal)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setActivePaywallDemo({
-                        feature: 'sms',
-                        current: 50,
-                        max: 50,
-                        planName: 'Pro Producteur',
-                      })
-                    }
-                    className="px-3 py-2 rounded-xl bg-[#963e1b] text-white font-bold hover:bg-[#823315] transition cursor-pointer flex items-center gap-1.5"
-                  >
-                    <Smartphone className="w-3.5 h-3.5" />
-                    <span>Plafond 50 SMS (Modal)</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Version inline card de démonstration */}
-              <div>
-                <div className="text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-2">
-                  Version Encart / Card (intégrable dans un formulaire) :
-                </div>
-                <LimitReached
-                  feature="parcelles"
-                  current={10}
-                  max={10}
-                  planName="Pro Producteur"
-                  mode="card"
-                />
-              </div>
+          <div className="p-5 rounded-2xl bg-white border border-stone-200/80 shadow-2xs space-y-2">
+            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-800 flex items-center justify-center font-black">
+              <PhoneCall className="w-5 h-5" />
             </div>
+            <h3 className="font-extrabold text-stone-900 text-sm">Assistance Terroir Dédiée</h3>
+            <p className="text-stone-600 leading-relaxed">
+              Une équipe d&apos;ingénieurs agronomes disponible pour vous guider dans la configuration de vos parcelles au Sénégal.
+            </p>
           </div>
         </section>
       </main>
 
-      {/* Paywall Modal actif si déclenché par un bouton */}
-      {activePaywallDemo && (
-        <LimitReached
-          feature={activePaywallDemo.feature}
-          current={activePaywallDemo.current}
-          max={activePaywallDemo.max}
-          planName={activePaywallDemo.planName}
-          mode="modal"
-          onClose={() => setActivePaywallDemo(null)}
-        />
-      )}
-
-      {/* Modale de recharge directe si ouverte */}
-      <TokenTopUpModal
-        isOpen={topUpModalOpen}
-        onClose={() => setTopUpModalOpen(false)}
-      />
-
-      {/* Pied de page */}
-      <footer className="py-8 border-t border-stone-300 text-center text-xs text-stone-500 bg-[#FAF9F5]">
-        <p>© 2026 AgriImpact • Plateforme SaaS Agricole Professionnelle 100% Payante.</p>
-        <p className="mt-1">
-          Paiements sécurisés Wave & Orange Money au Sénégal & UEMOA.
+      {/* Footer */}
+      <footer className="py-8 border-t border-stone-200 text-center text-xs text-stone-500 bg-white">
+        <p>© 2026 AgriImpact • Copilote Décisionnel Agricole au Sénégal • 100% Payant.</p>
+        <p className="mt-1 text-[11px] text-stone-400">
+          Transactions sécurisées Wave &amp; Orange Money Sénégal.
         </p>
       </footer>
     </div>
@@ -283,7 +169,7 @@ export default function TarifsPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#F5F3EB]">
+        <div className="min-h-screen flex items-center justify-center bg-[#FAF9F5]">
           <div className="w-8 h-8 border-3 border-[#0C2B1E] border-t-transparent rounded-full animate-spin" />
         </div>
       }

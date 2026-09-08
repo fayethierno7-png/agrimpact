@@ -46,6 +46,20 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     userPhone ? userPhone.replace('+221', '').trim() : '78 017 88 18'
   );
   const [step, setStep] = useState<'form' | 'waiting_approval' | 'success'>('form');
+  const [countdownSeconds, setCountdownSeconds] = useState(120);
+
+  React.useEffect(() => {
+    let timer: any = null;
+    if (step === 'waiting_approval') {
+      setCountdownSeconds(120);
+      timer = setInterval(() => {
+        setCountdownSeconds((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [step]);
 
   React.useEffect(() => {
     if (userPhone) {
@@ -432,6 +446,30 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 </p>
                 <div className="mt-2 inline-block px-3 py-1 bg-stone-100 dark:bg-stone-800 rounded-lg text-xs font-mono font-bold text-stone-800 dark:text-stone-200">
                   +221 {phoneNumber}
+                </div>
+              </div>
+
+              {/* Indicateur de Progression en 3 Étapes (Point 15) */}
+              <div className="bg-stone-50 dark:bg-stone-800/60 p-3.5 rounded-2xl border border-stone-200/80 dark:border-stone-700/80 space-y-2.5">
+                <div className="flex items-center justify-between text-[11px] font-bold text-stone-600 dark:text-stone-300">
+                  <span>Traitement opérateur en direct</span>
+                  <span className="font-mono text-emerald-700 dark:text-emerald-400">
+                    Expire dans {Math.floor(countdownSeconds / 60)}:{(countdownSeconds % 60).toString().padStart(2, '0')}
+                  </span>
+                </div>
+
+                {/* Barre animée */}
+                <div className="w-full bg-stone-200 dark:bg-stone-700 h-2 rounded-full overflow-hidden">
+                  <div
+                    className="bg-emerald-600 h-full rounded-full transition-all duration-1000 ease-linear animate-pulse"
+                    style={{ width: `${Math.max(15, ((120 - countdownSeconds) / 120) * 100)}%` }}
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-1 text-[10px] text-center pt-1 font-semibold text-stone-500 dark:text-stone-400">
+                  <span className="text-emerald-700 dark:text-emerald-400 font-bold">✓ 1. Initialisé</span>
+                  <span className="text-emerald-700 dark:text-emerald-400 font-bold animate-pulse">● 2. Push émis</span>
+                  <span>3. Validation PIN</span>
                 </div>
               </div>
 

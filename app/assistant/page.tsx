@@ -22,6 +22,8 @@ import {
   Activity,
   Check,
   Radio,
+  Copy,
+  ExternalLink,
 } from 'lucide-react';
 import {
   Conversation,
@@ -60,7 +62,9 @@ export default function AssistantPage() {
 
   // Partage de conversation (Point 8)
   const [shareLoading, setShareLoading] = useState(false);
-  const [shareSuccessUrl, setShareSuccessUrl] = useState<string | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [sharedLinkUrl, setSharedLinkUrl] = useState<string | null>(null);
+  const [isLinkCopied, setIsLinkCopied] = useState(false);
 
   // Mode vocal 100% mains-libres & STT / TTS (Point 15)
   const [isListening, setIsListening] = useState(false);
@@ -351,7 +355,7 @@ export default function AssistantPage() {
     }
   };
 
-  // POINT 8 : Partage de conversation via route API sécurisée
+  // POINT 8 : Partage de conversation via route API sécurisée et modal dédié
   const handleShare = async () => {
     if (!activeConv || activeConv.messages.length === 0) {
       alert('Cette conversation est vide.');
@@ -370,9 +374,13 @@ export default function AssistantPage() {
       });
       const data = await res.json();
       if (data.success && data.shareUrl) {
-        await navigator.clipboard.writeText(data.shareUrl);
-        setShareSuccessUrl(data.shareUrl);
-        setTimeout(() => setShareSuccessUrl(null), 6000);
+        setSharedLinkUrl(data.shareUrl);
+        setIsShareModalOpen(true);
+        setIsLinkCopied(false);
+        try {
+          await navigator.clipboard.writeText(data.shareUrl);
+          setIsLinkCopied(true);
+        } catch {}
       } else {
         alert(data.error || 'Erreur lors du partage.');
       }
@@ -380,6 +388,18 @@ export default function AssistantPage() {
       alert('Erreur réseau lors de la génération du lien.');
     } finally {
       setShareLoading(false);
+    }
+  };
+
+  const handleCopyShareLink = async () => {
+    if (sharedLinkUrl) {
+      try {
+        await navigator.clipboard.writeText(sharedLinkUrl);
+        setIsLinkCopied(true);
+        setTimeout(() => setIsLinkCopied(false), 3000);
+      } catch {
+        alert('Impossible de copier automatiquement.');
+      }
     }
   };
 
@@ -544,24 +564,6 @@ export default function AssistantPage() {
           </div>
         </header>
 
-        {/* Notification Toast de partage copié */}
-        {shareSuccessUrl && (
-          <div className="bg-emerald-600 text-white px-4 py-2.5 text-xs font-bold flex items-center justify-between shadow-md">
-            <div className="flex items-center gap-2">
-              <Check className="w-4 h-4" />
-              <span>Lien de partage généré et copié dans le presse-papier !</span>
-            </div>
-            <a
-              href={shareSuccessUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="underline text-emerald-100 hover:text-white text-[11px]"
-            >
-              Tester le lien
-            </a>
-          </div>
-        )}
-
         {/* Bannière Mode Vocal Actif */}
         {voiceModeActive && (
           <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 flex items-center justify-between text-xs">
@@ -610,9 +612,25 @@ export default function AssistantPage() {
             )}
 
             {loading && (
-              <div className="flex items-center gap-2.5 p-3.5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl w-fit text-xs text-stone-700 dark:text-stone-300 shadow-xs animate-pulse">
-                <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
-                <span>AgriImpact AI formule la recommandation agronomique...</span>
+              <div className="flex items-start gap-3 p-4 bg-white dark:bg-stone-900 border border-stone-200/90 dark:border-stone-800 rounded-2xl w-fit max-w-md shadow-xs animate-fade-in">
+                <div className="w-8 h-8 rounded-xl bg-[#0C2B1E] flex items-center justify-center text-white shrink-0 shadow-xs">
+                  <Sprout className="w-4 h-4 text-[#C8EF56] animate-pulse" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-stone-900 dark:text-stone-100">
+                      AgriImpact IA rédige votre conseil...
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-bounce [animation-delay:0ms]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-bounce [animation-delay:150ms]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-bounce [animation-delay:300ms]" />
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-stone-500 dark:text-stone-400 leading-snug">
+                    Analyse des données climatiques, hygrométriques et phénologiques de votre terroir
+                  </p>
+                </div>
               </div>
             )}
 
@@ -742,6 +760,92 @@ export default function AssistantPage() {
           onClose={() => setIsDiagnosticOpen(false)}
           onOpenTopUp={() => setIsTopUpOpen(true)}
         />
+
+        {/* Modal de Partage Réel de Conversation (Point 8) */}
+        {isShareModalOpen && sharedLinkUrl && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+            <div className="w-full max-w-md bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl p-6 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 flex items-center justify-center">
+                    <Share2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
+                      Partager cette discussion
+                    </h3>
+                    <span className="text-[11px] text-stone-500 dark:text-stone-400">
+                      Lien d&apos;accès sécurisé en lecture seule
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsShareModalOpen(false)}
+                  className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed">
+                Ce lien permet à vos collaborateurs ou conseillers agricoles connectés au SaaS de consulter l&apos;intégralité de cette analyse agronomique.
+              </p>
+
+              {/* Champ d'affichage du lien */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-stone-700 dark:text-stone-300">
+                  Lien généré
+                </label>
+                <div className="flex items-center gap-2 p-2 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl">
+                  <input
+                    type="text"
+                    readOnly
+                    value={sharedLinkUrl}
+                    className="flex-1 bg-transparent text-xs text-stone-800 dark:text-stone-200 font-mono outline-hidden select-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCopyShareLink}
+                    className="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
+                  >
+                    {isLinkCopied ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-[#C8EF56]" />
+                        <span>Copié !</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copier</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Actions du bas */}
+              <div className="flex items-center justify-between pt-2 border-t border-stone-100 dark:border-stone-800">
+                <a
+                  href={sharedLinkUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs font-semibold text-emerald-800 dark:text-emerald-400 hover:underline flex items-center gap-1"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Tester l&apos;affichage</span>
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => setIsShareModalOpen(false)}
+                  className="px-4 py-2 bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

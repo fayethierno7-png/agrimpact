@@ -49,6 +49,8 @@ function SignupContent() {
   const [showParcelDetails, setShowParcelDetails] = useState(false);
   const [region, setRegion] = useState('Thiès');
   const [culture, setCulture] = useState('Oignon');
+  const [isCustomCrop, setIsCustomCrop] = useState(false);
+  const [customCropInput, setCustomCropInput] = useState('');
   const [surfaceHa, setSurfaceHa] = useState('1.0');
   const [typeIrrigation, setTypeIrrigation] = useState<'goutte-a-goutte' | 'submersion' | 'pluviale'>('goutte-a-goutte');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -61,10 +63,22 @@ function SignupContent() {
         const parsed: SimulatorResult = JSON.parse(pendingRaw);
         setCachedSimulation(parsed);
         if (parsed.situation?.region) setRegion(parsed.situation.region);
-        if (parsed.situation?.culture) setCulture(parsed.situation.culture);
+        if (parsed.situation?.culture) {
+          setCulture(parsed.situation.culture);
+          if (!['Oignon', 'Tomate', 'Maïs', 'Arachide', 'Piment'].includes(parsed.situation.culture)) {
+            setIsCustomCrop(true);
+            setCustomCropInput(parsed.situation.culture);
+          }
+        }
       } else {
         if (regionParam) setRegion(regionParam);
-        if (cultureParam) setCulture(cultureParam);
+        if (cultureParam) {
+          setCulture(cultureParam);
+          if (!['Oignon', 'Tomate', 'Maïs', 'Arachide', 'Piment'].includes(cultureParam)) {
+            setIsCustomCrop(true);
+            setCustomCropInput(cultureParam);
+          }
+        }
       }
     } catch {}
   }, [regionParam, cultureParam]);
@@ -178,7 +192,7 @@ function SignupContent() {
             <div className="p-4 mb-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs flex items-center gap-3">
               <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
               <div>
-                <span className="font-bold">Découvrez votre espace AgriImpact en créant gratuitement votre compte.</span>
+                <span className="font-bold">Découvrez votre espace AgriImpact en activant votre profil exploitant.</span>
                 <p className="text-[11px] text-stone-600 dark:text-stone-300 mt-0.5">
                   Accès complet à la météo prédictive 14j et aux créneaux optimaux de traitement.
                 </p>
@@ -189,7 +203,7 @@ function SignupContent() {
           {/* Titre & Sous-titre */}
           <div className="text-center mb-6">
             <h1 className="text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-              Créer mon compte gratuit
+              Créer mon compte exploitant
             </h1>
             <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
               Activez votre copilote agronomique en 30 secondes chrono.
@@ -304,10 +318,10 @@ function SignupContent() {
                       <select
                         value={region}
                         onChange={(e) => setRegion(e.target.value)}
-                        className="w-full px-2.5 py-2 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg text-xs"
+                        className="w-full px-2.5 py-2 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg text-xs text-stone-900 dark:text-stone-100 font-medium"
                       >
                         {SENEGAL_REGIONS.map((r) => (
-                          <option key={r.nom} value={r.nom}>
+                          <option key={r.nom} value={r.nom} className="text-stone-900 dark:text-stone-100">
                             {r.nom}
                           </option>
                         ))}
@@ -322,31 +336,69 @@ function SignupContent() {
                         type="text"
                         value={surfaceHa}
                         onChange={(e) => setSurfaceHa(e.target.value)}
-                        className="w-full px-2.5 py-2 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg text-xs font-mono"
+                        className="w-full px-2.5 py-2 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg text-xs font-mono text-stone-900 dark:text-stone-100 font-medium"
+                        placeholder="1.0"
                       />
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">
-                      Culture
+                      Culture principale
                     </label>
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-1.5 mb-2">
                       {availableCrops.map((c) => (
                         <button
                           key={c}
                           type="button"
-                          onClick={() => setCulture(c)}
-                          className={`px-2.5 py-1 rounded-md text-xs font-bold ${
-                            culture === c
-                              ? 'bg-emerald-800 text-white'
-                              : 'bg-white dark:bg-stone-700 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-600'
+                          onClick={() => {
+                            setCulture(c);
+                            setIsCustomCrop(false);
+                          }}
+                          className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                            culture === c && !isCustomCrop
+                              ? 'bg-emerald-800 text-white shadow-xs'
+                              : 'bg-white dark:bg-stone-700 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-600 hover:border-emerald-600'
                           }`}
                         >
                           {c}
                         </button>
                       ))}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCustomCrop(true);
+                          if (customCropInput.trim()) setCulture(customCropInput.trim());
+                        }}
+                        className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                          isCustomCrop
+                            ? 'bg-emerald-800 text-white shadow-xs'
+                            : 'bg-white dark:bg-stone-700 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-600 hover:border-emerald-600'
+                        }`}
+                      >
+                        + Autre culture
+                      </button>
                     </div>
+
+                    {/* Saisie libre de culture si activée */}
+                    {isCustomCrop && (
+                      <div className="mt-2 animate-fade-in">
+                        <input
+                          type="text"
+                          value={customCropInput}
+                          onChange={(e) => {
+                            setCustomCropInput(e.target.value);
+                            setCulture(e.target.value.trim() || 'Culture personnalisée');
+                          }}
+                          placeholder="Nom de votre culture (ex: Pastèque, Gombo, Niébé, Mangue...)"
+                          className="w-full px-3 py-2 bg-white dark:bg-stone-800 border-2 border-emerald-600 rounded-lg text-xs text-stone-900 dark:text-stone-100 placeholder-stone-400 font-medium focus:ring-2 focus:ring-emerald-600/30"
+                          autoFocus
+                        />
+                        <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold block mt-1">
+                          ✓ Culture libre enregistrée : {culture}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -359,13 +411,13 @@ function SignupContent() {
                 disabled={isLoading}
                 className="w-full py-3.5 px-4 bg-emerald-800 hover:bg-emerald-900 active:bg-emerald-950 text-white text-sm font-black rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-900/20 cursor-pointer disabled:opacity-50"
               >
-                <span>{isLoading ? 'Création de votre espace...' : 'Créer mon compte et accéder au SaaS'}</span>
+                <span>{isLoading ? 'Création de votre espace...' : 'Créer mon compte exploitant et continuer'}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
 
             <p className="text-[11px] text-center text-stone-500 dark:text-stone-400 pt-1">
-              Gratuit • Aucune carte bancaire requise • Vos résultats sont immédiatement conservés.
+              Accès direct sécurisé • Données agronomiques ANACIM synchronisées • Vos simulations sont conservées.
             </p>
           </form>
 

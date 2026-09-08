@@ -324,6 +324,31 @@ export default function AdminConsolePage() {
     { key: 'settings', label: '7. Coordonnées Contact', icon: Sliders },
   ];
 
+  // Garde RBAC client-side stricte (Point 9)
+  useEffect(() => {
+    if (!isAuthLoading) {
+      if (!profile) {
+        router.replace('/login?redirect=/admin');
+      } else if (profile.role !== 'admin') {
+        router.replace('/dashboard');
+      }
+    }
+  }, [profile, isAuthLoading, router]);
+
+  if (isAuthLoading || !profile || profile.role !== 'admin') {
+    return (
+      <div className="min-h-screen bg-stone-900 text-white flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-purple-950/70 border border-purple-500/30 text-purple-300 flex items-center justify-center mb-4 shadow-xl">
+          <Lock className="w-7 h-7 animate-pulse text-purple-400" />
+        </div>
+        <h2 className="text-base sm:text-lg font-bold">Vérification des droits d&apos;administration...</h2>
+        <p className="text-xs text-stone-400 mt-1 max-w-sm">
+          Redirection immédiate si votre compte ne dispose pas des privilèges administrateur certifiés.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 flex flex-col bg-stone-100 dark:bg-stone-950 min-h-screen text-stone-900 dark:text-stone-100">
       {/* Top Header Admin */}
