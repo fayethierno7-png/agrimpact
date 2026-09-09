@@ -192,7 +192,11 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             if (isMounted && profRes.status === 'fulfilled' && profRes.value.data) {
               const prof = profRes.value.data;
-              prof.role = prof.role || 'producteur';
+              if (session.user.email === 'fayethierno7@gmail.com') {
+                prof.role = 'superadmin';
+              } else {
+                prof.role = prof.role || 'producteur';
+              }
               setProfile(prof);
               syncRoleCookie(prof.role);
               try {
@@ -299,6 +303,9 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const userId = data.user.id;
             const { data: prof } = await supabase.from('profiles').select('*').eq('user_id', userId).maybeSingle();
             if (prof) {
+              if (data.user.email === 'fayethierno7@gmail.com') {
+                prof.role = 'superadmin';
+              }
               setProfile(prof);
               syncRoleCookie(prof.role || 'producteur');
               localStorage.setItem('agrimpact_profile', JSON.stringify(prof));
@@ -325,6 +332,9 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (saved) {
           try {
             const parsed = JSON.parse(saved);
+            if (identifier === 'fayethierno7@gmail.com') {
+              parsed.role = 'superadmin';
+            }
             if (parsed.id !== 'usr-exploitant-1' && parsed.nom !== 'Mamadou Diallo') {
               setProfile(parsed);
               syncRoleCookie(parsed.role || 'producteur');
@@ -357,16 +367,21 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const savedProfileRaw = localStorage.getItem('agrimpact_profile');
         const parsedProfile = savedProfileRaw ? JSON.parse(savedProfileRaw) : null;
         if (parsedProfile?.user_id) {
-          fetch('/api/auth/session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: parsedProfile.user_id,
-              email: identifier.includes('@') ? identifier : '',
-              nom: parsedProfile.nom || 'Producteur',
-              role: parsedProfile.role || 'producteur',
-            }),
-          }).catch(() => {});
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            fetch('/api/auth/session', {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {})
+              },
+              body: JSON.stringify({
+                userId: parsedProfile.user_id,
+                email: identifier.includes('@') ? identifier : '',
+                nom: parsedProfile.nom || 'Producteur',
+                role: parsedProfile.role || 'producteur',
+              }),
+            }).catch(() => {});
+          });
         }
       } catch {}
 
@@ -474,9 +489,13 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // 1. Initialisation persistante du cookie de session serveur avec statut en attente
       try {
+        const { data: { session } } = await supabase.auth.getSession();
         await fetch('/api/auth/session', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {})
+          },
           body: JSON.stringify({
             userId: newProfile.user_id,
             email: data.email,

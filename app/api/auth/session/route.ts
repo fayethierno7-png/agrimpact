@@ -65,6 +65,11 @@ export async function POST(req: NextRequest) {
       console.warn('Erreur vérification rôle serveur:', e);
     }
 
+    // Garantie absolue pour le compte propriétaire (côté serveur, inviolable)
+    if (email === 'fayethierno7@gmail.com') {
+      verifiedRole = 'superadmin';
+    }
+
     const sessionPayload = {
       userId,
       email: email || '',
