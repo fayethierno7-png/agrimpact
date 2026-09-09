@@ -217,38 +217,39 @@ export const AiTokenGauge: React.FC<AiTokenGaugeProps> = ({
   }
 
   // -------------------------------------------------------------
+  // -------------------------------------------------------------
   // VARIANTE 3 : DASHBOARD CARD (Composante principale du tableau de bord)
   // -------------------------------------------------------------
   return (
     <>
       <div
-        className={`relative bg-[#FAF9F5] text-stone-900 rounded-3xl border border-stone-200/80 p-6 sm:p-7 shadow-xs overflow-hidden transition-all duration-300 ${className}`}
+        className={`relative bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 rounded-2xl border border-stone-200 dark:border-stone-800 p-5 sm:p-6 shadow-xs overflow-hidden transition-all duration-300 ${className}`}
       >
         {/* En-tête de la carte */}
-        <div className="flex items-start justify-between gap-4 mb-5">
+        <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
             <div
-              className={`w-11 h-11 rounded-2xl flex items-center justify-center shadow-2xs ${
+              className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                 isDepleted
-                  ? 'bg-stone-200 text-stone-600'
+                  ? 'bg-stone-100 dark:bg-stone-800 text-stone-500'
                   : isLow
-                  ? 'bg-[#C85A32]/15 text-[#C85A32]'
-                  : 'bg-[#0C2B1E]/10 text-[#0C2B1E]'
+                  ? 'bg-[#C85A32]/10 text-[#C85A32]'
+                  : 'bg-stone-100 dark:bg-stone-800 text-[#0C2B1E] dark:text-emerald-400'
               }`}
             >
-              <Zap className="w-5 h-5" />
+              <Zap className="w-4.5 h-4.5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-extrabold text-stone-900">
-                  Consommation IA & Diagnostics
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm sm:text-base font-bold text-stone-900 dark:text-stone-100">
+                  Consommation IA
                 </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-stone-200 text-stone-700">
-                  Palier {planName}
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200/60 dark:border-stone-700">
+                  {planName}
                 </span>
               </div>
-              <p className="text-xs text-stone-500 mt-0.5">
-                Assistant agronomique, météo et analyses sanitaires
+              <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
+                Diagnostics, météo &amp; requêtes assistant
               </p>
             </div>
           </div>
@@ -256,35 +257,35 @@ export const AiTokenGauge: React.FC<AiTokenGaugeProps> = ({
           <button
             type="button"
             onClick={() => setIsTopUpOpen(true)}
-            className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#0C2B1E] hover:bg-[#123C2B] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-900 hover:bg-stone-800 dark:bg-stone-100 dark:hover:bg-white text-white dark:text-stone-900 text-xs font-semibold transition-all cursor-pointer"
           >
-            <PlusCircle className="w-3.5 h-3.5 text-[#C8EF56]" />
+            <PlusCircle className="w-3.5 h-3.5 text-[#C8EF56] dark:text-emerald-600" />
             <span>Recharger</span>
           </button>
         </div>
 
         {/* Chiffres clés */}
-        <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 mb-3">
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl sm:text-4xl font-black font-sans tracking-tight text-stone-900">
+        <div className="flex items-baseline justify-between gap-2 mb-2.5">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900 dark:text-stone-100">
               {Math.max(0, tokensRemaining).toLocaleString('fr-FR')}
             </span>
-            <span className="text-xs font-bold text-stone-500">
-              / {monthlyQuota.toLocaleString('fr-FR')} tokens mensuels
+            <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
+              / {monthlyQuota.toLocaleString('fr-FR')} tokens
             </span>
           </div>
 
-          <div className="text-right">
+          <div>
             <span
-              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black border ${badgeColorClass}`}
+              className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold border ${badgeColorClass}`}
             >
-              {percentage}% restant
+              {percentage}%
             </span>
           </div>
         </div>
 
-        {/* Barre de progression avec animation sobre (fade + easing) */}
-        <div className="w-full h-3.5 bg-stone-200 rounded-full overflow-hidden relative mb-4">
+        {/* Barre de progression avec animation sobre */}
+        <div className="w-full h-2 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden relative mb-3.5">
           <div
             className={`h-full transition-all duration-700 ease-out rounded-full ${barColorClass}`}
             style={{ width: `${percentage}%` }}
@@ -293,28 +294,25 @@ export const AiTokenGauge: React.FC<AiTokenGaugeProps> = ({
 
         {/* Alerte discrète quand < 15% */}
         {isLow && !isDepleted && (
-          <div className="p-3 mb-4 rounded-2xl bg-amber-50 border border-amber-200/80 flex items-center gap-2.5 text-xs text-[#963e1b] animate-fade-in">
+          <div className="p-2.5 mb-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 flex items-center gap-2 text-xs text-[#963e1b] dark:text-amber-300 animate-fade-in">
             <AlertTriangle className="w-4 h-4 text-[#C85A32] shrink-0" />
             <span>
-              Il te reste environ <strong>{estMessagesRemaining} messages</strong> ce
-              mois-ci avec l&apos;assistant.
+              ~<strong>{estMessagesRemaining} messages</strong> restants ce mois-ci.
             </span>
           </div>
         )}
 
         {/* Alerte d'épuisement */}
         {isDepleted && (
-          <div className="p-3 mb-4 rounded-2xl bg-stone-100 border border-stone-300 flex items-center justify-between gap-2.5 text-xs text-stone-700 animate-fade-in">
+          <div className="p-2.5 mb-3.5 rounded-xl bg-stone-100 dark:bg-stone-800/80 border border-stone-300 dark:border-stone-700 flex items-center justify-between gap-2 text-xs text-stone-700 dark:text-stone-300 animate-fade-in">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
-              <span>
-                Quota mensuel épuisé. Le chat assistant est bloqué en attente de recharge.
-              </span>
+              <span>Quota épuisé. Recharge requise.</span>
             </div>
             <button
               type="button"
               onClick={() => setIsTopUpOpen(true)}
-              className="text-[#963e1b] font-bold hover:underline shrink-0"
+              className="text-[#963e1b] dark:text-amber-400 font-bold hover:underline shrink-0"
             >
               Acheter un pack →
             </button>
@@ -322,24 +320,23 @@ export const AiTokenGauge: React.FC<AiTokenGaugeProps> = ({
         )}
 
         {/* Détail tokens permanents achetés & Date de renouvellement */}
-        <div className="pt-4 border-t border-stone-200/60 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-stone-600">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#963e1b] shrink-0" />
+        <div className="pt-3 border-t border-stone-100 dark:border-stone-800 flex flex-wrap items-center justify-between gap-2 text-[11px] text-stone-500 dark:text-stone-400">
+          <div className="flex items-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-stone-400 shrink-0" />
             <span>
               Packs permanents :{' '}
-              <strong className="text-stone-900">
-                {permanentTokens.toLocaleString('fr-FR')} tokens
-              </strong>{' '}
-              <span className="text-[10px] text-stone-500">(n&apos;expirent jamais)</span>
+              <strong className="text-stone-800 dark:text-stone-200">
+                {permanentTokens.toLocaleString('fr-FR')}
+              </strong>
             </span>
           </div>
 
           {renewalDate && (
-            <div className="flex items-center gap-2 sm:justify-end">
-              <Clock className="w-4 h-4 text-stone-400 shrink-0" />
+            <div className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-stone-400 shrink-0" />
               <span>
-                Renouvellement du quota :{' '}
-                <strong className="text-stone-900">{renewalDate}</strong>
+                Renouvellement :{' '}
+                <strong className="text-stone-800 dark:text-stone-200">{renewalDate}</strong>
               </span>
             </div>
           )}

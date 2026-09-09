@@ -224,17 +224,17 @@ export function AgrometeoPredictiveModule({
 
   return (
     <div
-      className={`p-5 sm:p-6 bg-white dark:bg-stone-900 rounded-2xl border-2 ${vigilanceConfig.borderCard} shadow-sm relative transition-all duration-200`}
+      className={`p-6 sm:p-7 md:p-8 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200/90 dark:border-stone-800 shadow-sm relative transition-all duration-200`}
     >
       {/* 1. EN-TÊTE DU MODULE PRÉDICTIF */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="px-2.5 py-1 rounded-md bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 text-xs font-black tracking-wider uppercase flex items-center gap-1.5">
+          <span className="px-3 py-1.5 rounded-lg bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 text-xs font-black tracking-wider uppercase flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
             ANALYSE PRÉDICTIVE 14J • CAMPAGNE 2026
           </span>
           <span
-            className={`text-xs font-extrabold px-2.5 py-0.5 rounded-md border flex items-center gap-1.5 ${vigilanceConfig.badgeBg}`}
+            className={`text-xs font-extrabold px-2.5 py-1 rounded-lg border flex items-center gap-1.5 ${vigilanceConfig.badgeBg}`}
           >
             <span className={`w-2 h-2 rounded-full ${vigilanceConfig.dotColor} animate-pulse`} />
             {vigilanceConfig.label}
@@ -257,7 +257,7 @@ export function AgrometeoPredictiveModule({
       </div>
 
       {/* Titre & Sous-titre Culture */}
-      <div className="mb-4">
+      <div className="mb-5">
         <h2 className="text-base sm:text-lg font-black text-stone-900 dark:text-stone-100 leading-snug">
           {loading ? (
             <span className="inline-block w-64 h-6 bg-stone-200 dark:bg-stone-800 animate-pulse rounded" />
@@ -277,7 +277,7 @@ export function AgrometeoPredictiveModule({
       </div>
 
       {/* 2. BANDEAU DE RENTABILITÉ & ROI (4 INDICATEURS CLÉS) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mb-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
         {/* Métrique 1 : Perte de rendement projetée */}
         <div className="p-3 sm:p-3.5 rounded-xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700/80 flex flex-col justify-between">
           <div className="flex items-center justify-between text-stone-500 dark:text-stone-400 text-[11px] font-bold uppercase tracking-wider">

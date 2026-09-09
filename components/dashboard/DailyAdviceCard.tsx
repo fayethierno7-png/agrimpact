@@ -108,15 +108,15 @@ export default function DailyAdviceCard({ plot, farm, weather }: DailyAdviceCard
   }
 
   return (
-    <div className="bg-gradient-to-br from-white via-white to-amber-50/40 dark:from-stone-900 dark:via-stone-900 dark:to-emerald-950/20 rounded-3xl border border-stone-200 dark:border-stone-800 shadow-md p-5 sm:p-6 overflow-hidden relative">
+    <div className="bg-gradient-to-br from-white via-white to-amber-50/30 dark:from-stone-900 dark:via-stone-900 dark:to-emerald-950/20 rounded-3xl border border-stone-200/90 dark:border-stone-800 shadow-sm p-6 sm:p-7 md:p-8 overflow-hidden relative">
       {/* Halo décoratif subtil */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* En-tête avec badge dynamique */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 pb-4 border-b border-stone-100 dark:border-stone-800">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-[#0C2B1E] text-[#C8EF56] flex items-center justify-center font-bold shrink-0">
-            <Sparkles className="w-4 h-4" />
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-stone-100 dark:border-stone-800/80">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-[#0C2B1E] text-[#C8EF56] flex items-center justify-center font-bold shrink-0">
+            <Sparkles className="w-4.5 h-4.5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -125,82 +125,82 @@ export default function DailyAdviceCard({ plot, farm, weather }: DailyAdviceCard
               </span>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             </div>
-            <p className="text-[11px] text-stone-500 font-medium">
+            <p className="text-xs text-stone-500 dark:text-stone-400 font-medium mt-0.5">
               Calculé sur vos données en temps réel • Modélisation ISRA &amp; ANACIM
             </p>
           </div>
         </div>
 
         {/* Pilules de contexte actif */}
-        <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          <span className="px-2.5 py-1 rounded-lg bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold flex items-center gap-1">
-            <Sprout className="w-3.5 h-3.5 text-emerald-600" />
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="px-3 py-1.5 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold flex items-center gap-1.5">
+            <Sprout className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>{culture} • {matchedStage.nom} (J+{daysSinceSowing})</span>
           </span>
-          <span className="px-2.5 py-1 rounded-lg bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 font-medium">
+          <span className="px-3 py-1.5 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 font-medium">
             {region}
           </span>
         </div>
       </div>
 
       {/* Titre de recommandation immédiate */}
-      <div className="mt-4 mb-3">
-        <h2 className="text-base sm:text-lg font-black text-stone-900 dark:text-stone-100 leading-snug">
+      <div className="mt-5 mb-4">
+        <h2 className="text-base sm:text-xl font-black text-stone-900 dark:text-stone-100 leading-snug tracking-tight">
           {adviceTitle}
         </h2>
       </div>
 
       {/* 3 Blocs d'action concrets */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 my-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4 my-5">
         {/* Pulvérisation */}
-        <div className="p-3.5 bg-stone-50 dark:bg-stone-800/60 rounded-2xl border border-stone-200/80 dark:border-stone-800 text-xs space-y-1.5">
-          <div className="flex items-center gap-1.5 text-stone-700 dark:text-stone-300 font-bold">
-            <Wind className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+        <div className="p-4 sm:p-4.5 bg-stone-50/80 dark:bg-stone-800/50 rounded-2xl border border-stone-200/70 dark:border-stone-800 text-xs space-y-2">
+          <div className="flex items-center gap-2 text-stone-800 dark:text-stone-200 font-bold">
+            <Wind className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span>Pulvérisation &amp; Traitement</span>
           </div>
-          <p className="text-stone-600 dark:text-stone-400 leading-relaxed text-[11px]">
+          <p className="text-stone-600 dark:text-stone-300 leading-relaxed text-[11px] sm:text-xs">
             {sprayAdvice}
           </p>
         </div>
 
         {/* Irrigation */}
-        <div className="p-3.5 bg-stone-50 dark:bg-stone-800/60 rounded-2xl border border-stone-200/80 dark:border-stone-800 text-xs space-y-1.5">
-          <div className="flex items-center gap-1.5 text-stone-700 dark:text-stone-300 font-bold">
-            <Droplets className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+        <div className="p-4 sm:p-4.5 bg-stone-50/80 dark:bg-stone-800/50 rounded-2xl border border-stone-200/70 dark:border-stone-800 text-xs space-y-2">
+          <div className="flex items-center gap-2 text-stone-800 dark:text-stone-200 font-bold">
+            <Droplets className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0" />
             <span>Pilotage Irrigation ({typeIrrigation})</span>
           </div>
-          <p className="text-stone-600 dark:text-stone-400 leading-relaxed text-[11px]">
+          <p className="text-stone-600 dark:text-stone-300 leading-relaxed text-[11px] sm:text-xs">
             {waterAdvice}
           </p>
         </div>
 
         {/* Vigilance Sanitaire */}
-        <div className="p-3.5 bg-stone-50 dark:bg-stone-800/60 rounded-2xl border border-stone-200/80 dark:border-stone-800 text-xs space-y-1.5">
-          <div className="flex items-center gap-1.5 text-stone-700 dark:text-stone-300 font-bold">
-            <ShieldAlert className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+        <div className="p-4 sm:p-4.5 bg-stone-50/80 dark:bg-stone-800/50 rounded-2xl border border-stone-200/70 dark:border-stone-800 text-xs space-y-2">
+          <div className="flex items-center gap-2 text-stone-800 dark:text-stone-200 font-bold">
+            <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
             <span>Surveillance Sanitaire</span>
           </div>
-          <p className="text-stone-600 dark:text-stone-400 leading-relaxed text-[11px]">
+          <p className="text-stone-600 dark:text-stone-300 leading-relaxed text-[11px] sm:text-xs">
             {sanitaryAdvice}
           </p>
         </div>
       </div>
 
       {/* Footer avec CTA vers l'assistant */}
-      <div className="pt-3 border-t border-stone-100 dark:border-stone-800 flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-3 text-stone-500 dark:text-stone-400 text-[11px]">
-          <span>Météo du jour : <strong>{currentTemp}°C</strong></span>
+      <div className="pt-4 mt-2 border-t border-stone-100 dark:border-stone-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-stone-500 dark:text-stone-400 text-[11px]">
+          <span>Météo du jour : <strong className="text-stone-700 dark:text-stone-300">{currentTemp}°C</strong></span>
           <span>•</span>
-          <span>Humidité : <strong>{currentHumidity}%</strong></span>
+          <span>Humidité : <strong className="text-stone-700 dark:text-stone-300">{currentHumidity}%</strong></span>
           <span>•</span>
-          <span>Vent : <strong>{currentWind} km/h</strong></span>
+          <span>Vent : <strong className="text-stone-700 dark:text-stone-300">{currentWind} km/h</strong></span>
           <span>•</span>
-          <span>Pluie : <strong>{currentRainProb}%</strong></span>
+          <span>Pluie : <strong className="text-stone-700 dark:text-stone-300">{currentRainProb}%</strong></span>
         </div>
 
         <Link
           href={`/assistant`}
-          className="inline-flex items-center gap-1.5 font-bold text-[#963e1b] hover:text-[#7f3214] dark:text-amber-400 transition-colors"
+          className="inline-flex items-center gap-1.5 font-bold text-[#963e1b] hover:text-[#7f3214] dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
         >
           <span>Poser une question sur ce conseil</span>
           <ArrowRight className="w-3.5 h-3.5" />

@@ -183,15 +183,15 @@ export default function DashboardPage() {
     <div className="flex-1 flex flex-col bg-stone-50/70 dark:bg-stone-950 min-h-screen transition-colors duration-200">
       <AppHeader statusText="En ligne" />
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 space-y-8">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 pb-28 sm:pb-32 space-y-10 sm:space-y-12">
         {/* En-tête Salutations & Contexte */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-stone-200/60 dark:border-stone-800/60">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-stone-200/80 dark:border-stone-800/80">
           <div>
             <div className="flex items-center gap-2.5">
               <h1 className="text-2xl sm:text-3xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
                 Bonjour {userName}
               </h1>
-              <span className="hidden sm:inline-block px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold border border-emerald-200 dark:border-emerald-800/60 whitespace-nowrap">
+              <span className="hidden sm:inline-block px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold border border-emerald-200/80 dark:border-emerald-800/60 whitespace-nowrap">
                 Exploitant certifié
               </span>
             </div>
@@ -233,307 +233,408 @@ export default function DashboardPage() {
         </div>
 
         {/* Layout Responsive en Grille (12 colonnes sur Desktop, 1 colonne sur Mobile) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
           {/* COLONNE PRINCIPALE (8 Cols sur Desktop) */}
-          <div className="lg:col-span-8 space-y-8">
-            {/* Bannière de restitution de simulation */}
-            {recentSimulation && showSimulationCard && (
-              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#0C2B1E] to-[#164733] text-white shadow-md relative overflow-hidden animate-fade-in border border-[#C8EF56]/30">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-[#C8EF56]/20 flex items-center justify-center text-[#C8EF56] shrink-0 mt-0.5">
-                      <Sparkles className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="text-[11px] font-black uppercase tracking-wider text-[#C8EF56]">
-                        Diagnostic issu de votre simulation • {recentSimulation.situation?.culture} ({recentSimulation.situation?.region})
-                      </div>
-                      <h3 className="text-sm sm:text-base font-bold text-white mt-0.5">
-                        {recentSimulation.recommandation?.actionTitre}
-                      </h3>
-                      <p className="text-xs text-stone-200 mt-1 max-w-2xl leading-relaxed">
-                        {recentSimulation.recommandation?.actionMessage}
-                      </p>
-                      <div className="mt-2.5 flex flex-wrap items-center gap-2 text-[11px] text-emerald-200 font-medium">
-                        <span className="px-2 py-0.5 rounded-md bg-white/10 text-white font-mono">
-                          {recentSimulation.recommandation?.creneauConseille}
-                        </span>
-                        <span>• Économie estimée : ~{recentSimulation.analyse?.economieEauEstimeeM3 || 25} m³/ha</span>
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowSimulationCard(false)}
-                    className="text-stone-300 hover:text-white text-xs px-2.5 py-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
-                  >
-                    Fermer
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* POINT 11 : Avertissement Période de grâce 3 jours avant coupure */}
-            {Boolean((profile as any)?.statut_abonnement === 'impaye') && (
-              <div className="p-4 rounded-2xl bg-[#963e1b]/10 border border-[#963e1b]/30 text-[#963e1b] dark:text-amber-300 flex flex-wrap items-center justify-between gap-3 shadow-xs">
-                <div className="flex items-center gap-3">
-                  <AlertTriangle className="w-5 h-5 shrink-0 text-[#963e1b] animate-pulse" />
-                  <div>
-                    <span className="text-xs font-black uppercase tracking-wider block">
-                      Période de grâce active — Renouvellement requis
-                    </span>
-                    <p className="text-xs mt-0.5 text-stone-700 dark:text-stone-300">
-                      Votre abonnement est en attente de règlement. Veuillez régulariser votre souscription avant la suspension complète de vos accès aux outils d&apos;aide à la décision.
-                    </p>
-                  </div>
-                </div>
-                <Link
-                  href="/tarifs"
-                  className="px-3.5 py-1.5 bg-[#963e1b] hover:bg-[#7f3214] text-white rounded-xl text-xs font-bold shrink-0 shadow-xs transition-colors"
-                >
-                  Régulariser mon forfait
-                </Link>
-              </div>
-            )}
-
-            {/* Bandeau Alerte Météo Prioritaire (Conditionnel Réel) */}
-            {activeAlert ? (
-              <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/80 shadow-xs relative overflow-hidden">
-                <div className="flex items-start gap-3 sm:gap-4">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 flex items-center justify-center shrink-0 mt-0.5">
-                    <AlertTriangle className="w-5 h-5 text-amber-700 dark:text-amber-400" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center justify-between gap-1">
-                      <span className="text-[11px] font-extrabold tracking-wider text-amber-900 dark:text-amber-300 uppercase">
-                        VIGILANCE MÉTÉO • {activeAlert.vigilance.toUpperCase()}
-                      </span>
-                      {activeAlert.time_slot && (
-                        <span className="px-2 py-0.5 rounded-md bg-amber-200/80 dark:bg-amber-900/80 text-amber-900 dark:text-amber-200 text-xs font-bold">
-                          {activeAlert.time_slot}
-                        </span>
-                      )}
-                    </div>
-                    <h2 className="text-sm sm:text-base font-bold text-stone-950 dark:text-stone-100 mt-1">
-                      {activeAlert.titre}
-                    </h2>
-                    <p className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 mt-1 leading-relaxed">
-                      {activeAlert.impact_direct || activeAlert.message}
-                    </p>
-                    {activeAlert.consignes && (
-                      <p className="text-xs font-semibold text-amber-950 dark:text-amber-200 mt-2 bg-amber-100/70 dark:bg-amber-900/50 p-2 rounded-lg">
-                        👉 {activeAlert.consignes}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60 shadow-xs flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 flex items-center justify-center shrink-0">
-                    <Check className="w-5 h-5 text-emerald-700 dark:text-emerald-400 stroke-[2.5]" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-emerald-950 dark:text-emerald-200">
-                      Conditions météorologiques favorables
-                    </div>
-                    <p className="text-[11px] text-emerald-800 dark:text-emerald-300 mt-0.5">
-                      Aucune alerte météo extrême en cours sur votre exploitation à {farmRegion}.
-                    </p>
-                  </div>
-                </div>
-                <Link
-                  href="/alerts"
-                  className="text-xs font-bold text-emerald-800 dark:text-emerald-400 hover:text-emerald-950 dark:hover:text-emerald-300 underline shrink-0 hidden sm:inline"
-                >
-                  Vigilance ANACIM
-                </Link>
-              </div>
-            )}
-
-            {/* Cartes Météo (2 sur mobile, 4 sur tablette/desktop) */}
-            {currentWeather ? (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-              {/* Carte 1 : Température */}
-              <div className="p-4 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-xs flex flex-col justify-between">
-                <div className="flex items-center justify-between text-stone-500 dark:text-stone-400 mb-1">
-                  <span className="text-xs font-medium">Température</span>
-                  <Sun className="w-4.5 h-4.5 text-amber-500" />
-                </div>
-                <div>
-                  <div className="text-2xl sm:text-3xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-                    {currentWeather.temperature}°C
-                  </div>
-                  <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 font-medium">
-                    Max {currentWeather.temperatureMax}°C • Min {currentWeather.temperatureMin}°C
-                  </div>
-                </div>
-              </div>
-
-              {/* Carte 2 : Risque de pluie */}
-              <div className="p-4 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-xs flex flex-col justify-between">
-                <div className="flex items-center justify-between text-stone-500 dark:text-stone-400 mb-1">
-                  <span className="text-xs font-medium">Précipitations</span>
-                  <CloudRain className="w-4.5 h-4.5 text-blue-500" />
-                </div>
-                <div>
-                  <div className="text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400 tracking-tight">
-                    {currentWeather.precipitationProbability}%
-                  </div>
-                  <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 font-medium truncate">
-                    {currentWeather.precipitationSum} mm attendus
-                  </div>
-                </div>
-              </div>
-
-              {/* Carte 3 : Vent */}
-              <div className="p-4 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-xs flex flex-col justify-between">
-                <div className="flex items-center justify-between text-stone-500 dark:text-stone-400 mb-1">
-                  <span className="text-xs font-medium">Vent / Rafales</span>
-                  <Wind className="w-4.5 h-4.5 text-teal-600 dark:text-teal-400" />
-                </div>
-                <div>
-                  <div className="text-2xl sm:text-3xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-                    {currentWeather.windSpeed} <span className="text-sm font-semibold text-stone-500 dark:text-stone-400">km/h</span>
-                  </div>
-                  <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 font-medium">
-                    {currentWeather.windSpeed >= 25 ? 'Rafales soutenues' : currentWeather.windSpeed >= 15 ? 'Vent modéré' : 'Vent calme'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Carte 4 : Humidité de l'air */}
-              <div className="p-4 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-xs flex flex-col justify-between">
-                <div className="flex items-center justify-between text-stone-500 dark:text-stone-400 mb-1">
-                  <span className="text-xs font-medium">Humidité</span>
-                  <Droplets className="w-4.5 h-4.5 text-indigo-500 dark:text-indigo-400" />
-                </div>
-                <div>
-                  <div className="text-2xl sm:text-3xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-                    {currentWeather.humidity}%
-                  </div>
-                  <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 font-medium">
-                    {predictionVigilance === 'rouge'
-                      ? 'Vigilance mildiou critique'
-                      : predictionVigilance === 'orange'
-                      ? 'Vigilance mildiou élevée'
-                      : predictionVigilance === 'jaune'
-                      ? 'Vigilance mildiou modérée'
-                      : currentWeather.humidity >= 80
-                      ? 'Humidité élevée — surveiller'
-                      : currentWeather.humidity >= 60
-                      ? 'Humidité normale'
-                      : 'Air sec — irriguer si nécessaire'
-                    }
-                  </div>
-                </div>
-              </div>
-            </div>
-            ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-              {['Température', 'Précipitations', 'Vent / Rafales', 'Humidité'].map((label) => (
-                <div key={label} className="p-4 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-xs flex flex-col justify-between animate-pulse">
-                  <div className="flex items-center justify-between text-stone-400 dark:text-stone-500 mb-1">
-                    <span className="text-xs font-medium">{label}</span>
-                  </div>
-                  <div>
-                    <div className="w-20 h-8 bg-stone-200 dark:bg-stone-800 rounded mt-1" />
-                    <div className="w-32 h-3 bg-stone-100 dark:bg-stone-800 rounded mt-2" />
-                  </div>
-                </div>
-              ))}
-            </div>
-            )}
-
-            {/* Module d'Analyse Prédictive Avancée 14j & Rentabilité ROI */}
-            {currentPlot && cropStage ? (
-              <>
-                {/* POINT 3 : Conseil du jour visible, dynamique et contextuel */}
-                <DailyAdviceCard plot={currentPlot} farm={farm} weather={currentWeather} />
-
-                <AgrometeoPredictiveModule
-                  plot={currentPlot}
-                  latitude={latitude}
-                  longitude={longitude}
-                  hasApplied={hasApplied}
-                  onApply={handleApply}
-                  conseilFallback={conseilDuJour}
-                  onPredictionSync={handlePredictionSync}
-                />
-
-                {/* Carte Culture & Cycle Végétatif */}
-                <Link
-                  href="/history"
-                  className="p-5 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 hover:border-emerald-300 dark:hover:border-emerald-700/60 hover:shadow-sm transition-all block group"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 flex items-center justify-center group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/60 transition-colors">
-                        <Sprout className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
+          <div className="lg:col-span-8 space-y-10 sm:space-y-12">
+            {/* SECTION 1 : Diagnostic & Recommandations prioritaires (Le Coeur Décisionnel) */}
+            <section className="space-y-6">
+              {/* Bannière de restitution de simulation */}
+              {recentSimulation && showSimulationCard && (
+                <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-[#0C2B1E] to-[#164733] text-white shadow-md relative overflow-hidden animate-fade-in border border-[#C8EF56]/30">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3.5">
+                      <div className="w-10 h-10 rounded-2xl bg-[#C8EF56]/20 flex items-center justify-center text-[#C8EF56] shrink-0 mt-0.5">
+                        <Sparkles className="w-5 h-5" />
                       </div>
                       <div>
-                        <div className="flex items-center gap-1.5 text-sm font-bold text-stone-900 dark:text-stone-100">
-                          <span>{cropStage.culture} ({cropStage.variete})</span>
-                          <ChevronRight className="w-4 h-4 text-stone-400 group-hover:translate-x-0.5 transition-transform" />
+                        <div className="text-[11px] font-black uppercase tracking-wider text-[#C8EF56]">
+                          Diagnostic issu de votre simulation • {recentSimulation.situation?.culture} ({recentSimulation.situation?.region})
                         </div>
-                        <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
-                          Semis il y a {cropStage.joursDepuisSemis} jours • Actuellement au stade : <span className="font-semibold text-emerald-900 dark:text-emerald-300">{cropStage.stadeNom}</span>
+                        <h3 className="text-base sm:text-lg font-bold text-white mt-1">
+                          {recentSimulation.recommandation?.actionTitre}
+                        </h3>
+                        <p className="text-xs sm:text-sm text-stone-200 mt-1 max-w-2xl leading-relaxed">
+                          {recentSimulation.recommandation?.actionMessage}
                         </p>
+                        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-emerald-200 font-medium">
+                          <span className="px-2.5 py-1 rounded-md bg-white/10 text-white font-mono font-bold">
+                            {recentSimulation.recommandation?.creneauConseille}
+                          </span>
+                          <span>• Économie estimée : ~{recentSimulation.analyse?.economieEauEstimeeM3 || 25} m³/ha</span>
+                        </div>
                       </div>
                     </div>
-
-                    <span className="hidden sm:inline-flex text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800/60">
-                      Progression : {cropStage.pourcentageCycle}%
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowSimulationCard(false)}
+                      className="text-stone-300 hover:text-white text-xs px-2.5 py-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+                    >
+                      Fermer
+                    </button>
                   </div>
+                </div>
+              )}
 
-                  {/* Jauge de progression */}
-                  <div className="mt-4 pt-3 border-t border-stone-100 dark:border-stone-800">
-                    <div className="flex items-center justify-between text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1.5">
-                      <span>
-                        Cycle végétatif : {cropStage.joursDepuisSemis} sur {cropStage.cycleTotalJours} jours
+              {/* Avertissement Période de grâce 3 jours avant coupure */}
+              {Boolean((profile as any)?.statut_abonnement === 'impaye') && (
+                <div className="p-5 rounded-2xl bg-[#963e1b]/10 border border-[#963e1b]/30 text-[#963e1b] dark:text-amber-300 flex flex-wrap items-center justify-between gap-4 shadow-xs">
+                  <div className="flex items-center gap-3.5">
+                    <AlertTriangle className="w-5 h-5 shrink-0 text-[#963e1b] animate-pulse" />
+                    <div>
+                      <span className="text-xs font-black uppercase tracking-wider block">
+                        Période de grâce active — Renouvellement requis
                       </span>
-                      <span className="text-emerald-900 dark:text-emerald-300 font-bold">{cropStage.pourcentageCycle}%</span>
-                    </div>
-                    <div className="w-full h-2.5 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-emerald-700 rounded-full transition-all duration-500"
-                        style={{ width: `${cropStage.pourcentageCycle}%` }}
-                      />
+                      <p className="text-xs mt-0.5 text-stone-700 dark:text-stone-300">
+                        Votre abonnement est en attente de règlement. Veuillez régulariser votre souscription avant la suspension complète de vos accès aux outils d&apos;aide à la décision.
+                      </p>
                     </div>
                   </div>
-                </Link>
-              </>
-            ) : (
-              <div className="p-8 bg-white dark:bg-stone-900 rounded-2xl border border-dashed border-stone-300 dark:border-stone-700 text-center space-y-4 shadow-xs">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 flex items-center justify-center mx-auto">
-                  <Sprout className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-stone-900 dark:text-stone-100">
-                    Aucune parcelle agricole enregistrée
-                  </h3>
-                  <p className="text-xs text-stone-500 dark:text-stone-400 max-w-md mx-auto mt-1 leading-relaxed">
-                    Configurez votre culture principale (Oignon, Tomate, Piment, Pomme de terre, etc.), votre mode d&apos;irrigation et votre date de semis pour activer les recommandations quotidiennes personnalisées.
-                  </p>
-                </div>
-                <div className="pt-2">
                   <Link
-                    href="/profile"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold rounded-xl transition-all shadow-xs"
+                    href="/tarifs"
+                    className="px-4 py-2 bg-[#963e1b] hover:bg-[#7f3214] text-white rounded-xl text-xs font-bold shrink-0 shadow-xs transition-colors"
                   >
-                    <span>Ajouter ma parcelle</span>
-                    <ChevronRight className="w-4 h-4" />
+                    Régulariser mon forfait
                   </Link>
                 </div>
+              )}
+
+              {/* Bandeau Alerte Météo Prioritaire (ou bandeau favorable sobre et neutre) */}
+              {activeAlert ? (
+                <div className="p-5 sm:p-6 rounded-3xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/80 shadow-xs relative overflow-hidden">
+                  <div className="flex items-start gap-3.5 sm:gap-4">
+                    <div className="w-10 h-10 rounded-2xl bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 flex items-center justify-center shrink-0 mt-0.5">
+                      <AlertTriangle className="w-5 h-5 text-amber-700 dark:text-amber-400" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-center justify-between gap-1.5">
+                        <span className="text-[11px] font-extrabold tracking-wider text-amber-900 dark:text-amber-300 uppercase">
+                          VIGILANCE MÉTÉO • {activeAlert.vigilance.toUpperCase()}
+                        </span>
+                        {activeAlert.time_slot && (
+                          <span className="px-2.5 py-0.5 rounded-md bg-amber-200/80 dark:bg-amber-900/80 text-amber-900 dark:text-amber-200 text-xs font-bold">
+                            {activeAlert.time_slot}
+                          </span>
+                        )}
+                      </div>
+                      <h2 className="text-sm sm:text-base font-bold text-stone-950 dark:text-stone-100 mt-1">
+                        {activeAlert.titre}
+                      </h2>
+                      <p className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 mt-1 leading-relaxed">
+                        {activeAlert.impact_direct || activeAlert.message}
+                      </p>
+                      {activeAlert.consignes && (
+                        <p className="text-xs font-semibold text-amber-950 dark:text-amber-200 mt-2.5 bg-amber-100/70 dark:bg-amber-900/50 p-2.5 rounded-xl">
+                          👉 {activeAlert.consignes}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 sm:p-4.5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 shadow-xs flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                      <Check className="w-4 h-4 stroke-[2.5]" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-stone-900 dark:text-stone-100">
+                        Conditions météorologiques favorables
+                      </div>
+                      <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
+                        Aucune alerte météo extrême en cours sur votre exploitation à {farmRegion}.
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/alerts"
+                    className="text-xs font-semibold text-stone-600 dark:text-stone-400 hover:text-emerald-700 dark:hover:text-emerald-400 underline shrink-0 hidden sm:inline"
+                  >
+                    Vigilance ANACIM
+                  </Link>
+                </div>
+              )}
+
+              {/* POINT 3 : Conseil du jour visible, dynamique et contextuel (HÉROS) */}
+              {currentPlot && cropStage ? (
+                <>
+                  <DailyAdviceCard plot={currentPlot} farm={farm} weather={currentWeather} />
+
+                  {/* Module d'Analyse Prédictive Avancée 14j & Rentabilité ROI */}
+                  <AgrometeoPredictiveModule
+                    plot={currentPlot}
+                    latitude={latitude}
+                    longitude={longitude}
+                    hasApplied={hasApplied}
+                    onApply={handleApply}
+                    conseilFallback={conseilDuJour}
+                    onPredictionSync={handlePredictionSync}
+                  />
+
+                  {/* Carte Culture & Cycle Végétatif */}
+                  <Link
+                    href="/history"
+                    className="p-6 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 hover:border-emerald-300 dark:hover:border-emerald-700/60 hover:shadow-sm transition-all block group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 flex items-center justify-center group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/60 transition-colors shrink-0">
+                          <Sprout className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5 text-sm font-bold text-stone-900 dark:text-stone-100">
+                            <span>{cropStage.culture} ({cropStage.variete})</span>
+                            <ChevronRight className="w-4 h-4 text-stone-400 group-hover:translate-x-0.5 transition-transform" />
+                          </div>
+                          <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+                            Semis il y a {cropStage.joursDepuisSemis} jours • Actuellement au stade : <span className="font-semibold text-emerald-900 dark:text-emerald-300">{cropStage.stadeNom}</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      <span className="hidden sm:inline-flex text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800/60">
+                        Progression : {cropStage.pourcentageCycle}%
+                      </span>
+                    </div>
+
+                    {/* Jauge de progression */}
+                    <div className="mt-4 pt-3.5 border-t border-stone-100 dark:border-stone-800">
+                      <div className="flex items-center justify-between text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1.5">
+                        <span>
+                          Cycle végétatif : {cropStage.joursDepuisSemis} sur {cropStage.cycleTotalJours} jours
+                        </span>
+                        <span className="text-emerald-900 dark:text-emerald-300 font-bold">{cropStage.pourcentageCycle}%</span>
+                      </div>
+                      <div className="w-full h-2.5 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-emerald-700 rounded-full transition-all duration-500"
+                          style={{ width: `${cropStage.pourcentageCycle}%` }}
+                        />
+                      </div>
+                    </div>
+                  </Link>
+                </>
+              ) : (
+                /* État vide soigné et discret */
+                <div className="p-7 sm:p-8 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 text-center space-y-4 shadow-xs">
+                  <div className="w-12 h-12 rounded-2xl bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 flex items-center justify-center mx-auto">
+                    <Sprout className="w-6 h-6 text-emerald-700 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-stone-900 dark:text-stone-100">
+                      Aucune parcelle agricole enregistrée
+                    </h3>
+                    <p className="text-xs text-stone-500 dark:text-stone-400 max-w-md mx-auto mt-1 leading-relaxed">
+                      Configurez votre culture principale (Oignon, Tomate, Piment, Pomme de terre, etc.), votre mode d&apos;irrigation et votre date de semis pour activer les recommandations quotidiennes personnalisées.
+                    </p>
+                  </div>
+                  <div className="pt-2">
+                    <Link
+                      href="/profile"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold rounded-xl transition-all shadow-xs"
+                    >
+                      <span>Ajouter ma parcelle</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </section>
+
+            {/* SECTION 2 : REGROUPEMENT LOGIQUE MÉTÉO & PRÉVISIONS 24H */}
+            <section className="space-y-4 pt-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-1">
+                <div>
+                  <h2 className="text-base sm:text-lg font-black text-stone-900 dark:text-stone-100 tracking-tight flex items-center gap-2">
+                    <Sun className="w-4.5 h-4.5 text-amber-500" />
+                    <span>Météo de l&apos;Exploitation &amp; Prévisions</span>
+                  </h2>
+                  <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+                    Conditions locales en temps réel • Relevé station {farmRegion} • ANACIM
+                  </p>
+                </div>
+
+                <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border ${
+                  currentWeather
+                    ? 'text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200/60 dark:border-emerald-800/60'
+                    : 'text-stone-500 dark:text-stone-400 bg-stone-100 dark:bg-stone-800 border-stone-200 dark:border-stone-700'
+                }`}>
+                  {currentWeather ? 'Synchronisé en direct' : 'Actualisation…'}
+                </span>
               </div>
-            )}
+
+              {/* Cartes Météo Temps Réel (4 métriques avec gap et padding aérés) */}
+              {currentWeather ? (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
+                  {/* Carte 1 : Température */}
+                  <div className="p-4 sm:p-5 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col justify-between min-h-[120px]">
+                    <div className="flex items-center justify-between text-stone-500 dark:text-stone-400 mb-1">
+                      <span className="text-xs font-medium">Température</span>
+                      <Sun className="w-4.5 h-4.5 text-amber-500" />
+                    </div>
+                    <div>
+                      <div className="text-2xl sm:text-3xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+                        {currentWeather.temperature}°C
+                      </div>
+                      <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 font-medium">
+                        Max {currentWeather.temperatureMax}°C • Min {currentWeather.temperatureMin}°C
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Carte 2 : Risque de pluie */}
+                  <div className="p-4 sm:p-5 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col justify-between min-h-[120px]">
+                    <div className="flex items-center justify-between text-stone-500 dark:text-stone-400 mb-1">
+                      <span className="text-xs font-medium">Précipitations</span>
+                      <CloudRain className="w-4.5 h-4.5 text-blue-500" />
+                    </div>
+                    <div>
+                      <div className="text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400 tracking-tight">
+                        {currentWeather.precipitationProbability}%
+                      </div>
+                      <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 font-medium truncate">
+                        {currentWeather.precipitationSum} mm attendus
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Carte 3 : Vent */}
+                  <div className="p-4 sm:p-5 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col justify-between min-h-[120px]">
+                    <div className="flex items-center justify-between text-stone-500 dark:text-stone-400 mb-1">
+                      <span className="text-xs font-medium">Vent / Rafales</span>
+                      <Wind className="w-4.5 h-4.5 text-teal-600 dark:text-teal-400" />
+                    </div>
+                    <div>
+                      <div className="text-2xl sm:text-3xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+                        {currentWeather.windSpeed} <span className="text-sm font-semibold text-stone-500 dark:text-stone-400">km/h</span>
+                      </div>
+                      <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 font-medium">
+                        {currentWeather.windSpeed >= 25 ? 'Rafales soutenues' : currentWeather.windSpeed >= 15 ? 'Vent modéré' : 'Vent calme'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Carte 4 : Humidité de l'air */}
+                  <div className="p-4 sm:p-5 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col justify-between min-h-[120px]">
+                    <div className="flex items-center justify-between text-stone-500 dark:text-stone-400 mb-1">
+                      <span className="text-xs font-medium">Humidité</span>
+                      <Droplets className="w-4.5 h-4.5 text-indigo-500 dark:text-indigo-400" />
+                    </div>
+                    <div>
+                      <div className="text-2xl sm:text-3xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+                        {currentWeather.humidity}%
+                      </div>
+                      <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 font-medium">
+                        {predictionVigilance === 'rouge'
+                          ? 'Vigilance mildiou critique'
+                          : predictionVigilance === 'orange'
+                          ? 'Vigilance mildiou élevée'
+                          : predictionVigilance === 'jaune'
+                          ? 'Vigilance mildiou modérée'
+                          : currentWeather.humidity >= 80
+                          ? 'Humidité élevée'
+                          : currentWeather.humidity >= 60
+                          ? 'Humidité normale'
+                          : 'Air sec'
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
+                  {['Température', 'Précipitations', 'Vent / Rafales', 'Humidité'].map((label) => (
+                    <div key={label} className="p-4 sm:p-5 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col justify-between animate-pulse min-h-[120px]">
+                      <div className="flex items-center justify-between text-stone-400 dark:text-stone-500 mb-1">
+                        <span className="text-xs font-medium">{label}</span>
+                      </div>
+                      <div>
+                        <div className="w-20 h-8 bg-stone-200 dark:bg-stone-800 rounded mt-1" />
+                        <div className="w-32 h-3 bg-stone-100 dark:bg-stone-800 rounded mt-2" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Carte Prévisions 24h ANACIM (Regroupée logiquement sous la météo) */}
+              <div className="p-5 sm:p-6 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs mt-4">
+                <div className="flex items-center justify-between pb-3.5 border-b border-stone-100 dark:border-stone-800">
+                  <h3 className="text-xs font-bold text-stone-900 dark:text-stone-100 uppercase tracking-wider flex items-center gap-2">
+                    <span>Créneaux prévisionnels 24h • ANACIM</span>
+                  </h3>
+                  <span className="text-[11px] text-stone-500 dark:text-stone-400">
+                    Modèle haute résolution
+                  </span>
+                </div>
+
+                {currentWeather ? (
+                  <div className="mt-3 divide-y divide-stone-100 dark:divide-stone-800 text-xs">
+                    <div className="py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <Sun className="w-4 h-4 text-amber-500 shrink-0" />
+                        <span className="text-stone-700 dark:text-stone-300 font-medium">Midi (12h - 15h)</span>
+                      </div>
+                      <span className="font-bold text-stone-900 dark:text-stone-100">
+                        {currentWeather.temperatureMax}°C • {currentWeather.temperatureMax >= 35 ? 'Caniculaire' : currentWeather.temperatureMax >= 30 ? 'Chaud' : 'Tempéré'}
+                      </span>
+                    </div>
+                    <div className="py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <Wind className="w-4 h-4 text-stone-400 shrink-0" />
+                        <span className="text-stone-700 dark:text-stone-300 font-medium">Après-midi (15h - 18h)</span>
+                      </div>
+                      <span className="font-bold text-stone-900 dark:text-stone-100">
+                        {currentWeather.windSpeed} km/h • {currentWeather.windSpeed >= 25 ? 'Rafales' : currentWeather.windSpeed >= 15 ? 'Vent modéré' : 'Vent calme'}
+                      </span>
+                    </div>
+                    {currentWeather.precipitationProbability >= 40 || currentWeather.precipitationSum > 0 ? (
+                      <div className="py-3 flex items-center justify-between bg-amber-50/60 dark:bg-amber-950/40 -mx-2 px-2.5 rounded-xl">
+                        <div className="flex items-center gap-2.5 text-amber-900 dark:text-amber-300 font-semibold">
+                          <CloudRain className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                          <span>Soirée (19h - 22h)</span>
+                        </div>
+                        <span className="font-bold text-amber-900 dark:text-amber-200">
+                          {currentWeather.precipitationSum} mm • {currentWeather.description}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="py-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5 text-stone-700 dark:text-stone-300 font-medium">
+                          <Sun className="w-4 h-4 text-amber-400 shrink-0" />
+                          <span>Soirée (19h - 22h)</span>
+                        </div>
+                        <span className="font-bold text-stone-900 dark:text-stone-100">
+                          {currentWeather.temperatureMin + 3}°C • Calme
+                        </span>
+                      </div>
+                    )}
+                    <div className="py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2.5 text-stone-700 dark:text-stone-300 font-medium">
+                        <Droplets className="w-4 h-4 text-blue-400 shrink-0" />
+                        <span>Nuit &amp; Aurore</span>
+                      </div>
+                      <span className="font-bold text-stone-900 dark:text-stone-100">
+                        {currentWeather.temperatureMin}°C • Humidité {currentWeather.humidity}%
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-3 space-y-3 animate-pulse">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="py-3 flex items-center justify-between">
+                        <div className="w-28 h-4 bg-stone-200 dark:bg-stone-800 rounded" />
+                        <div className="w-36 h-4 bg-stone-200 dark:bg-stone-800 rounded" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
           </div>
 
           {/* COLONNE LATÉRALE DESKTOP (4 Cols sur Desktop, sous la colonne principale sur Mobile) */}
-          <div className="lg:col-span-4 space-y-8">
-            {/* Jauge IA & Tokens AgriImpact (Point 4) */}
+          <div className="lg:col-span-4 space-y-8 sm:space-y-10">
+            {/* Jauge IA & Tokens AgriImpact (Discrète et sobre) */}
             <AiTokenGauge
               tokensRemaining={walletData.tokensRemaining}
               monthlyQuota={walletData.monthlyQuota}
@@ -548,9 +649,9 @@ export default function DashboardPage() {
               }}
             />
 
-            {/* Carte Exploitation & Parcelles (Point 5) */}
-            <div className="p-5 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-xs">
-              <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800">
+            {/* Carte Exploitation & Parcelles */}
+            <div className="p-6 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-xs">
+              <div className="flex items-center justify-between pb-3.5 border-b border-stone-100 dark:border-stone-800">
                 <div className="flex items-center gap-2">
                   <Layers className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
                   <h3 className="text-xs font-bold text-stone-900 dark:text-stone-100 uppercase tracking-wider">
@@ -567,7 +668,7 @@ export default function DashboardPage() {
               </div>
 
               {currentPlot ? (
-                <div className="mt-4 space-y-3 text-xs">
+                <div className="mt-4 space-y-3.5 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="text-stone-500 dark:text-stone-400">Parcelle active :</span>
                     <span className="font-bold text-stone-900 dark:text-stone-100">{currentPlot.nom}</span>
@@ -590,11 +691,11 @@ export default function DashboardPage() {
                   </div>
                 </div>
               ) : (
-                <div className="mt-4 py-4 text-center text-xs text-stone-400 dark:text-stone-500 space-y-2">
+                <div className="mt-4 py-4 text-center text-xs text-stone-400 dark:text-stone-500 space-y-2.5">
                   <p>Aucune parcelle configurée.</p>
                   <Link
                     href="/profile"
-                    className="inline-block px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors border border-emerald-200 dark:border-emerald-800/60"
+                    className="inline-block px-3.5 py-1.5 rounded-lg bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors border border-stone-200 dark:border-stone-700"
                   >
                     + Configurer une parcelle
                   </Link>
@@ -602,124 +703,59 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* Carte Météo Prévisionnelle 24h */}
-            <div className="p-5 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-xs">
-              <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800">
-                <h3 className="text-xs font-bold text-stone-900 dark:text-stone-100 uppercase tracking-wider">
-                  Prévisions 24h • ANACIM
-                </h3>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
-                  currentWeather
-                    ? 'text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200/60 dark:border-emerald-800/60'
-                    : 'text-stone-500 dark:text-stone-400 bg-stone-100 dark:bg-stone-800 border-stone-200 dark:border-stone-700'
-                }`}>
-                  {currentWeather ? 'Synchronisé' : 'Chargement…'}
-                </span>
-              </div>
-
-              {currentWeather ? (
-              <div className="mt-3 divide-y divide-stone-100 dark:divide-stone-800 text-xs">
-                <div className="py-2.5 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Sun className="w-4 h-4 text-amber-500" />
-                    <span className="text-stone-700 dark:text-stone-300">Midi (12h - 15h)</span>
+            {/* REGROUPEMENT LOGIQUE : Zone d'Assistance & Signalement ("Besoin d'aide") */}
+            <div className="p-6 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-xs space-y-5">
+              {/* Assistance Téléphonique */}
+              <div>
+                <div className="flex items-center gap-2.5 mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 flex items-center justify-center shrink-0">
+                    <PhoneCall className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
                   </div>
-                  <span className="font-bold text-stone-900 dark:text-stone-100">{currentWeather.temperatureMax}°C • {currentWeather.temperatureMax >= 35 ? 'Caniculaire' : currentWeather.temperatureMax >= 30 ? 'Chaud' : 'Tempéré'}</span>
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-stone-900 dark:text-stone-100">
+                      Assistance Téléphonique
+                    </h4>
+                    <div className="text-sm font-extrabold text-emerald-800 dark:text-emerald-400">33 800 12 12</div>
+                  </div>
                 </div>
-                <div className="py-2.5 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Wind className="w-4 h-4 text-stone-400" />
-                    <span className="text-stone-700 dark:text-stone-300">Après-midi (15h - 18h)</span>
-                  </div>
-                  <span className="font-bold text-stone-900 dark:text-stone-100">{currentWeather.windSpeed} km/h • {currentWeather.windSpeed >= 25 ? 'Rafales' : currentWeather.windSpeed >= 15 ? 'Vent modéré' : 'Vent calme'}</span>
-                </div>
-                {currentWeather.precipitationProbability >= 40 || currentWeather.precipitationSum > 0 ? (
-                  <div className="py-2.5 flex items-center justify-between bg-amber-50/60 dark:bg-amber-950/40 -mx-2 px-2 rounded-lg">
-                    <div className="flex items-center gap-2 text-amber-900 dark:text-amber-300 font-semibold">
-                      <CloudRain className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      <span>Soirée (19h - 22h)</span>
-                    </div>
-                    <span className="font-bold text-amber-900 dark:text-amber-200">{currentWeather.precipitationSum} mm • {currentWeather.description}</span>
-                  </div>
-                ) : (
-                  <div className="py-2.5 flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-stone-700 dark:text-stone-300">
-                      <Sun className="w-4 h-4 text-amber-400" />
-                      <span>Soirée (19h - 22h)</span>
-                    </div>
-                    <span className="font-bold text-stone-900 dark:text-stone-100">{currentWeather.temperatureMin + 3}°C • Calme</span>
-                  </div>
-                )}
-                <div className="py-2.5 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Droplets className="w-4 h-4 text-blue-400" />
-                    <span className="text-stone-700 dark:text-stone-300">Nuit & Aurore</span>
-                  </div>
-                  <span className="font-bold text-stone-900 dark:text-stone-100">{currentWeather.temperatureMin}°C • Humidité {currentWeather.humidity}%</span>
-                </div>
-              </div>
-              ) : (
-              <div className="mt-3 space-y-3 animate-pulse">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="py-2.5 flex items-center justify-between">
-                    <div className="w-28 h-4 bg-stone-200 dark:bg-stone-800 rounded" />
-                    <div className="w-36 h-4 bg-stone-200 dark:bg-stone-800 rounded" />
-                  </div>
-                ))}
-              </div>
-              )}
-            </div>
-
-            {/* Carte Support Paysan & Hotline */}
-            <div className="p-5 rounded-2xl bg-emerald-900 text-white shadow-md">
-              <div className="flex items-center gap-2.5 mb-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-800 flex items-center justify-center">
-                  <PhoneCall className="w-4 h-4 text-emerald-200" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-200">
-                    Assistance Téléphonique
-                  </h4>
-                  <div className="text-sm font-extrabold text-white">33 800 12 12</div>
-                </div>
-              </div>
-              <p className="text-xs text-emerald-100/90 leading-relaxed mt-2">
-                Un agronome AGRIMPACT est disponible pour répondre à vos doutes sur l&apos;irrigation et les traitements foliaires.
-              </p>
-              <a
-                href="tel:338001212"
-                className="mt-4 w-full py-2 bg-white text-emerald-950 hover:bg-emerald-50 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-colors block text-center"
-              >
-                <span>Appeler l&apos;agronome</span>
-                <ArrowUpRight className="w-3.5 h-3.5" />
-              </a>
-            </div>
-
-            {/* Action Discrète : Signalement d'anomalie */}
-            <div className="p-4 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 shadow-2xs flex flex-col gap-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-stone-500 dark:text-stone-400 font-medium">Un souci ou un doute ?</span>
-                <Link
-                  href="/signalements"
-                  className="text-stone-500 dark:text-stone-400 hover:text-emerald-700 dark:hover:text-emerald-400 font-semibold underline text-[11px]"
+                <p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed mt-1.5">
+                  Un agronome AGRIMPACT est disponible pour répondre à vos doutes sur l&apos;irrigation et les traitements foliaires.
+                </p>
+                <a
+                  href="tel:338001212"
+                  className="mt-3.5 w-full py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-colors block text-center shadow-2xs"
                 >
-                  Mes signalements
-                </Link>
+                  <span>Appeler l&apos;agronome</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </a>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsReportModalOpen(true)}
-                className="w-full py-2 px-3 rounded-xl border border-stone-200 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
-              >
-                <Flag className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                <span>Signaler un problème</span>
-              </button>
+
+              {/* Séparateur discret */}
+              <div className="border-t border-stone-100 dark:border-stone-800 pt-4">
+                <div className="flex items-center justify-between text-xs mb-2.5">
+                  <span className="text-stone-500 dark:text-stone-400 font-medium">Un souci sur vos parcelles ?</span>
+                  <Link
+                    href="/signalements"
+                    className="text-stone-500 dark:text-stone-400 hover:text-emerald-700 dark:hover:text-emerald-400 font-semibold underline text-[11px]"
+                  >
+                    Mes signalements
+                  </Link>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsReportModalOpen(true)}
+                  className="w-full py-2.5 px-3 rounded-xl border border-stone-200 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Flag className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                  <span>Signaler un problème</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Coordonnées de contact administrables (Point 14) */}
-        <div className="mt-6">
+        {/* Coordonnées de contact administrables avec respiration généreuse */}
+        <div className="pt-6">
           <ContactSupportBanner />
         </div>
       </main>

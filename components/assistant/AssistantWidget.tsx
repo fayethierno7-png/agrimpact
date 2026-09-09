@@ -27,11 +27,11 @@ export default function AssistantWidget() {
 
   return (
     <>
-      {/* Bouton Flottant en bas à droite */}
-      <div className="fixed bottom-5 right-5 z-40 animate-fade-in">
+      {/* Bouton Flottant en bas à droite — positionné au-dessus du BottomNav sur mobile */}
+      <div className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-30 animate-fade-in">
         <button
           onClick={() => setIsOpen(true)}
-          className="group relative flex items-center gap-2.5 px-4 py-3 bg-[#0C2B1E] hover:bg-[#123C2B] text-white rounded-full shadow-[0_12px_32px_rgba(12,43,30,0.35)] hover:shadow-[0_16px_40px_rgba(12,43,30,0.45)] hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer border border-white/15"
+          className="group relative flex items-center gap-2 sm:gap-2.5 px-3.5 sm:px-4 py-2.5 sm:py-3 bg-[#0C2B1E] hover:bg-[#123C2B] text-white rounded-full shadow-[0_10px_25px_rgba(12,43,30,0.3)] hover:shadow-[0_14px_30px_rgba(12,43,30,0.4)] hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer border border-white/15"
           aria-label="Ouvrir l'Assistant AgriImpact"
         >
           {/* Badge de statut en ligne */}
