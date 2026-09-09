@@ -6,6 +6,21 @@
 -- Full Table Scans sur Postgres.
 -- ==============================================================================
 
+-- 0. Ajouter la colonne provider_subscription_id si elle n'existe pas encore
+--    (Elle est utilisée par les webhooks de paiement mais n'a jamais été créée par migration)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'subscriptions'
+          AND column_name = 'provider_subscription_id'
+    ) THEN
+        ALTER TABLE public.subscriptions ADD COLUMN provider_subscription_id TEXT;
+        RAISE NOTICE 'Colonne provider_subscription_id ajoutée à subscriptions';
+    END IF;
+END $$;
+
 -- 1. Index critique sur les souscriptions / webhooks (utilisé à chaque polling et webhook de paiement)
 CREATE INDEX IF NOT EXISTS idx_subscriptions_provider_id 
   ON public.subscriptions(provider_subscription_id);
