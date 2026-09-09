@@ -347,3 +347,13 @@ CREATE POLICY "Users can manage intervention windows for own plots"
     USING (plot_id IN (SELECT p.id FROM public.plots p JOIN public.farms f ON p.farm_id = f.id WHERE f.user_id = auth.uid()))
     WITH CHECK (plot_id IN (SELECT p.id FROM public.plots p JOIN public.farms f ON p.farm_id = f.id WHERE f.user_id = auth.uid()));
 
+-- ==============================================================================
+-- INDEX DE SCALABILITÉ & HAUTE CHARGE (10k à 1M utilisateurs)
+-- ==============================================================================
+CREATE INDEX IF NOT EXISTS idx_subscriptions_provider_id ON public.subscriptions(provider_subscription_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles(role);
+CREATE INDEX IF NOT EXISTS idx_profiles_created_at ON public.profiles(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_farms_region ON public.farms(region);
+CREATE INDEX IF NOT EXISTS idx_plots_culture ON public.plots(culture);
+
+

@@ -3,10 +3,24 @@ import { supabase } from '../../../lib/supabase/client';
 import { DEFAULT_PLANS, DEFAULT_TOKEN_PACKS } from '../../../lib/saas/plansData';
 import { Plan, TokenPack } from '../../../lib/saas/types';
 
-export const dynamic = 'force-dynamic';
+// Cache mémoire serveur (15 minutes)
+let cachedPlansData: { plans: Plan[]; tokenPacks: TokenPack[] } | null = null;
+let cacheExpiresAt = 0;
 
 export async function GET() {
   try {
+    const now = Date.now();
+    if (cachedPlansData && now < cacheExpiresAt) {
+      return NextResponse.json(
+        { success: true, ...cachedPlansData, fromCache: true },
+        {
+          headers: {
+            'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+          },
+        }
+      );
+    }
+
     let plans: Plan[] = DEFAULT_PLANS;
     let tokenPacks: TokenPack[] = DEFAULT_TOKEN_PACKS;
 
@@ -92,11 +106,21 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      plans,
-      tokenPacks,
-    });
+    cachedPlansData = { plans, tokenPacks };
+    cacheExpiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes
+
+    return NextResponse.json(
+      {
+        success: true,
+        plans,
+        tokenPacks,
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+        },
+      }
+    );
   } catch (err: any) {
     console.error('Error fetching plans:', err);
     // Fallback gracieux pour ne jamais bloquer l'UI

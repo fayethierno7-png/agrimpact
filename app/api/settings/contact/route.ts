@@ -27,9 +27,24 @@ const DEFAULT_SETTINGS: ContactSettings = {
   global_visible: true,
 };
 
+let cachedContactSettings: ContactSettings | null = null;
+let contactCacheExpiresAt = 0;
+
 // GET : Public (utilisé par le footer et les pages de contact)
 export async function GET() {
   try {
+    const now = Date.now();
+    if (cachedContactSettings && now < contactCacheExpiresAt) {
+      return NextResponse.json(
+        { success: true, settings: cachedContactSettings, fromCache: true },
+        {
+          headers: {
+            'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=86400',
+          },
+        }
+      );
+    }
+
     if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase
         .from('app_settings')
@@ -38,28 +53,41 @@ export async function GET() {
         .maybeSingle();
 
       if (!error && data) {
-        return NextResponse.json({
-          success: true,
-          settings: {
-            support_phone: data.support_phone,
-            support_phone_visible: data.support_phone_visible ?? true,
-            contact_email: data.contact_email,
-            contact_email_visible: data.contact_email_visible ?? true,
-            whatsapp_link: data.whatsapp_link,
-            whatsapp_visible: data.whatsapp_visible ?? true,
-            social_link: data.social_link,
-            social_visible: data.social_visible ?? true,
-            global_visible: data.global_visible ?? true,
-            updated_at: data.updated_at,
-          },
-        });
+        const settings: ContactSettings = {
+          support_phone: data.support_phone,
+          support_phone_visible: data.support_phone_visible ?? true,
+          contact_email: data.contact_email,
+          contact_email_visible: data.contact_email_visible ?? true,
+          whatsapp_link: data.whatsapp_link,
+          whatsapp_visible: data.whatsapp_visible ?? true,
+          social_link: data.social_link,
+          social_visible: data.social_visible ?? true,
+          global_visible: data.global_visible ?? true,
+          updated_at: data.updated_at,
+        };
+
+        cachedContactSettings = settings;
+        contactCacheExpiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+        return NextResponse.json(
+          { success: true, settings },
+          {
+            headers: {
+              'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=86400',
+            },
+          }
+        );
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      settings: DEFAULT_SETTINGS,
-    });
+    return NextResponse.json(
+      { success: true, settings: DEFAULT_SETTINGS },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=86400',
+        },
+      }
+    );
   } catch (err: any) {
     return NextResponse.json({
       success: true,
@@ -109,6 +137,10 @@ export async function PUT(req: NextRequest) {
         );
       }
     }
+
+    // Invalidation immédiate du cache après modification admin
+    cachedContactSettings = null;
+    contactCacheExpiresAt = 0;
 
     return NextResponse.json({
       success: true,
