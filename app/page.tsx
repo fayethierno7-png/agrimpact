@@ -306,13 +306,18 @@ export default function SaaSLandingPage() {
               <div className="absolute inset-0 bg-gradient-to-t from-[#0A1C14]/95 via-[#0A1C14]/40 to-[#0A1C14]/20" />
             </div>
 
-            {/* Cartes flottantes d'interface en direct (Desktop) */}
+            {/* Cartes d'aperçu démonstration de l'interface en direct (Desktop) */}
             <div className="absolute top-8 right-8 z-10 hidden md:flex flex-col gap-3 max-w-[320px]">
+              {/* Badge indicatif honnête */}
+              <div className="self-end px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-[10px] font-bold text-stone-300 uppercase tracking-wider">
+                Exemple illustratif • Terroir Niayes
+              </div>
+
               {/* Carte 1 : Météo en direct Niayes */}
               <div className="bg-white/90 backdrop-blur-md p-4 rounded-2xl border border-white/60 shadow-xl animate-float-subtle">
                 <div className="flex items-center justify-between text-xs font-bold text-stone-500 mb-1">
                   <span className="uppercase tracking-wider">Station Niayes (Kayar)</span>
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_#10B981]" />
+                  <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Simulation</span>
                 </div>
                 <div className="text-2xl font-black text-[#0C2B1E] tracking-tight">
                   27°C <span className="text-sm font-semibold text-stone-500">• RH 84%</span>

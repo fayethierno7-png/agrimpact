@@ -56,12 +56,25 @@ export default function DashboardPage() {
   const [isEditFarmOpen, setIsEditFarmOpen] = useState(false);
   const [toast, setToast] = useState<ToastMessage | null>(null);
 
-  // État réel du portefeuille IA (Point 4)
+  // État réel du portefeuille IA synchronisé avec Supabase
+  const defaultPlanName =
+    profile?.plan === 'pro'
+      ? 'Pro Producteur'
+      : profile?.plan === 'business' || profile?.plan === 'cooperative'
+      ? 'Coopérative & GIE'
+      : 'Solo';
+  const defaultQuota =
+    profile?.plan === 'pro'
+      ? 60000
+      : profile?.plan === 'business' || profile?.plan === 'cooperative'
+      ? 250000
+      : 8000;
+
   const [walletData, setWalletData] = useState({
-    tokensRemaining: 45000,
-    monthlyQuota: 60000,
+    tokensRemaining: defaultQuota,
+    monthlyQuota: defaultQuota,
     permanentTokens: 0,
-    planName: 'Pro Producteur',
+    planName: defaultPlanName,
   });
 
   useEffect(() => {
@@ -70,15 +83,15 @@ export default function DashboardPage() {
       .then((json) => {
         if (json?.success && json.wallet) {
           setWalletData({
-            tokensRemaining: json.wallet.tokensRemaining,
-            monthlyQuota: json.wallet.monthlyQuota,
-            permanentTokens: json.wallet.permanentTokens,
-            planName: 'Pro Producteur',
+            tokensRemaining: Number(json.wallet.tokensRemaining ?? defaultQuota),
+            monthlyQuota: Number(json.wallet.monthlyQuota ?? defaultQuota),
+            permanentTokens: Number(json.wallet.permanentTokens ?? 0),
+            planName: json.wallet.planName || defaultPlanName,
           });
         }
       })
       .catch(() => {});
-  }, []);
+  }, [defaultPlanName, defaultQuota]);
 
   // État de vigilance prédictive synchro depuis le module AgrometeoPredictiveModule
   const [predictionVigilance, setPredictionVigilance] = useState<string | null>(null);

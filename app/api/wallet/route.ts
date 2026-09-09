@@ -38,7 +38,8 @@ export async function GET(req: NextRequest) {
         });
       }
 
-      // 2. Lire le plan actif pour déterminer le quota total
+      // 2. Lire le plan actif pour déterminer le quota total et le nom du plan
+      let planName = 'Solo';
       const { data: sub } = await supabase
         .from('subscriptions')
         .select('plans (nom, limites)')
@@ -48,9 +49,29 @@ export async function GET(req: NextRequest) {
 
       if (sub && sub.plans) {
         const planObj = Array.isArray(sub.plans) ? sub.plans[0] : sub.plans;
+        if ((planObj as any)?.nom) {
+          planName = (planObj as any).nom;
+        }
         const limits = (planObj as any)?.limites;
         if (limits?.tokens_ia_mois) {
           monthlyQuota = Number(limits.tokens_ia_mois);
+        }
+      } else {
+        // Vérifier le profil de l'utilisateur pour son forfait par défaut
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('plan')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (prof?.plan === 'pro') {
+          planName = 'Pro Producteur';
+          monthlyQuota = 60000;
+        } else if (prof?.plan === 'business' || prof?.plan === 'cooperative') {
+          planName = 'Coopérative & GIE';
+          monthlyQuota = 250000;
+        } else {
+          planName = 'Solo';
+          monthlyQuota = 8000;
         }
       }
 
@@ -76,6 +97,7 @@ export async function GET(req: NextRequest) {
           tokensRemaining: tokensQuotaRestants,
           monthlyQuota,
           permanentTokens: tokensPayantsRestants,
+          planName,
           totalAvailable,
           lastReset,
         },

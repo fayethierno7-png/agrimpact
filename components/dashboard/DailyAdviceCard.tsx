@@ -188,15 +188,21 @@ export default function DailyAdviceCard({ plot, farm, weather }: DailyAdviceCard
 
       {/* Footer avec CTA vers l'assistant */}
       <div className="pt-4 mt-2 border-t border-stone-100 dark:border-stone-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-stone-500 dark:text-stone-400 text-[11px]">
-          <span>Météo du jour : <strong className="text-stone-700 dark:text-stone-300">{currentTemp}°C</strong></span>
-          <span>•</span>
-          <span>Humidité : <strong className="text-stone-700 dark:text-stone-300">{currentHumidity}%</strong></span>
-          <span>•</span>
-          <span>Vent : <strong className="text-stone-700 dark:text-stone-300">{currentWind} km/h</strong></span>
-          <span>•</span>
-          <span>Pluie : <strong className="text-stone-700 dark:text-stone-300">{currentRainProb}%</strong></span>
-        </div>
+        {weather ? (
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-stone-500 dark:text-stone-400 text-[11px]">
+            <span>Météo du jour : <strong className="text-stone-700 dark:text-stone-300">{weather.temperature}°C</strong></span>
+            <span>•</span>
+            <span>Humidité : <strong className="text-stone-700 dark:text-stone-300">{weather.humidity}%</strong></span>
+            <span>•</span>
+            <span>Vent : <strong className="text-stone-700 dark:text-stone-300">{weather.windSpeed} km/h</strong></span>
+            <span>•</span>
+            <span>Pluie : <strong className="text-stone-700 dark:text-stone-300">{weather.precipitationProbability}%</strong></span>
+          </div>
+        ) : (
+          <span className="text-stone-400 dark:text-stone-500 text-[11px] italic">
+            Synchronisation de la station agrométéorologique...
+          </span>
+        )}
 
         <Link
           href={`/assistant`}
