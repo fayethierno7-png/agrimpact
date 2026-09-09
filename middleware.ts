@@ -21,7 +21,7 @@ export async function middleware(request: NextRequest) {
   // 1. CONTRÔLE D'ACCÈS RBAC DE LA CONSOLE ADMIN (Point 9)
   // Aucun bypass par simple cookie client n'est toléré : seule la session serveur ou Supabase fait foi.
   if (pathname.startsWith('/admin')) {
-    let isAdmin = sessionData?.role === 'admin' || sessionData?.role === 'superadmin';
+    let isAdmin = sessionData?.role === 'superadmin';
 
     // Vérification de secours Supabase si un jeton Supabase direct est présent
     if (!isAdmin && tokenCookie) {
@@ -54,7 +54,7 @@ export async function middleware(request: NextRequest) {
 
               if (profileRes.ok) {
                 const profiles = await profileRes.json();
-                if (profiles?.[0]?.role === 'admin' || profiles?.[0]?.role === 'superadmin') {
+                if (profiles?.[0]?.role === 'superadmin') {
                   isAdmin = true;
                 }
               }

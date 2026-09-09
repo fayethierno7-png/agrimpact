@@ -39,11 +39,25 @@ export async function getAuthenticatedUser(req: NextRequest): Promise<Authentica
         const { data, error } = await serverClient.auth.getUser();
         if (!error && data?.user) {
           const userMeta = data.user.user_metadata || {};
+          let verifiedRole = userMeta.role || 'producteur';
+          try {
+            const { data: profData } = await serverClient
+              .from('profiles')
+              .select('role')
+              .eq('user_id', data.user.id)
+              .single();
+            if (profData?.role) {
+              verifiedRole = profData.role;
+            }
+          } catch (e) {
+            console.warn('Erreur récupération profil dans serverAuth:', e);
+          }
+
           return {
             id: data.user.id,
             email: data.user.email,
             nom: userMeta.nom || data.user.email?.split('@')[0],
-            role: userMeta.role || 'producteur',
+            role: verifiedRole,
             statut_compte: 'actif',
             statut_abonnement: 'actif',
           };

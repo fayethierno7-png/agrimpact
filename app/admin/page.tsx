@@ -329,13 +329,13 @@ export default function AdminConsolePage() {
     if (!isAuthLoading) {
       if (!profile) {
         router.replace('/login?redirect=/admin');
-      } else if (profile.role !== 'admin') {
+      } else if (profile.role !== 'superadmin') {
         router.replace('/dashboard');
       }
     }
   }, [profile, isAuthLoading, router]);
 
-  if (isAuthLoading || !profile || profile.role !== 'admin') {
+  if (isAuthLoading || !profile || profile.role !== 'superadmin') {
     return (
       <div className="min-h-screen bg-stone-900 text-white flex flex-col items-center justify-center p-6 text-center">
         <div className="w-14 h-14 rounded-2xl bg-purple-950/70 border border-purple-500/30 text-purple-300 flex items-center justify-center mb-4 shadow-xl">

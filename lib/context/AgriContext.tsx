@@ -192,18 +192,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             if (isMounted && profRes.status === 'fulfilled' && profRes.value.data) {
               const prof = profRes.value.data;
-              // Si le profil local était déjà admin, préserver le rôle admin pour éviter toute rétrogradation intempestive
-              let effectiveRole = prof.role;
-              try {
-                const localProfileRaw = localStorage.getItem('agrimpact_profile');
-                if (localProfileRaw) {
-                  const localProf = JSON.parse(localProfileRaw);
-                  if (localProf.role === 'admin') {
-                    effectiveRole = 'admin';
-                  }
-                }
-              } catch {}
-              prof.role = effectiveRole || 'admin';
+              prof.role = prof.role || 'producteur';
               setProfile(prof);
               syncRoleCookie(prof.role);
               try {
@@ -311,7 +300,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const { data: prof } = await supabase.from('profiles').select('*').eq('user_id', userId).maybeSingle();
             if (prof) {
               setProfile(prof);
-              syncRoleCookie(prof.role || 'admin');
+              syncRoleCookie(prof.role || 'producteur');
               localStorage.setItem('agrimpact_profile', JSON.stringify(prof));
             }
 

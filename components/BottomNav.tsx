@@ -10,7 +10,7 @@ export const BottomNav: React.FC = () => {
   const pathname = usePathname();
   const { profile, alerts } = useAgri();
   const activeAlertsCount = alerts.filter((a) => a.statut === 'active').length;
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin';
+  const isAdmin = profile?.role === 'superadmin';
 
   const navItems = [
     {

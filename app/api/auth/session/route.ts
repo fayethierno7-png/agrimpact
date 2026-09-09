@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { signSessionToken, verifySessionToken } from '../../../../lib/auth/sessionSigner';
+import { getSupabaseServerClient } from '../../../../lib/supabase/client';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const {
       userId,
-      role = 'producteur',
       email,
       nom,
       statut_compte = 'actif',
@@ -21,11 +21,39 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // SÉCURITÉ : Récupérer le rôle RÉEL depuis la base de données
+    // Ne JAMAIS faire confiance au champ 'role' envoyé par le client
+    let verifiedRole = 'producteur';
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      if (supabaseUrl && supabaseServiceKey) {
+        const res = await fetch(
+          `${supabaseUrl}/rest/v1/profiles?user_id=eq.${userId}&select=role`,
+          {
+            headers: {
+              apikey: supabaseServiceKey,
+              Authorization: `Bearer ${supabaseServiceKey}`,
+            },
+            signal: AbortSignal.timeout(2000),
+          }
+        );
+        if (res.ok) {
+          const profiles = await res.json();
+          if (profiles?.[0]?.role) {
+            verifiedRole = profiles[0].role;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Erreur vérification rôle serveur:', e);
+    }
+
     const sessionPayload = {
       userId,
       email: email || '',
       nom: nom || '',
-      role,
+      role: verifiedRole,
       statut_compte,
       statut_abonnement,
       date_limite_grace,
@@ -51,7 +79,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Cookie de rôle informatif (non suffisant seul pour autoriser l'admin)
-    response.cookies.set('agri_user_role', role, {
+    response.cookies.set('agri_user_role', verifiedRole, {
       path: '/',
       maxAge: 60 * 60 * 24 * 7,
       httpOnly: false,
@@ -67,6 +95,7 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
 
 export async function DELETE() {
   const response = NextResponse.json({

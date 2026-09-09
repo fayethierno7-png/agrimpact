@@ -261,34 +261,15 @@ export default function ParametresPage() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {profile?.role !== 'superadmin' && profile?.role !== 'admin' && (
-              <button
-                type="button"
-                onClick={async () => {
-                  await setRole('admin');
-                  showToast('success', 'Rôle Administrateur activé avec succès !');
-                }}
-                className="px-3 py-2 bg-purple-100 hover:bg-purple-200 text-purple-900 dark:bg-purple-900/50 dark:text-purple-200 text-xs font-bold rounded-xl transition-colors"
-                title="Activer les droits administrateur"
+            {profile?.role === 'superadmin' && (
+              <Link
+                href="/admin"
+                className="px-4 py-2.5 bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 shadow-xs transition-all hover:scale-105 cursor-pointer ring-2 ring-purple-300"
               >
-                Activer Droits Admin
-              </button>
+                <span>Console SuperAdmin</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             )}
-
-            <Link
-              href="/admin"
-              onClick={() => {
-                const targetRole = profile?.role === 'superadmin' ? 'superadmin' : 'admin';
-                document.cookie = `agri_user_role=${targetRole}; path=/; max-age=604800; SameSite=Lax`;
-                if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
-                  setRole('admin');
-                }
-              }}
-              className="px-4 py-2.5 bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 shadow-xs transition-all hover:scale-105 cursor-pointer ring-2 ring-purple-300"
-            >
-              <span>{profile?.role === 'superadmin' ? 'Accéder Console SuperAdmin' : 'Accéder à la Console Admin'}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
           </div>
         </div>
 
