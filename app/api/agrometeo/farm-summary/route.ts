@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient, supabase } from '../../../../lib/supabase/client';
 import { getFarmAgrometeoSummary } from '../../../../lib/services/agrometeoService';
 import { Farm, Plot } from '../../../../lib/types';
+import { isValidId } from '../../../../lib/validation/apiValidators';
 
 export async function GET(req: NextRequest) {
   try {
@@ -9,6 +10,20 @@ export async function GET(req: NextRequest) {
     let farmId = searchParams.get('farmId') || searchParams.get('id');
     const userId = searchParams.get('userId');
     const forceRefresh = searchParams.get('forceRefresh') === 'true' || searchParams.get('forceRefresh') === '1';
+
+    // Validation des identifiants
+    if (farmId && !isValidId(farmId)) {
+      return NextResponse.json(
+        { success: false, error: "Format d'identifiant farmId invalide." },
+        { status: 400 }
+      );
+    }
+    if (userId && !isValidId(userId)) {
+      return NextResponse.json(
+        { success: false, error: "Format d'identifiant userId invalide." },
+        { status: 400 }
+      );
+    }
 
     const authHeader = req.headers.get('authorization');
     const db = getSupabaseServerClient(authHeader) || supabase;
@@ -40,18 +55,6 @@ export async function GET(req: NextRequest) {
           if (userFarms && userFarms.length > 0) {
             farmId = userFarms[0].id;
           }
-        }
-      }
-
-      // 2. Si toujours pas de farmId, tenter de récupérer la première ferme de la base
-      if (!farmId) {
-        const { data: anyFarm } = await db
-          .from('farms')
-          .select('*')
-          .limit(1);
-
-        if (anyFarm && anyFarm.length > 0) {
-          farmId = anyFarm[0].id;
         }
       }
     }

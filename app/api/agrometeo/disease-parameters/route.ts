@@ -12,10 +12,18 @@ export async function GET(req: NextRequest) {
     const db = getSupabaseServerClient(authHeader) || supabase;
 
     if (culture) {
-      const parameter = await getCropDiseaseParameter(culture, db);
+      const cleanCulture = culture.trim();
+      if (cleanCulture.length > 50 || !/^[a-zA-Z0-9\u00C0-\u017F\s\-_]+$/.test(cleanCulture)) {
+        return NextResponse.json(
+          { success: false, error: 'Nom de culture invalide (max 50 caractères alphanumériques).' },
+          { status: 400 }
+        );
+      }
+
+      const parameter = await getCropDiseaseParameter(cleanCulture, db);
       return NextResponse.json({
         success: true,
-        culture,
+        culture: cleanCulture,
         parameter,
       });
     }

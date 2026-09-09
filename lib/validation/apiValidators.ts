@@ -69,4 +69,51 @@ export const v = {
     validate: (val) => allowed.includes(val),
     message: `${name} doit être l'une des valeurs suivantes: ${allowed.join(', ')}`,
   }),
+
+  safeId: (name: string): ValidationRule<any> => ({
+    validate: (val) => typeof val === 'string' && /^[a-zA-Z0-9_\-\:]{1,64}$/.test(val.trim()),
+    message: `${name} doit être un identifiant valide (alphanumérique, tirets, max 64 caractères)`,
+  }),
+
+  safeCultureName: (name: string): ValidationRule<any> => ({
+    validate: (val) => typeof val === 'string' && /^[a-zA-Z0-9\u00C0-\u017F\s\-_]{1,50}$/.test(val.trim()),
+    message: `${name} doit être un nom de culture valide`,
+  }),
 };
+
+/**
+ * Vérifie si une chaîne est un identifiant sain (prévention des caractères d'injection)
+ */
+export function isValidId(val: string | null | undefined): boolean {
+  if (!val || typeof val !== 'string') return false;
+  return /^[a-zA-Z0-9_\-\:]{1,64}$/.test(val.trim());
+}
+
+/**
+ * Assainit et valide les coordonnées géographiques (latitude / longitude)
+ */
+export function sanitizeCoordinates(
+  latStr: string | null,
+  lonStr: string | null,
+  defaultLat = 14.7910,
+  defaultLon = -16.9256
+): { latitude: number; longitude: number } {
+  let latitude = defaultLat;
+  let longitude = defaultLon;
+
+  if (latStr) {
+    const parsed = parseFloat(latStr);
+    if (!isNaN(parsed) && parsed >= -90 && parsed <= 90) {
+      latitude = parsed;
+    }
+  }
+
+  if (lonStr) {
+    const parsed = parseFloat(lonStr);
+    if (!isNaN(parsed) && parsed >= -180 && parsed <= 180) {
+      longitude = parsed;
+    }
+  }
+
+  return { latitude, longitude };
+}

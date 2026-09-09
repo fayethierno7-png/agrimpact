@@ -6,6 +6,7 @@ import {
   buildPlotPredictionSummary,
 } from '../../../../lib/services/agrometeoService';
 import { Plot } from '../../../../lib/types';
+import { isValidId, sanitizeCoordinates } from '../../../../lib/validation/apiValidators';
 
 export async function GET(req: NextRequest) {
   try {
@@ -15,11 +16,11 @@ export async function GET(req: NextRequest) {
     const latParam = searchParams.get('lat') || searchParams.get('latitude');
     const lonParam = searchParams.get('lon') || searchParams.get('longitude');
 
-    if (!plotId) {
+    if (!plotId || !isValidId(plotId)) {
       return NextResponse.json(
         {
           success: false,
-          error: "Paramètre 'plotId' obligatoire. Exemple: /api/agrometeo/predictions?plotId=<UUID>",
+          error: "Paramètre 'plotId' obligatoire et valide. Exemple: /api/agrometeo/predictions?plotId=<UUID>",
         },
         { status: 400 }
       );
@@ -30,8 +31,9 @@ export async function GET(req: NextRequest) {
 
     // Récupération de la parcelle et de sa ferme associée dans Supabase
     let plot: Plot | null = null;
-    let latitude = latParam ? parseFloat(latParam) : 14.7910;
-    let longitude = lonParam ? parseFloat(lonParam) : -16.9256;
+    const coords = sanitizeCoordinates(latParam, lonParam);
+    let latitude = coords.latitude;
+    let longitude = coords.longitude;
 
     if (db) {
       const { data: plotData, error: plotErr } = await db
