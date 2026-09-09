@@ -27,14 +27,30 @@ export async function POST(req: NextRequest) {
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+      // Récupérer le token d'accès pour passer la RLS
+      let authHeader = req.headers.get('authorization');
+      if (!authHeader) {
+        const sbTokenStr = req.cookies.get('sb-xtizlewxnrttymtydqka-auth-token')?.value;
+        if (sbTokenStr) {
+          try {
+            const sbToken = JSON.parse(sbTokenStr);
+            if (sbToken?.access_token) {
+              authHeader = `Bearer ${sbToken.access_token}`;
+            }
+          } catch {}
+        }
+      }
+
       if (supabaseUrl && supabaseServiceKey) {
+        const headers: HeadersInit = { apikey: supabaseServiceKey };
+        if (authHeader) headers['Authorization'] = authHeader;
+        else headers['Authorization'] = `Bearer ${supabaseServiceKey}`; // Fallback anon
+
         const res = await fetch(
           `${supabaseUrl}/rest/v1/profiles?user_id=eq.${userId}&select=role`,
           {
-            headers: {
-              apikey: supabaseServiceKey,
-              Authorization: `Bearer ${supabaseServiceKey}`,
-            },
+            headers,
             signal: AbortSignal.timeout(2000),
           }
         );
