@@ -79,14 +79,17 @@ execSync(`sips -z 48 48 "${baseFaviconPng}" --out "${tmpFavicon48}"`);
 
 // Apple Touch Icon 180x180
 execSync(`sips -z 180 180 "${baseApplePng}" --out "public/apple-touch-icon.png"`);
+execSync(`sips -z 180 180 "${baseApplePng}" --out "app/apple-icon.png"`);
 
 // PWA Icons standards (192x192, 512x512)
 execSync(`sips -z 192 192 "${baseOfficialPng}" --out "public/icon-192.png"`);
 execSync(`sips -z 512 512 "${baseOfficialPng}" --out "public/icon-512.png"`);
 execSync(`sips -z 512 512 "${baseOfficialPng}" --out "public/icon.png"`);
+execSync(`sips -z 512 512 "${baseOfficialPng}" --out "app/icon.png"`);
 
 // PWA Icon maskable pour Android (512x512 sans découpage)
 execSync(`sips -z 512 512 "${baseMaskablePng}" --out "public/icon-maskable-512.png"`);
+execSync(`sips -z 512 512 "${baseMaskablePng}" --out "public/icon-512-maskable.png"`);
 
 // Copie du favicon.svg direct
 fs.writeFileSync('public/favicon.svg', faviconSvgContent);
@@ -134,6 +137,7 @@ for (const img of images) {
 
 const finalIcoBuffer = Buffer.concat([header, ...entries, ...imageBuffers]);
 fs.writeFileSync('public/favicon.ico', finalIcoBuffer);
+fs.writeFileSync('app/favicon.ico', finalIcoBuffer);
 
 console.log(`✓ favicon.ico multi-résolution généré avec succès (${finalIcoBuffer.length} octets, 3 résolutions : 16, 32, 48px).`);
 console.log('✓ Tous les assets PWA et Favicon sont à jour dans public/ :');

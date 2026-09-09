@@ -1,10 +1,11 @@
 -- ==============================================================================
--- MIGRATION AGRIMPACT : Activation SUPERADMIN (Tolérante aux colonnes manquantes)
+-- MIGRATION AGRIMPACT : Activation SUPERADMIN (Version simplifiée et robuste)
 -- ==============================================================================
 
--- 1. Ajouter les colonnes updated_at et statut_compte si elles n'existent pas encore
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS statut_compte TEXT DEFAULT 'actif';
+-- 1. Forcer la colonne role en TEXT pour éviter tout conflit avec un type ENUM existant
+ALTER TABLE public.profiles ALTER COLUMN role DROP DEFAULT;
+ALTER TABLE public.profiles ALTER COLUMN role TYPE TEXT USING role::text;
+ALTER TABLE public.profiles ALTER COLUMN role SET DEFAULT 'producteur';
 
 -- 2. Supprimer l'ancienne contrainte CHECK sur role si présente
 DO $$
@@ -17,12 +18,8 @@ BEGIN
     END IF;
 END $$;
 
--- 3. Convertir la colonne role en TEXT (supprime l'incompatibilité avec l'enum user_role)
-ALTER TABLE public.profiles ALTER COLUMN role DROP DEFAULT;
-ALTER TABLE public.profiles ALTER COLUMN role TYPE TEXT USING role::text;
-ALTER TABLE public.profiles ALTER COLUMN role SET DEFAULT 'producteur';
-
--- 4. Promouvoir le compte utilisateur fayethierno en SUPERADMIN
+-- 3. Promouvoir le compte utilisateur fayethierno en SUPERADMIN
+-- On utilise uniquement l'email via auth.users pour éviter l'erreur sur la colonne "nom"
 UPDATE public.profiles
 SET role = 'superadmin'
 WHERE user_id IN (
@@ -30,22 +27,16 @@ WHERE user_id IN (
     WHERE email ILIKE '%fayethierno%' OR email ILIKE '%thierno%'
 );
 
--- Mise à jour de secours si le compte est identifié par le nom
-UPDATE public.profiles
-SET role = 'superadmin'
-WHERE nom ILIKE '%faye%' OR nom ILIKE '%thierno%';
-
--- 5. Mettre à jour les métadonnées auth.users pour les tokens JWT
+-- 4. Mettre à jour les métadonnées auth.users pour les tokens JWT
 UPDATE auth.users
 SET raw_app_meta_data = COALESCE(raw_app_meta_data, '{}'::jsonb) || '{"role": "superadmin"}'::jsonb,
     raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || '{"role": "superadmin"}'::jsonb
 WHERE email ILIKE '%fayethierno%' OR email ILIKE '%thierno%';
 
--- 6. Contrôle immédiat du résultat (affiché dans l'onglet Results)
+-- 5. Contrôle immédiat du résultat (affiché dans l'onglet Results)
 SELECT 
     p.id,
     p.user_id,
-    p.nom,
     p.role,
     u.email
 FROM public.profiles p

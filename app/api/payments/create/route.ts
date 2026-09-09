@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       operator = 'wave_money',
       otp,
       cycle = 'mensuel',
-      amount: customAmount,
+      // On ignore volontairement tout amount envoyé par le frontend par sécurité
     } = body;
 
     // Normalisation du nom de plan
@@ -49,29 +49,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Détermination dynamique du montant et de la description
-    let amount = customAmount ? Number(customAmount) : 0;
+    // Détermination dynamique et stricte du montant côté serveur
+    let amount = 0;
     let planDisplayName = 'Pro Producteur';
 
-    if (!amount || amount <= 0) {
-      if (['eclair', 'recolte', 'saison'].includes(normalizedPlan)) {
-        const pack = DEFAULT_TOKEN_PACKS.find((p) => p.slug === normalizedPlan);
-        amount = pack ? pack.prix_fcfa : 1990;
-        planDisplayName = pack ? pack.nom : 'Pack de Tokens IA';
+    if (['eclair', 'recolte', 'saison'].includes(normalizedPlan)) {
+      const pack = DEFAULT_TOKEN_PACKS.find((p) => p.slug === normalizedPlan);
+      amount = pack ? pack.prix_fcfa : 1990;
+      planDisplayName = pack ? pack.nom : 'Pack de Tokens IA';
+    } else {
+      const matchingPlan = DEFAULT_PLANS.find((p) => p.slug === normalizedPlan);
+      if (matchingPlan) {
+        amount = cycle === 'annuel' ? matchingPlan.prix_annuel_fcfa : matchingPlan.prix_mensuel_fcfa;
+        planDisplayName = matchingPlan.nom;
       } else {
-        const matchingPlan = DEFAULT_PLANS.find((p) => p.slug === normalizedPlan);
-        if (matchingPlan) {
-          amount = cycle === 'annuel' ? matchingPlan.prix_annuel_fcfa : matchingPlan.prix_mensuel_fcfa;
-          planDisplayName = matchingPlan.nom;
-        } else {
-          const planInfo = PLAN_LIMITS[normalizedPlan as UserPlan] || PLAN_LIMITS.pro;
-          amount = planInfo.priceMonthlyCFA;
-          planDisplayName = planInfo.name;
-        }
+        const planInfo = PLAN_LIMITS[normalizedPlan as UserPlan] || PLAN_LIMITS.pro;
+        amount = planInfo.priceMonthlyCFA;
+        planDisplayName = planInfo.name;
       }
     }
 
-    const orderReference = `AGRI_${normalizedPlan.toUpperCase()}_${Date.now().toString().slice(-6)}`;
+    // Génération de référence sécurisée au format attendu par le webhook: AGRI_[PLAN]_[USERID]_[TIMESTAMP]
+    const orderReference = `AGRI_${normalizedPlan.toUpperCase()}_usr-${userId}_${Date.now().toString().slice(-6)}`;
     const description = `AgriImpact Sénégal - ${planDisplayName} (${amount} FCFA)`;
 
     // Résolution précise et robuste du domaine d'origine sur Vercel ou en local
