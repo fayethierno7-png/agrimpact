@@ -367,12 +367,12 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const savedProfileRaw = localStorage.getItem('agrimpact_profile');
         const parsedProfile = savedProfileRaw ? JSON.parse(savedProfileRaw) : null;
         if (parsedProfile?.user_id) {
-          supabase.auth.getSession().then(({ data: { session } }) => {
+          const sendSession = (token?: string) => {
             fetch('/api/auth/session', {
               method: 'POST',
               headers: { 
                 'Content-Type': 'application/json',
-                ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {})
+                ...(token ? { Authorization: `Bearer ${token}` } : {})
               },
               body: JSON.stringify({
                 userId: parsedProfile.user_id,
@@ -381,7 +381,15 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 role: parsedProfile.role || 'producteur',
               }),
             }).catch(() => {});
-          });
+          };
+
+          if (supabase) {
+            supabase.auth.getSession().then(({ data: { session } }) => {
+              sendSession(session?.access_token);
+            }).catch(() => sendSession());
+          } else {
+            sendSession();
+          }
         }
       } catch {}
 
@@ -489,12 +497,16 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // 1. Initialisation persistante du cookie de session serveur avec statut en attente
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        let accessToken: string | undefined;
+        if (supabase) {
+          const { data: { session } } = await supabase.auth.getSession();
+          accessToken = session?.access_token;
+        }
         await fetch('/api/auth/session', {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
-            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {})
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
           },
           body: JSON.stringify({
             userId: newProfile.user_id,
