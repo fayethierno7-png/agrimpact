@@ -50,7 +50,7 @@ export async function getWeatherData(
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum&timezone=Africa%2FDakar`;
     
-    const response = await fetch(url, { next: { revalidate: 10800 } }); // revalidate 3 hours in Next.js
+    const response = await fetch(url, { next: { revalidate: 10800 }, signal: AbortSignal.timeout(6000) }); // revalidate 3 hours in Next.js
     if (!response.ok) {
       throw new Error(`Open-Meteo HTTP ${response.status}`);
     }
@@ -178,7 +178,7 @@ export async function get14DayAgroForecast(
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&forecast_days=14&daily=temperature_2m_max,temperature_2m_min,temperature_2m_mean,relative_humidity_2m_mean,relative_humidity_2m_max,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,weather_code&hourly=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=Africa%2FDakar`;
 
-    const response = await fetch(url, { next: { revalidate: 21600 } });
+    const response = await fetch(url, { next: { revalidate: 21600 }, signal: AbortSignal.timeout(6000) });
     if (!response.ok) {
       throw new Error(`Open-Meteo HTTP ${response.status}`);
     }

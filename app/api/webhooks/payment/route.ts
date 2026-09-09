@@ -36,6 +36,23 @@ export async function POST(req: NextRequest) {
 
     // Mise à jour de la table subscriptions et du profil
     if (isSupabaseConfigured && supabase) {
+      // 0. Protection Idempotence & Race Conditions
+      if (transactionId) {
+        const { data: existingSub } = await supabase
+          .from('subscriptions')
+          .select('id')
+          .eq('provider_subscription_id', transactionId)
+          .maybeSingle();
+
+        if (existingSub) {
+          return NextResponse.json({
+            success: true,
+            duplicate: true,
+            message: 'Transaction déjà enregistrée.',
+          });
+        }
+      }
+
       // 1. Mettre à jour le plan dans profiles
       await supabase
         .from('profiles')

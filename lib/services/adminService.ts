@@ -70,14 +70,26 @@ export async function getAdminUsers(period?: PeriodFilterValue): Promise<AdminUs
 
   if (isSupabaseConfigured && supabase) {
     try {
-      const [profilesRes, farmsRes] = await Promise.allSettled([
-        withTimeout<any>(supabase.from('profiles').select('*').order('created_at', { ascending: false })),
-        withTimeout<any>(supabase.from('farms').select('*')),
-      ]);
+      const profilesRes: any = await withTimeout<any>(
+        supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(100),
+        1500
+      );
 
-      if (profilesRes.status === 'fulfilled' && (profilesRes.value as any)?.data) {
-        const profiles: any[] = (profilesRes.value as any).data;
-        const farms: any[] = farmsRes.status === 'fulfilled' && (farmsRes.value as any)?.data ? (farmsRes.value as any).data : [];
+      if (profilesRes && profilesRes.data) {
+        const profiles: any[] = profilesRes.data;
+        const userIds = profiles.map((p: any) => p.user_id).filter(Boolean);
+
+        let farms: any[] = [];
+        if (userIds.length > 0) {
+          const farmsRes: any = await withTimeout<any>(
+            supabase.from('farms').select('id, user_id, nom, region').in('user_id', userIds),
+            1500
+          );
+          if (farmsRes && farmsRes.data) {
+            farms = farmsRes.data;
+          }
+        }
+
         const farmMap = new Map((farms || []).map((f: any) => [f.user_id, f]));
 
         const result: AdminUserListItem[] = profiles.map((p: any) => {
@@ -378,7 +390,7 @@ export async function getAuditLogs(params: {
 
   if (isSupabaseConfigured && supabase) {
     try {
-      let query: any = supabase.from('audit_log').select('*').order('created_at', { ascending: false });
+      let query: any = supabase.from('audit_log').select('*').order('created_at', { ascending: false }).limit(100);
 
       if (params.actionFilter && params.actionFilter !== 'all') {
         query = query.eq('action', params.actionFilter);
@@ -468,7 +480,7 @@ export async function getAdminPayments(period?: PeriodFilterValue): Promise<Paym
 
   if (isSupabaseConfigured && supabase) {
     try {
-      let query: any = supabase.from('payments').select('*').order('created_at', { ascending: false });
+      let query: any = supabase.from('payments').select('*').order('created_at', { ascending: false }).limit(100);
 
       if (period) {
         query = query.gte('created_at', period.startDate).lte('created_at', period.endDate);
@@ -493,7 +505,10 @@ export async function getAdminSubscriptions(period?: PeriodFilterValue): Promise
 
   if (isSupabaseConfigured && supabase) {
     try {
-      const { data, error } = await withTimeout<any>(supabase.from('subscriptions').select('*'), 1200);
+      const { data, error } = await withTimeout<any>(
+        supabase.from('subscriptions').select('*').order('created_at', { ascending: false }).limit(100),
+        1200
+      );
       if (!error && data) {
         return setAdminCached(cacheKey, data);
       }
@@ -601,7 +616,7 @@ export async function getAdminReports(period?: PeriodFilterValue): Promise<UserR
 
   if (isSupabaseConfigured && supabase) {
     try {
-      let query: any = supabase.from('reports').select('*').order('created_at', { ascending: false });
+      let query: any = supabase.from('reports').select('*').order('created_at', { ascending: false }).limit(100);
 
       if (period) {
         query = query.gte('created_at', period.startDate).lte('created_at', period.endDate);

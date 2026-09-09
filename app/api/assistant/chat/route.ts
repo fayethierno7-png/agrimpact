@@ -163,6 +163,7 @@ export async function POST(req: NextRequest) {
               temperature: 0.4,
               max_tokens: 1200,
             }),
+            signal: AbortSignal.timeout(8000),
           });
 
           if (groqResponse.ok) {
@@ -176,7 +177,7 @@ export async function POST(req: NextRequest) {
             }
           }
         } catch (groqErr) {
-          console.warn(`Tentative Groq (${groqModel}) échouée:`, groqErr);
+          console.warn(`Tentative Groq (${groqModel}) échouée ou timeout:`, groqErr);
         }
       }
     }
@@ -202,6 +203,7 @@ export async function POST(req: NextRequest) {
             temperature: 0.4,
             max_tokens: 1024,
           }),
+          signal: AbortSignal.timeout(8000),
         });
 
         if (openAiResponse.ok) {

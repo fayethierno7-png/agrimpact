@@ -83,6 +83,26 @@ export async function POST(req: NextRequest) {
 
     // Mise à jour de la base de données PostgreSQL / Supabase
     if (isSupabaseConfigured && supabase) {
+      // 0. Protection Idempotence & Race Conditions : vérifier si la transaction a déjà été traitée
+      const { data: existingSub } = await supabase
+        .from('subscriptions')
+        .select('id')
+        .eq('provider_subscription_id', transactionId)
+        .maybeSingle();
+
+      if (existingSub) {
+        console.log(`ℹ️ [IDEMPOTENCE] Transaction ${transactionId} déjà enregistrée. Traitement ignoré.`);
+        return NextResponse.json(
+          {
+            status: 'success',
+            received: true,
+            duplicate: true,
+            transaction_id: transactionId,
+          },
+          { status: 200 }
+        );
+      }
+
       // 1. Mettre à jour le plan dans la table profiles
       const { error: profileError } = await supabase
         .from('profiles')

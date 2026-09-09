@@ -20,19 +20,31 @@ import {
   Flag,
   ShieldCheck,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useAgri } from '../../lib/context/AgriContext';
 import { AppHeader } from '../../components/AppHeader';
 import { BottomNav } from '../../components/BottomNav';
-import { ReportModal } from '../../components/ReportModal';
-import { AgriCalendarModal } from '../../components/AgriCalendarModal';
 import { Toast, ToastMessage } from '../../components/Toast';
 import { AgrometeoPredictiveModule } from '../../components/AgrometeoPredictiveModule';
 import { getWeatherData, CurrentWeatherReport } from '../../lib/weather/openMeteo';
 import { calculateCropStage, evaluateAgronomicRules } from '../../lib/engine/recommendationEngine';
 import AiTokenGauge from '../../components/billing/AiTokenGauge';
 import DailyAdviceCard from '../../components/dashboard/DailyAdviceCard';
-import EditFarmModal from '../../components/farm/EditFarmModal';
 import ContactSupportBanner from '../../components/common/ContactSupportBanner';
+
+// Code Splitting / Lazy Loading des modales lourdes
+const ReportModal = dynamic(
+  () => import('../../components/ReportModal').then((mod) => mod.ReportModal),
+  { ssr: false }
+);
+const AgriCalendarModal = dynamic(
+  () => import('../../components/AgriCalendarModal').then((mod) => mod.AgriCalendarModal),
+  { ssr: false }
+);
+const EditFarmModal = dynamic(
+  () => import('../../components/farm/EditFarmModal'),
+  { ssr: false }
+);
 
 export default function DashboardPage() {
   const { profile, farm, plot, markRecommendationApplied, recommendations, alerts, updateFarmAndPlot } = useAgri();
