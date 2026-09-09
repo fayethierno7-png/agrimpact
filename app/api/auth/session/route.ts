@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { signSessionToken, verifySessionToken } from '../../../../lib/auth/sessionSigner';
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,8 +38,8 @@ export async function POST(req: NextRequest) {
       session: sessionPayload,
     });
 
-    // Encodage base64 léger et propre pour le cookie de session httpOnly
-    const sessionToken = Buffer.from(JSON.stringify(sessionPayload)).toString('base64url');
+    // Encodage signé cryptographiquement HMAC-SHA256
+    const sessionToken = await signSessionToken(sessionPayload);
 
     // Déposer le cookie de session serveur sécurisé (7 jours)
     response.cookies.set('agri_session', sessionToken, {
@@ -96,11 +97,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ isAuthenticated: false }, { status: 401 });
   }
 
-  try {
-    const raw = Buffer.from(sessionCookie, 'base64url').toString('utf-8');
-    const session = JSON.parse(raw);
-    return NextResponse.json({ isAuthenticated: true, session });
-  } catch {
+  const session = await verifySessionToken(sessionCookie);
+  if (!session) {
     return NextResponse.json({ isAuthenticated: false }, { status: 401 });
   }
+
+  return NextResponse.json({ isAuthenticated: true, session });
 }

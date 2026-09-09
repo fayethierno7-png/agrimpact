@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServerClient } from '../supabase/client';
+import { verifySessionToken } from './sessionSigner';
 
 export interface AuthenticatedUser {
   id: string;
@@ -12,25 +13,20 @@ export interface AuthenticatedUser {
 }
 
 export async function getAuthenticatedUser(req: NextRequest): Promise<AuthenticatedUser | null> {
-  // 1. Vérifier le cookie de session httpOnly agri_session
+  // 1. Vérifier le cookie de session httpOnly agri_session avec vérification HMAC
   const sessionCookie = req.cookies.get('agri_session')?.value;
   if (sessionCookie) {
-    try {
-      const raw = Buffer.from(sessionCookie, 'base64url').toString('utf-8');
-      const data = JSON.parse(raw);
-      if (data && data.userId) {
-        return {
-          id: data.userId,
-          email: data.email,
-          nom: data.nom,
-          role: data.role || 'producteur',
-          statut_compte: data.statut_compte || 'actif',
-          statut_abonnement: data.statut_abonnement || 'actif',
-          date_limite_grace: data.date_limite_grace,
-        };
-      }
-    } catch (e) {
-      console.warn('Erreur décodage cookie agri_session:', e);
+    const data = await verifySessionToken(sessionCookie);
+    if (data && data.userId) {
+      return {
+        id: data.userId,
+        email: data.email,
+        nom: data.nom,
+        role: data.role || 'producteur',
+        statut_compte: data.statut_compte || 'actif',
+        statut_abonnement: data.statut_abonnement || 'actif',
+        date_limite_grace: data.date_limite_grace,
+      };
     }
   }
 

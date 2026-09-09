@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '../../../../lib/supabase/client';
 import { UserPlan } from '../../../../lib/types';
+import { verifyWebhookSignature } from '../../../../lib/security/webhookVerifier';
 
 /**
  * Webhook UnitechPay
@@ -9,7 +10,28 @@ import { UserPlan } from '../../../../lib/types';
  */
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const rawBody = await req.text();
+    const signatureHeader =
+      req.headers.get('x-unitechpay-signature') ||
+      req.headers.get('x-webhook-signature') ||
+      req.headers.get('signature');
+
+    // Vérification stricte de l'authenticité de l'émetteur
+    const verification = verifyWebhookSignature(
+      rawBody,
+      signatureHeader,
+      process.env.UNITECHPAY_WEBHOOK_SECRET
+    );
+
+    if (!verification.valid) {
+      console.warn('⛔ [SECURITE] Tentative d\'appel Webhook UnitechPay rejetée:', verification.reason);
+      return NextResponse.json(
+        { error: 'Non autorisé: signature invalide ou absente' },
+        { status: 401 }
+      );
+    }
+
+    const body = JSON.parse(rawBody);
 
     // Exemple de structure UnitechPay :
     // { "event": "payment_completed", "data": { "transaction_id": "12345", "reference": "AGRI_PRO_usr-123_...", "amount": 2500, "status": "completed" } }
@@ -108,9 +130,9 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (error: any) {
-    console.error('Erreur traitement Webhook UnitechPay:', error);
+    console.error('Erreur traitement Webhook UnitechPay:', error?.message || 'Erreur inconnue');
     return NextResponse.json(
-      { error: error.message || 'Erreur interne du webhook UnitechPay' },
+      { error: 'Erreur interne lors du traitement du paiement' },
       { status: 500 }
     );
   }

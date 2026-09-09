@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '../../../../lib/supabase/client';
 import { UserPlan } from '../../../../lib/types';
+import { verifyWebhookSignature } from '../../../../lib/security/webhookVerifier';
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const rawBody = await req.text();
+    const signatureHeader =
+      req.headers.get('x-payment-signature') ||
+      req.headers.get('x-webhook-signature') ||
+      req.headers.get('signature');
+
+    const secret = process.env.PAYMENT_WEBHOOK_SECRET || process.env.UNITECHPAY_WEBHOOK_SECRET;
+    const verification = verifyWebhookSignature(rawBody, signatureHeader, secret);
+
+    if (!verification.valid) {
+      console.warn('⛔ [SECURITE] Webhook paiement rejeté:', verification.reason);
+      return NextResponse.json({ error: 'Signature invalide ou absente' }, { status: 401 });
+    }
+
+    const body = JSON.parse(rawBody);
 
     // Payload attendu de Wave ou Orange Money
     // { event: 'payment.completed', provider: 'wave', userId: '...', plan: 'pro', transactionId: '...' }
@@ -49,8 +64,9 @@ export async function POST(req: NextRequest) {
       message: `Abonnement ${plan} activé avec succès via ${provider || 'mobile money'}.`,
     });
   } catch (error: any) {
+    console.error('Erreur webhook paiement:', error?.message || 'Erreur inconnue');
     return NextResponse.json(
-      { error: error.message || 'Erreur interne du webhook' },
+      { error: 'Erreur interne lors du traitement du paiement' },
       { status: 500 }
     );
   }

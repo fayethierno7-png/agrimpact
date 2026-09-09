@@ -1,35 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured, getSupabaseServerClient } from '../../../../lib/supabase/client';
+import { getAuthenticatedUser } from '../../../../lib/auth/serverAuth';
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Vérification session
-    const sessionCookie = req.cookies.get('agri_session')?.value;
-    const authHeader = req.headers.get('authorization');
-    let userId: string | null = null;
-
-    if (sessionCookie) {
-      try {
-        const raw = Buffer.from(sessionCookie, 'base64url').toString('utf-8');
-        const session = JSON.parse(raw);
-        userId = session.userId;
-      } catch {}
-    }
-
-    const body = await req.json();
-    const {
-      simulation,
-      userId: bodyUserId,
-    } = body;
-
-    const targetUserId = userId || bodyUserId;
-
-    if (!targetUserId) {
+    // 1. Dérivation stricte de l'identité depuis la session serveur (Prévention CWE-345)
+    const user = await getAuthenticatedUser(req);
+    if (!user || !user.id) {
       return NextResponse.json(
         { success: false, error: 'Authentification requise pour sauvegarder cette simulation.' },
         { status: 401 }
       );
     }
+
+    const authHeader = req.headers.get('authorization');
+    const body = await req.json();
+    const { simulation } = body;
 
     if (!simulation || !simulation.situation) {
       return NextResponse.json(
@@ -40,7 +26,7 @@ export async function POST(req: NextRequest) {
 
     const record = {
       id: `sim-${Date.now()}`,
-      user_id: targetUserId,
+      user_id: user.id,
       region: simulation.situation.region,
       culture: simulation.situation.culture,
       stade_nom: simulation.situation.stadeNom,

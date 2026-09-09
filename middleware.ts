@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { verifySessionToken } from './lib/auth/sessionSigner';
+import './lib/security/envValidator';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -11,14 +13,8 @@ export async function middleware(request: NextRequest) {
     request.cookies.get('supabase-auth-token')?.value;
   const authHeader = request.headers.get('authorization');
 
-  // Décodage sécurisé de la session serveur httpOnly
-  let sessionData: any = null;
-  if (sessionCookie) {
-    try {
-      const raw = Buffer.from(sessionCookie, 'base64url').toString('utf-8');
-      sessionData = JSON.parse(raw);
-    } catch {}
-  }
+  // Décodage et vérification cryptographique HMAC de la session serveur httpOnly
+  const sessionData = await verifySessionToken(sessionCookie);
 
   const isAuthenticated = Boolean(sessionData?.userId || tokenCookie || authHeader);
 

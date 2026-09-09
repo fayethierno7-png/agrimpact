@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AGRIMPACT_SYSTEM_PROMPT, generateLocalAgronomicResponse } from '../../../../lib/assistant/systemPrompt';
 import { getAuthenticatedUser } from '../../../../lib/auth/serverAuth';
 import { supabase, isSupabaseConfigured } from '../../../../lib/supabase/client';
+import { rateLimit, getClientIdentifier } from '../../../../lib/security/rateLimiter';
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,6 +16,27 @@ export async function POST(req: NextRequest) {
           code: 'UNAUTHORIZED',
         },
         { status: 401 }
+      );
+    }
+
+    // Protection anti-abus / Rate Limiting (20 requêtes par minute par utilisateur)
+    const rateLimitKey = getClientIdentifier(req, 'chat', user.id);
+    const rlResult = rateLimit(rateLimitKey, 20, 60_000);
+    if (!rlResult.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Trop de requêtes envoyées. Veuillez patienter ${rlResult.reset} secondes.`,
+          code: 'RATE_LIMIT_EXCEEDED',
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(rlResult.reset),
+            'X-RateLimit-Limit': String(rlResult.limit),
+            'X-RateLimit-Remaining': String(rlResult.remaining),
+          },
+        }
       );
     }
 

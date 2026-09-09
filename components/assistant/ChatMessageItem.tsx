@@ -82,7 +82,22 @@ export default function ChatMessageItem({ message, onFeedback, onRetry }: ChatMe
     }
   };
 
-  // Formatage simple du markdown (gras, listes à puces)
+  // Helper pour convertir **texte** en éléments React sécurisés sans dangerouslySetInnerHTML (Prévention XSS)
+  const renderWithBold = (str: string) => {
+    const parts = str.split(/(\*\*.*?\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return (
+          <strong key={i} className="font-semibold text-stone-900 dark:text-stone-100">
+            {part.slice(2, -2)}
+          </strong>
+        );
+      }
+      return part;
+    });
+  };
+
+  // Formatage simple du markdown (gras, listes à puces) 100% sécurisé React
   const renderFormattedContent = (text: string) => {
     const lines = text.split('\n');
     return lines.map((line, idx) => {
@@ -91,7 +106,7 @@ export default function ChatMessageItem({ message, onFeedback, onRetry }: ChatMe
         const bulletText = line.trim().substring(2);
         return (
           <li key={idx} className="ml-4 list-disc text-stone-700 dark:text-stone-300 my-1 leading-relaxed">
-            <span dangerouslySetInnerHTML={{ __html: formatBold(bulletText) }} />
+            <span>{renderWithBold(bulletText)}</span>
           </li>
         );
       }
@@ -99,7 +114,7 @@ export default function ChatMessageItem({ message, onFeedback, onRetry }: ChatMe
       if (/^\d+\.\s/.test(line.trim())) {
         return (
           <div key={idx} className="font-bold text-stone-900 dark:text-stone-100 mt-2 mb-1">
-            <span dangerouslySetInnerHTML={{ __html: formatBold(line) }} />
+            <span>{renderWithBold(line)}</span>
           </div>
         );
       }
@@ -110,16 +125,11 @@ export default function ChatMessageItem({ message, onFeedback, onRetry }: ChatMe
       // Paragraphe standard
       return (
         <p key={idx} className="my-1 leading-relaxed">
-          <span dangerouslySetInnerHTML={{ __html: formatBold(line) }} />
+          <span>{renderWithBold(line)}</span>
         </p>
       );
     });
   };
-
-  // Helper pour convertir **texte** en <strong>texte</strong>
-  function formatBold(str: string): string {
-    return str.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-  }
 
   return (
     <div className={`flex gap-3 my-4 ${isAssistant ? 'items-start' : 'items-start flex-row-reverse'}`}>
