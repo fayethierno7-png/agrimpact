@@ -6,6 +6,8 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: 'AgriImpact',
     description: 'Copilote agronomique décisionnel et météo prédictive pour les producteurs au Sénégal.',
     start_url: '/',
+    scope: '/',
+    id: '/',
     display: 'standalone',
     background_color: '#0C2B1E',
     theme_color: '#0C2B1E',

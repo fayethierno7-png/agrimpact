@@ -3,8 +3,20 @@ import './globals.css';
 import { AgriProvider } from '../lib/context/AgriContext';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://www.agrimpact.app'),
   title: 'AGRIMPACT — Conseil Agricole & Météo Sénégal',
   description: 'Le copilote de votre exploitation agricole au Sénégal. Recommandations agronomiques actionnables et météo en temps réel.',
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'AGRIMPACT — Conseil Agricole & Météo Sénégal',
+    description: 'Le copilote de votre exploitation agricole au Sénégal. Recommandations agronomiques actionnables et météo en temps réel.',
+    url: 'https://www.agrimpact.app',
+    siteName: 'AgriImpact',
+    locale: 'fr_SN',
+    type: 'website',
+  },
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,

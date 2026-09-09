@@ -7,18 +7,16 @@ import {
   ShieldCheck,
   ArrowLeft,
   ArrowRight,
-  Smartphone,
   Lock,
-  CheckCircle2,
   AlertCircle,
-  Sparkles,
-  Zap,
 } from 'lucide-react';
 import { DEFAULT_PLANS, DEFAULT_TOKEN_PACKS, formatPriceFCFA } from '../../lib/saas/plansData';
+import { useAgri } from '../../lib/context/AgriContext';
 
 function PaymentPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { profile } = useAgri();
 
   const planParam = searchParams.get('plan') || 'pro';
   const providerParam = (searchParams.get('provider') as 'wave' | 'orange_money') || 'wave';
@@ -29,10 +27,6 @@ function PaymentPageContent() {
   const [phoneNumber, setPhoneNumber] = useState('77 123 45 67');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Nouvel état pour gérer l'affichage post-soumission (Le Vrai QR Code)
-  const [paymentData, setPaymentData] = useState<{ url: string, transactionId: string, reference: string } | null>(null);
-  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'completed' | 'expired'>('pending');
 
   // Recherche du plan ou pack correspondant
   const matchingPlan = DEFAULT_PLANS.find((p) => p.slug === planParam);
@@ -60,43 +54,13 @@ function PaymentPageContent() {
     }
   }, [providerParam]);
 
-  // Polling Effect
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-
-    if (paymentData && paymentStatus === 'pending') {
-      intervalId = setInterval(async () => {
-        try {
-          const res = await fetch(`/api/payments/status?transactionId=${paymentData.transactionId}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data.status === 'completed') {
-              setPaymentStatus('completed');
-              clearInterval(intervalId);
-              // Redirection au succès
-              router.push(
-                `/payment/success?reference=${paymentData.reference}&plan=${planParam}&provider=${provider}&amount=${amount}`
-              );
-            }
-          }
-        } catch (error) {
-          console.error("Erreur polling", error);
-        }
-      }, 3000);
-    }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [paymentData, paymentStatus, router, planParam, provider, amount]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
     const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
     if (cleanPhone.length < 9) {
-      setErrorMessage('Veuillez entrer un numéro de mobile sénégalais valide (9 chiffres).');
+      setErrorMessage('Veuillez entrer un numéro de mobile sénégalais valide (9 chiffres, ex: 77 123 45 67).');
       return;
     }
 
@@ -111,7 +75,7 @@ function PaymentPageContent() {
           provider,
           phoneNumber: cleanPhone,
           cycle: cycleParam,
-          // on n'envoie pas amount, le backend gère.
+          userId: profile?.user_id || 'anonymous',
         }),
       });
 
@@ -122,14 +86,10 @@ function PaymentPageContent() {
       }
 
       if (data.paymentUrl) {
-        // Au lieu de rediriger directement, on affiche le QR Code et on lance le polling
-        setPaymentData({ 
-          url: data.paymentUrl, 
-          transactionId: data.transactionId,
-          reference: data.orderReference
-        });
+        // Redirection directe vers le portail officiel Wave ou Orange Money
+        window.location.href = data.paymentUrl;
       } else {
-        // Fallback s'il n'y a pas d'URL (ex: mode simulation direct)
+        // Redirection vers la page de confirmation de commande
         router.push(
           `/payment/success?reference=${data.orderReference || 'AGRI_' + Date.now()}&plan=${planParam}&provider=${provider}&amount=${amount}`
         );
@@ -137,157 +97,8 @@ function PaymentPageContent() {
     } catch (err: any) {
       console.error('Erreur paiement:', err);
       setErrorMessage(err.message || 'Une erreur est survenue lors de l’initialisation.');
-    } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const renderPaymentForm = () => (
-    <form onSubmit={handleSubmit} className="p-6 sm:p-7 space-y-6">
-      {/* 1. Sélection opérateur */}
-      <div>
-        <label className="block text-xs font-black uppercase tracking-wider text-stone-700 mb-2.5">
-          1. Choisissez votre compte Mobile Money
-        </label>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => setProvider('wave')}
-            className={`p-3.5 rounded-2xl border-2 flex items-center justify-center gap-2 font-bold text-xs transition cursor-pointer ${
-              provider === 'wave'
-                ? 'border-[#1DA1F2] bg-[#1DA1F2]/10 text-[#0070BA] shadow-xs'
-                : 'border-stone-200 bg-white text-stone-600 hover:border-stone-300'
-            }`}
-          >
-            <span className="w-2.5 h-2.5 rounded-full bg-[#1DA1F2]" />
-            <span>Wave Sénégal</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setProvider('orange_money')}
-            className={`p-3.5 rounded-2xl border-2 flex items-center justify-center gap-2 font-bold text-xs transition cursor-pointer ${
-              provider === 'orange_money'
-                ? 'border-[#FF6600] bg-[#FF6600]/10 text-[#FF6600] shadow-xs'
-                : 'border-stone-200 bg-white text-stone-600 hover:border-stone-300'
-            }`}
-          >
-            <span className="w-2.5 h-2.5 rounded-full bg-[#FF6600]" />
-            <span>Orange Money</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 2. Numéro de téléphone */}
-      <div>
-        <label className="block text-xs font-black uppercase tracking-wider text-stone-700 mb-2">
-          2. Numéro de téléphone rattaché au compte
-        </label>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-xs font-bold text-stone-500">
-            +221
-          </div>
-          <input
-            type="tel"
-            required
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            placeholder="77 123 45 67"
-            className="w-full pl-14 pr-4 py-3 bg-white border border-stone-300 rounded-2xl text-sm font-bold text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#0C2B1E]"
-          />
-        </div>
-        <p className="text-[11px] text-stone-500 mt-1.5 font-medium">
-          Ce numéro sera utilisé pour générer la demande de paiement.
-        </p>
-      </div>
-
-      {/* Alerte d'erreur */}
-      {errorMessage && (
-        <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-start gap-2 animate-fade-in">
-          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
-          <span>{errorMessage}</span>
-        </div>
-      )}
-
-      {/* Bouton de confirmation */}
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full py-4 px-6 rounded-2xl bg-[#963e1b] hover:bg-[#823315] text-white text-sm font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer active:scale-[0.99] disabled:opacity-50"
-      >
-        {isSubmitting ? (
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            <span>Création de la transaction...</span>
-          </div>
-        ) : (
-          <>
-            <span>
-              Générer le paiement de {formatPriceFCFA(amount)} FCFA
-            </span>
-            <ArrowRight className="w-4 h-4" />
-          </>
-        )}
-      </button>
-
-      <div className="pt-2 text-center">
-        <p className="text-[11px] text-stone-500 font-medium">
-          Paiement sécurisé • Facture et quittance éditées automatiquement
-        </p>
-      </div>
-    </form>
-  );
-
-  const renderQRCodeScreen = () => {
-    if (!paymentData) return null;
-    
-    return (
-      <div className="p-6 sm:p-8 flex flex-col items-center space-y-6 animate-fade-in">
-        <div className="text-center space-y-2">
-          <h2 className="text-lg font-black text-stone-900">Validation requise</h2>
-          <p className="text-sm text-stone-500">
-            Ouvrez votre application <strong className={provider === 'wave' ? 'text-[#0070BA]' : 'text-[#FF6600]'}>{provider === 'wave' ? 'Wave' : 'Orange Money'}</strong> pour scanner ce code, ou cliquez sur le bouton si vous êtes sur votre téléphone.
-          </p>
-        </div>
-
-        <div className="relative overflow-hidden p-4 bg-white border-2 border-stone-200 rounded-3xl shadow-sm">
-          <div className={`absolute top-0 left-0 w-full h-1.5 ${provider === 'wave' ? 'bg-[#1DA1F2]' : 'bg-[#FF6600]'}`}></div>
-          <div className="p-2 border border-stone-100 rounded-2xl">
-            {/* Vrai QR Code généré à partir du vrai URL de paiement UnitechPay */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(paymentData.url)}&margin=0`} 
-              alt="QR Code de Paiement" 
-              className="w-48 h-48 object-contain rounded-lg"
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 text-sm font-bold text-emerald-700 bg-emerald-50 px-4 py-2.5 rounded-full">
-          <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-          En attente du paiement...
-        </div>
-
-        <div className="w-full space-y-3 pt-4 border-t border-stone-200">
-          <a
-            href={paymentData.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full py-3.5 px-6 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white text-sm font-black flex items-center justify-center gap-2 shadow-lg transition-all"
-          >
-            <Smartphone className="w-4 h-4" />
-            Ouvrir l'application mobile
-          </a>
-          
-          <button
-            onClick={() => setPaymentData(null)}
-            className="w-full py-3.5 px-6 rounded-2xl bg-white border-2 border-stone-200 text-stone-600 text-sm font-black hover:bg-stone-50 transition-all"
-          >
-            Annuler et recommencer
-          </button>
-        </div>
-      </div>
-    );
   };
 
   return (
@@ -346,8 +157,100 @@ function PaymentPageContent() {
             </div>
           </div>
 
-          {/* Contenu dynamique (Formulaire ou Ecran de Scan QR) */}
-          {paymentData ? renderQRCodeScreen() : renderPaymentForm()}
+          {/* Formulaire de paiement Mobile Money */}
+          <form onSubmit={handleSubmit} className="p-6 sm:p-7 space-y-6">
+            {/* 1. Sélection opérateur */}
+            <div>
+              <label className="block text-xs font-black uppercase tracking-wider text-stone-700 mb-2.5">
+                1. Choisissez votre compte Mobile Money
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setProvider('wave')}
+                  className={`p-3.5 rounded-2xl border-2 flex items-center justify-center gap-2 font-bold text-xs transition cursor-pointer ${
+                    provider === 'wave'
+                      ? 'border-[#1DA1F2] bg-[#1DA1F2]/10 text-[#0070BA] shadow-xs'
+                      : 'border-stone-200 bg-white text-stone-600 hover:border-stone-300'
+                  }`}
+                >
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#1DA1F2]" />
+                  <span>Wave Sénégal</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setProvider('orange_money')}
+                  className={`p-3.5 rounded-2xl border-2 flex items-center justify-center gap-2 font-bold text-xs transition cursor-pointer ${
+                    provider === 'orange_money'
+                      ? 'border-[#FF6600] bg-[#FF6600]/10 text-[#FF6600] shadow-xs'
+                      : 'border-stone-200 bg-white text-stone-600 hover:border-stone-300'
+                  }`}
+                >
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#FF6600]" />
+                  <span>Orange Money</span>
+                </button>
+              </div>
+            </div>
+
+            {/* 2. Numéro de téléphone */}
+            <div>
+              <label className="block text-xs font-black uppercase tracking-wider text-stone-700 mb-2">
+                2. Numéro de téléphone rattaché au compte
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-xs font-bold text-stone-500">
+                  +221
+                </div>
+                <input
+                  type="tel"
+                  required
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="77 123 45 67"
+                  className="w-full pl-14 pr-4 py-3 bg-white border border-stone-300 rounded-2xl text-sm font-bold text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#0C2B1E]"
+                />
+              </div>
+              <p className="text-[11px] text-stone-500 mt-1.5 font-medium">
+                Vous serez redirigé automatiquement vers l'application {provider === 'wave' ? 'Wave' : 'Orange Money'} pour valider le débit.
+              </p>
+            </div>
+
+            {/* Alerte d'erreur */}
+            {errorMessage && (
+              <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-start gap-2 animate-fade-in">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
+            {/* Bouton de confirmation */}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full py-4 px-6 rounded-2xl bg-[#963e1b] hover:bg-[#823315] text-white text-sm font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer active:scale-[0.99] disabled:opacity-50"
+            >
+              {isSubmitting ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Redirection vers {provider === 'wave' ? 'Wave' : 'Orange Money'}...</span>
+                </div>
+              ) : (
+                <>
+                  <span>
+                    Valider le paiement de {formatPriceFCFA(amount)} FCFA
+                  </span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+
+            <div className="pt-2 text-center">
+              <p className="text-[11px] text-stone-500 font-medium">
+                Paiement instantané • Facture et quittance éditées automatiquement
+              </p>
+            </div>
+          </form>
         </div>
       </div>
     </div>

@@ -38,16 +38,18 @@ export async function POST(req: NextRequest) {
     let plan: UserPlan = 'pro';
     let userId = data?.user_id || body?.user_id || '';
 
-    if (reference.includes('BUSINESS') || amount >= 10000) {
-      plan = 'business';
+    if (reference.includes('COOPERATIVE') || reference.includes('BUSINESS') || amount >= 10000) {
+      plan = 'cooperative';
+    } else if (reference.includes('SOLO') || amount < 2000) {
+      plan = 'solo';
     } else {
       plan = 'pro';
     }
 
-    // Extraction du userId depuis la référence si présente
+    // Extraction du userId depuis la référence si présente (format: AGRI_[PLAN]_usr-[USERID]_[TIMESTAMP])
     const refParts = reference.split('_');
     if (refParts.length >= 3 && refParts[2].startsWith('usr-')) {
-      userId = refParts[2];
+      userId = refParts[2].replace(/^usr-/, '');
     }
 
     // Détection du provider (Wave ou Orange Money)

@@ -28,9 +28,10 @@ export async function sendWelcomeEmail(params: WelcomeEmailParams): Promise<Send
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
   const smtpFrom = process.env.SMTP_FROM || 'AGRIMPACT Sénégal <contact@agrimpact.sn>';
+  const siteUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.agrimpact.app').replace(/\/+$/, '');
 
   const subject = `🌱 Bienvenue sur AGRIMPACT — Votre exploitation à ${region} est configurée`;
-  const textContent = `Bienvenue sur AGRIMPACT, ${nom} !\n\nVotre exploitation à ${region} (${culture}, ${surfaceHa} ha, ${typeIrrigation}) a bien été enregistrée.\nAccédez à vos conseils agronomiques et alertes météo sur : http://localhost:3000/dashboard\n\nBesoin d'aide ? Contactez notre conseiller au 33 800 12 12.`;
+  const textContent = `Bienvenue sur AGRIMPACT, ${nom} !\n\nVotre exploitation à ${region} (${culture}, ${surfaceHa} ha, ${typeIrrigation}) a bien été enregistrée.\nAccédez à vos conseils agronomiques et alertes météo sur : ${siteUrl}/dashboard\n\nBesoin d'aide ? Contactez notre conseiller au 33 800 12 12.`;
 
   const htmlContent = `
 <!DOCTYPE html>
@@ -78,7 +79,7 @@ export async function sendWelcomeEmail(params: WelcomeEmailParams): Promise<Send
 
       <p>Nos modèles de calcul ont synchronisé vos données d'humidité des sols et les risques caniculaires pour <strong>${region}</strong>.</p>
 
-      <a href="http://localhost:3000/dashboard" class="button">Accéder à mon Tableau de Bord →</a>
+      <a href="${siteUrl}/dashboard" class="button">Accéder à mon Tableau de Bord →</a>
 
       <div class="contact-box">
         <strong>📞 Ligne directe agronome :</strong> Une question sur vos parcelles ou votre météo ? Appelez votre conseiller au <strong>33 800 12 12</strong> (numéro vert gratuit).

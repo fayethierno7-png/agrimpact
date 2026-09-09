@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     } else if (process.env.NEXT_PUBLIC_APP_URL && process.env.NEXT_PUBLIC_APP_URL.startsWith('https://')) {
       origin = process.env.NEXT_PUBLIC_APP_URL;
     } else {
-      origin = 'https://agrimpact.sn';
+      origin = 'https://www.agrimpact.app';
     }
 
     // Retirer tout slash de fin

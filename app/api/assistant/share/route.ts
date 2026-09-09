@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'https://agrimpact.vercel.app';
+    const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'https://www.agrimpact.app';
     const shareUrl = `${origin}/assistant/shared/${shareToken}`;
 
     return NextResponse.json({
