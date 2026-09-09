@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '../../../../lib/supabase/client';
+import { isValidId } from '../../../../lib/validation/apiValidators';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,9 +20,9 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const transactionId = searchParams.get('transactionId');
 
-    if (!transactionId) {
+    if (!transactionId || !isValidId(transactionId)) {
       return NextResponse.json(
-        { error: 'transactionId manquant.' },
+        { error: 'transactionId manquant ou invalide.' },
         { status: 400 }
       );
     }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient, supabase } from '../../../../../lib/supabase/client';
 import { getFarmAgrometeoSummary } from '../../../../../lib/services/agrometeoService';
+import { isValidId } from '../../../../../lib/validation/apiValidators';
 
 type RouteContext = {
   params: Promise<{ farmId: string }> | { farmId: string };
@@ -11,9 +12,9 @@ export async function GET(req: NextRequest, context: RouteContext) {
     const resolvedParams = await Promise.resolve(context.params);
     const farmId = resolvedParams.farmId;
 
-    if (!farmId) {
+    if (!farmId || !isValidId(farmId)) {
       return NextResponse.json(
-        { success: false, error: "Paramètre d'URL 'farmId' manquant." },
+        { success: false, error: "Paramètre d'URL 'farmId' obligatoire et valide." },
         { status: 400 }
       );
     }

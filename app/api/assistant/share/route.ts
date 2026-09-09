@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '../../../../lib/auth/serverAuth';
 import { supabase, isSupabaseConfigured } from '../../../../lib/supabase/client';
+import { isValidId } from '../../../../lib/validation/apiValidators';
 import crypto from 'crypto';
 
 export async function POST(req: NextRequest) {
@@ -74,9 +75,9 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const token = searchParams.get('token');
 
-    if (!token) {
+    if (!token || !isValidId(token)) {
       return NextResponse.json(
-        { success: false, error: 'Jeton de partage manquant.' },
+        { success: false, error: 'Jeton de partage manquant ou invalide.' },
         { status: 400 }
       );
     }
@@ -132,8 +133,8 @@ export async function DELETE(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const token = searchParams.get('token');
 
-    if (!token) {
-      return NextResponse.json({ success: false, error: 'Token manquant.' }, { status: 400 });
+    if (!token || !isValidId(token)) {
+      return NextResponse.json({ success: false, error: 'Token manquant ou invalide.' }, { status: 400 });
     }
 
     if (isSupabaseConfigured && supabase) {
