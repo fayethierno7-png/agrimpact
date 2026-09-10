@@ -540,6 +540,15 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: data.email,
           password: data.password,
+          options: {
+            data: {
+              nom: newProfile.nom,
+              telephone: data.telephone || '',
+              region: selectedRegion,
+              culture: selectedCulture,
+              surfaceHa: selectedSurface,
+            },
+          },
         });
         if (authError) throw authError;
 
@@ -549,9 +558,32 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
           newProfile.id = supabaseUserId;
           newFarm.user_id = supabaseUserId;
 
-          await supabase.from('profiles').insert([{ ...newProfile, user_id: supabaseUserId, statut_compte: 'en_attente' }]);
-          await supabase.from('farms').insert([{ ...newFarm, user_id: supabaseUserId }]);
-          await supabase.from('plots').insert([{ ...newPlot, farm_id: newFarmId }]);
+          // 1. Enregistrement garanti côté serveur
+          try {
+            await fetch('/api/auth/register-profile', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: supabaseUserId,
+                email: data.email,
+                nom: newProfile.nom,
+                telephone: data.telephone || '',
+                region: selectedRegion,
+                culture: selectedCulture,
+                surfaceHa: selectedSurface,
+                typeIrrigation: selectedIrrigation,
+              }),
+            });
+          } catch (regErr) {
+            console.warn('Erreur appel register-profile:', regErr);
+          }
+
+          // 2. Tentative directe client (si session ou policy active)
+          try {
+            await supabase.from('profiles').upsert([{ ...newProfile, user_id: supabaseUserId, statut_compte: 'en_attente' }]);
+            await supabase.from('farms').insert([{ ...newFarm, user_id: supabaseUserId }]);
+            await supabase.from('plots').insert([{ ...newPlot, farm_id: newFarmId }]);
+          } catch {}
         }
       }
 

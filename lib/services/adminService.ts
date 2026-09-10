@@ -75,6 +75,24 @@ export async function getAdminUsers(period?: PeriodFilterValue): Promise<AdminUs
   const cached = getAdminCached<AdminUserListItem[]>(cacheKey);
   if (cached) return cached;
 
+  // 1. Appel prioritaire vers l'API Route serveur sécurisée (passe les vérifications de session et évite les blocages RLS client)
+  try {
+    const res = await fetch('/api/admin/users', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && Array.isArray(data.users)) {
+        return setAdminCached(cacheKey, data.users);
+      }
+    }
+  } catch (apiErr) {
+    console.warn('Erreur appel /api/admin/users, tentative fallback direct:', apiErr);
+  }
+
+  // 2. Fallback direct Supabase (si l'utilisateur dispose d'un JWT actif)
   if (isSupabaseConfigured && supabase) {
     try {
       const profilesRes: any = await withTimeout<any>(
@@ -130,6 +148,29 @@ export async function updateUserAccountStatus(params: {
   invalidateAdminCache('users_');
   invalidateAdminCache('audit_');
 
+  // 1. Appel API serveur prioritaire
+  try {
+    const res = await fetch('/api/admin/users', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        targetUserId,
+        targetUserNom,
+        newStatus,
+        reason,
+      }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success) {
+        return { success: true };
+      }
+    }
+  } catch (apiErr) {
+    console.warn('Erreur appel PATCH /api/admin/users:', apiErr);
+  }
+
+  // 2. Fallback direct Supabase
   if (isSupabaseConfigured && supabase) {
     try {
       const { error } = await withTimeout<any>(
