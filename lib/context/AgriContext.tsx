@@ -16,7 +16,7 @@ interface AgriContextType {
   theme: UserTheme;
   setTheme: (theme: UserTheme) => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
-  login: (identifier: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
+  login: (identifier: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string; profile?: UserProfile | null }>;
   signupAndCreateFarm: (data: {
     email: string;
     password: string;
@@ -431,10 +431,12 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // Synchronisation du cookie de session serveur HttpOnly
+      let activeProfile: UserProfile | null = profile;
       try {
         const savedProfileRaw = getAgriStoredItem('agrimpact_profile');
         const parsedProfile = savedProfileRaw ? JSON.parse(savedProfileRaw) : null;
         if (parsedProfile?.user_id) {
+          activeProfile = parsedProfile;
           const sendSession = (token?: string) => {
             fetch('/api/auth/session', {
               method: 'POST',
@@ -466,7 +468,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } catch {}
 
-      return { success: true };
+      return { success: true, profile: activeProfile };
     } catch (err: any) {
       return { success: false, error: err.message || 'Erreur lors de la connexion' };
     } finally {
