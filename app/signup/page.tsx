@@ -89,6 +89,7 @@ function SignupContent() {
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [maskedEmail, setMaskedEmail] = useState('');
+  const [devCode, setDevCode] = useState<string | null>(null);
 
   const handleRequestOtpAndValidateForm = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,6 +120,11 @@ function SignupContent() {
       const data = await res.json();
       if (data.success) {
         setMaskedEmail(data.sentTo || email);
+        if (data.devCode) {
+          setDevCode(data.devCode);
+        } else {
+          setDevCode(null);
+        }
         setStep('otp');
       } else {
         setErrorMessage(data.error || 'Erreur lors de l\'envoi du code de sécurité.');
@@ -313,11 +319,16 @@ function SignupContent() {
             <form onSubmit={handleVerifyOtpAndSignup} className="space-y-4 animate-fade-in">
               <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl text-xs text-emerald-900 dark:text-emerald-200 flex items-start gap-2.5">
                 <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                <div>
+                <div className="flex-1">
                   <p className="font-bold">Confirmation de votre identité</p>
                   <p className="text-[11px] text-emerald-800 dark:text-emerald-300 mt-1">
-                    Un code de sécurité à 6 chiffres vient d&apos;être expédié à l&apos;adresse <span className="font-semibold">{maskedEmail || email}</span>.
+                    Un code de sécurité à 6 chiffres a été généré pour l&apos;adresse <span className="font-semibold">{maskedEmail || email}</span>.
                   </p>
+                  {devCode && (
+                    <div className="mt-2.5 p-2 bg-amber-100/80 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 rounded-lg text-amber-900 dark:text-amber-200 text-[11px]">
+                      <span className="font-bold">Mode Test/Développement :</span> Serveur SMTP non connecté dans .env.local. Votre code de validation immédiat est : <strong className="font-mono text-sm px-1.5 py-0.5 bg-white dark:bg-stone-900 rounded border border-amber-400 text-emerald-700">{devCode}</strong>
+                    </div>
+                  )}
                 </div>
               </div>
 

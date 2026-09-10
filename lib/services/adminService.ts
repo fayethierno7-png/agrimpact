@@ -37,6 +37,13 @@ function getAdminCached<T>(key: string): T | null {
 }
 
 function setAdminCached<T>(key: string, data: T, ttlMs = 45000): T {
+  // Ne pas mettre en cache les tableaux vides ou les résultats nuls pour éviter de figer un état non encore authentifié
+  if (Array.isArray(data) && data.length === 0) {
+    return data;
+  }
+  if (data === null || data === undefined) {
+    return data;
+  }
   adminMemoryCache.set(key, { data, exp: Date.now() + ttlMs });
   return data;
 }

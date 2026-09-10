@@ -66,6 +66,11 @@ export default function AdminConsolePage() {
   const router = useRouter();
   const { profile, isLoading: isAuthLoading } = useAgri();
 
+  const isAdmin =
+    profile?.role === 'superadmin' ||
+    profile?.role === 'admin' ||
+    (profile as any)?.is_admin === true;
+
   // Onglet actif
   const [activeTab, setActiveTab] = useState<AdminTab>('users');
 
@@ -180,8 +185,11 @@ export default function AdminConsolePage() {
   };
 
   useEffect(() => {
-    loadModuleData();
-  }, [activeTab, period, auditActionFilter]);
+    // Ne charger les données que si l'authentification est confirmée et que l'utilisateur est admin
+    if (!isAuthLoading && isAdmin) {
+      loadModuleData();
+    }
+  }, [isAuthLoading, isAdmin, activeTab, period, auditActionFilter]);
 
   // Action : Valider / Suspendre utilisateur
   const handleUserStatusChange = async (targetUser: AdminUserListItem, newStatus: AccountStatus) => {
@@ -326,11 +334,6 @@ export default function AdminConsolePage() {
     { key: 'reports', label: '6. Signalements', icon: Flag },
     { key: 'settings', label: '7. Coordonnées Contact', icon: Sliders },
   ];
-
-  const isAdmin =
-    profile?.role === 'superadmin' ||
-    profile?.role === 'admin' ||
-    (profile as any)?.is_admin === true;
 
   // Garde RBAC client-side explicite (Point 9)
   useEffect(() => {

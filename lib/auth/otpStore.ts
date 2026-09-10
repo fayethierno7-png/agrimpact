@@ -57,7 +57,12 @@ export function verifyOtp(identifier: string, inputCode: string): { valid: boole
 /**
  * Envoie le code de confirmation par email à l'utilisateur
  */
-export async function sendOtpEmail(to: string, code: string, type: 'signup' | 'login', nom?: string): Promise<boolean> {
+export async function sendOtpEmail(
+  to: string,
+  code: string,
+  type: 'signup' | 'login',
+  nom?: string
+): Promise<{ sent: boolean; error?: string }> {
   const smtpHost = process.env.SMTP_HOST;
   const smtpPort = Number(process.env.SMTP_PORT) || 587;
   const smtpUser = process.env.SMTP_USER;
@@ -122,9 +127,10 @@ export async function sendOtpEmail(to: string, code: string, type: 'signup' | 'l
         text: textContent,
         html: htmlContent,
       });
-      return true;
-    } catch (err) {
+      return { sent: true };
+    } catch (err: any) {
       console.warn('Erreur envoi OTP SMTP:', err);
+      return { sent: false, error: err?.message };
     }
   }
 
@@ -132,7 +138,7 @@ export async function sendOtpEmail(to: string, code: string, type: 'signup' | 'l
   console.log(`\n======================================================`);
   console.log(`[AGRIMPACT OTP] Destinataire: ${to} | Code: ${code} | Type: ${type}`);
   console.log(`======================================================\n`);
-  return true;
+  return { sent: false, error: 'Serveur SMTP non configuré dans .env.local' };
 }
 
 /**

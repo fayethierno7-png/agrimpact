@@ -28,8 +28,44 @@ export async function POST(req: NextRequest) {
     const code = generateOtpCode();
     saveOtp(targetEmail, code, type);
 
-    // 1. Envoyer le code à l'utilisateur
-    await sendOtpEmail(targetEmail, code, type, nom);
+    // 1. Envoyer le code à l'utilisateur :
+    // D'abord tenter via Supabase Auth OTP natif (qui a un serveur de messagerie relié au projet Supabase)
+    let emailSent = false;
+    let deliveryMethod = 'none';
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      if (supabaseUrl && supabaseAnonKey) {
+        const sbRes = await fetch(`${supabaseUrl}/auth/v1/otp`, {
+          method: 'POST',
+          headers: {
+            apikey: supabaseAnonKey,
+            Authorization: `Bearer ${supabaseAnonKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: targetEmail,
+            create_user: false,
+          }),
+        });
+        if (sbRes.ok) {
+          emailSent = true;
+          deliveryMethod = 'supabase';
+        }
+      }
+    } catch (e) {
+      console.warn('Supabase OTP fetch error:', e);
+    }
+
+    // Si Supabase OTP n'a pas abouti, tenter via le transport SMTP configuré
+    if (!emailSent) {
+      const smtpRes = await sendOtpEmail(targetEmail, code, type, nom);
+      if (smtpRes.sent) {
+        emailSent = true;
+        deliveryMethod = 'smtp';
+      }
+    }
 
     // 2. Notifier en temps réel l'administrateur
     const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
@@ -43,10 +79,16 @@ export async function POST(req: NextRequest) {
       userAgent,
     }).catch(() => {});
 
+    // Retour honnête : si aucun serveur mail réel n'est connecté, on fournit le code de secours pour permettre le test
     return NextResponse.json({
       success: true,
-      message: `Code de confirmation envoyé à ${targetEmail}.`,
-      // En dev local, on transmet l'email masqué
+      emailSent,
+      deliveryMethod,
+      // Si le mail n'a pas pu être expédié par le réseau SMTP/Supabase, fournir le code de test transparent
+      devCode: !emailSent ? code : undefined,
+      message: emailSent
+        ? `Code de confirmation envoyé à ${targetEmail}.`
+        : `Aucun serveur SMTP n'est configuré dans .env.local. Utilisez le code temporaire ci-dessous pour valider votre test.`,
       sentTo: targetEmail.replace(/(.{2})(.*)(?=@)/, '$1***'),
     });
   } catch (err: any) {
