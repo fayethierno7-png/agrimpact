@@ -18,17 +18,14 @@ export const resend = process.env.RESEND_API_KEY
 
 /**
  * Détermine dynamiquement l'adresse d'expéditeur.
- * Si RESEND_FROM_EMAIL est défini (ex: "AGRIMPACT <securite@agrimpact.sn>"), il est utilisé en priorité.
- * Sinon, repli sur l'expéditeur de test officiel Resend 'onboarding@resend.dev'.
+ * Utilise par défaut le domaine vérifié agrimpact.app.
+ * Peut être surchargé par RESEND_FROM_EMAIL si nécessaire.
  */
 export function getFromEmail(): string {
   if (process.env.RESEND_FROM_EMAIL && process.env.RESEND_FROM_EMAIL.trim()) {
     return process.env.RESEND_FROM_EMAIL.trim();
   }
-  if (process.env.VERIFIED_DOMAIN && process.env.VERIFIED_DOMAIN.trim()) {
-    return `AGRIMPACT <securite@${process.env.VERIFIED_DOMAIN.trim()}>`;
-  }
-  return 'AGRIMPACT <onboarding@resend.dev>';
+  return 'AgrImpact <verification@agrimpact.app>';
 }
 
 export const FROM_EMAIL = getFromEmail();
@@ -129,19 +126,20 @@ export async function sendOtpViaResend(params: SendOtpEmailParams): Promise<Rese
     });
 
     if (error) {
-      console.error('Erreur API Resend envoi OTP:', error);
+      console.error('❌ Erreur API Resend envoi OTP:', JSON.stringify(error, null, 2));
       return {
         success: false,
-        error: error.message || "Échec d'envoi par le serveur Resend.",
+        error: error.message || (typeof error === 'string' ? error : "Échec d'envoi par le serveur Resend."),
       };
     }
 
+    console.log(`✅ [Resend] OTP envoyé avec succès à ${to} depuis ${getFromEmail()} (Message ID: ${data?.id})`);
     return {
       success: true,
       messageId: data?.id,
     };
   } catch (err: any) {
-    console.error('Exception Resend:', err);
+    console.error('❌ Exception Resend:', err);
     return {
       success: false,
       error: err?.message || 'Erreur inattendue lors de la communication avec Resend.',
@@ -163,7 +161,10 @@ export async function notifyAdminViaResend(params: {
   const { type, userNom, userEmail, userPhone, ip, userAgent } = params;
 
   const client = getResendClient() || resend;
-  if (!client) return;
+  if (!client) {
+    console.warn('⚠️ [Resend] Impossible d\'envoyer la notification admin: client non initialisé (clé manquante).');
+    return;
+  }
 
   const adminEmail = process.env.ADMIN_ALERT_EMAIL || 'fayethierno7@gmail.com';
   const now = new Date().toLocaleString('fr-FR', { timeZone: 'Africa/Dakar' });
@@ -195,13 +196,18 @@ export async function notifyAdminViaResend(params: {
   `;
 
   try {
-    await client.emails.send({
+    const { data, error } = await client.emails.send({
       from: getFromEmail(),
       to: [adminEmail],
       subject,
       html,
     });
+    if (error) {
+      console.error('❌ Erreur notification admin Resend:', JSON.stringify(error, null, 2));
+    } else {
+      console.log(`✅ [Resend] Notification admin envoyée avec succès à ${adminEmail} (ID: ${data?.id})`);
+    }
   } catch (err) {
-    console.warn('Erreur notification admin Resend:', err);
+    console.warn('❌ Erreur notification admin Resend:', err);
   }
 }
