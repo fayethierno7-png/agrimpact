@@ -81,6 +81,7 @@ export async function getAdminUsers(period?: PeriodFilterValue): Promise<AdminUs
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
+      credentials: 'include',
     });
     if (res.ok) {
       const json = await res.json();
@@ -98,6 +99,7 @@ export async function getAdminUsers(period?: PeriodFilterValue): Promise<AdminUs
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
+      credentials: 'include',
     });
     if (res.ok) {
       const data = await res.json();
@@ -265,6 +267,7 @@ export async function getRevenueMetrics(period: PeriodFilterValue): Promise<Reve
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
+      credentials: 'include',
     });
     if (res.ok) {
       const json = await res.json();
@@ -373,6 +376,7 @@ export async function getConversionFunnel(period: PeriodFilterValue): Promise<Fu
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
+      credentials: 'include',
     });
     if (res.ok) {
       const json = await res.json();
@@ -453,6 +457,7 @@ export async function getAuditLogs(params: {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
+      credentials: 'include',
     });
     if (res.ok) {
       const json = await res.json();
@@ -545,6 +550,7 @@ export async function getAdminPayments(period?: PeriodFilterValue): Promise<Paym
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
+      credentials: 'include',
     });
     if (res.ok) {
       const json = await res.json();
@@ -576,6 +582,7 @@ export async function getAdminSubscriptions(period?: PeriodFilterValue): Promise
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
+      credentials: 'include',
     });
     if (res.ok) {
       const json = await res.json();
@@ -667,6 +674,7 @@ export async function getAdminReports(period?: PeriodFilterValue): Promise<UserR
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
+      credentials: 'include',
     });
     if (res.ok) {
       const json = await res.json();
