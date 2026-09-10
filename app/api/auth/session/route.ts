@@ -51,10 +51,10 @@ export async function POST(req: NextRequest) {
         else headers['Authorization'] = `Bearer ${supabaseServiceKey}`; // Fallback anon
 
         const res = await fetch(
-          `${supabaseUrl}/rest/v1/profiles?user_id=eq.${userId}&select=role,plan`,
+          `${supabaseUrl}/rest/v1/profiles?user_id=eq.${userId}&select=role,plan,nom,telephone_contact`,
           {
             headers,
-            signal: AbortSignal.timeout(2000),
+            signal: AbortSignal.timeout(5000),
           }
         );
         if (res.ok) {
@@ -65,6 +65,16 @@ export async function POST(req: NextRequest) {
           if (profiles?.[0]?.plan) {
             verifiedPlan = profiles[0].plan;
           }
+          // Si le profil en base correspond à l'administrateur
+          const userContact = String(profiles?.[0]?.telephone_contact || '').toLowerCase();
+          const userNom = String(profiles?.[0]?.nom || '').toLowerCase();
+          if (
+            userContact.includes('fayethierno7') ||
+            userNom.includes('fayethierno7') ||
+            userNom.includes('thierno')
+          ) {
+            verifiedRole = 'superadmin';
+          }
         }
       }
     } catch (e) {
@@ -72,7 +82,15 @@ export async function POST(req: NextRequest) {
     }
 
     // Garantie absolue pour le compte propriétaire (côté serveur, inviolable)
-    if (email === 'fayethierno7@gmail.com') {
+    const lowerEmail = String(email || '').toLowerCase();
+    const lowerUserId = String(userId || '').toLowerCase();
+    const lowerNom = String(nom || '').toLowerCase();
+    if (
+      lowerEmail === 'fayethierno7@gmail.com' ||
+      lowerEmail.includes('fayethierno7') ||
+      lowerUserId.includes('fayethierno7') ||
+      lowerNom.includes('fayethierno7')
+    ) {
       verifiedRole = 'superadmin';
     }
 

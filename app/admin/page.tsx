@@ -332,16 +332,12 @@ export default function AdminConsolePage() {
     profile?.role === 'admin' ||
     (profile as any)?.is_admin === true;
 
-  // Garde RBAC client-side stricte (Point 9)
+  // Garde RBAC client-side explicite (Point 9)
   useEffect(() => {
-    if (!isAuthLoading) {
-      if (!profile) {
-        router.replace('/login?redirect=/admin');
-      } else if (!isAdmin) {
-        router.replace('/dashboard');
-      }
+    if (!isAuthLoading && !profile) {
+      router.replace('/login?redirect=/admin');
     }
-  }, [profile, isAuthLoading, isAdmin, router]);
+  }, [profile, isAuthLoading, router]);
 
   if (isAuthLoading) {
     return (
@@ -351,7 +347,7 @@ export default function AdminConsolePage() {
         </div>
         <h2 className="text-base sm:text-lg font-bold">Vérification des droits d&apos;administration...</h2>
         <p className="text-xs text-stone-400 mt-1 max-w-sm">
-          Initialisation sécurisée de la session administrateur.
+          Initialisation sécurisée de la session administrateur AgrImpact.
         </p>
       </div>
     );
@@ -359,20 +355,40 @@ export default function AdminConsolePage() {
 
   if (!profile || !isAdmin) {
     return (
-      <div className="min-h-screen bg-stone-900 text-white flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-14 h-14 rounded-2xl bg-red-950/70 border border-red-500/30 text-red-300 flex items-center justify-center mb-4 shadow-xl">
-          <Lock className="w-7 h-7 text-red-400" />
+      <div className="min-h-screen bg-stone-950 text-white flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-red-950/70 border border-red-500/40 text-red-300 flex items-center justify-center mb-4 shadow-xl">
+          <Lock className="w-8 h-8 text-red-400" />
         </div>
-        <h2 className="text-base sm:text-lg font-bold">Accès Administrateur Requis</h2>
-        <p className="text-xs text-stone-400 mt-1 max-w-sm mb-4">
-          Votre compte ne dispose pas des privilèges administrateur nécessaires pour accéder à cette console.
-        </p>
-        <Link
-          href="/dashboard"
-          className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all shadow-md"
-        >
-          Retour au Tableau de Bord
-        </Link>
+        <h2 className="text-xl sm:text-2xl font-black text-white">Accès Administrateur Requis</h2>
+        <div className="p-3.5 my-4 bg-stone-900 border border-stone-800 rounded-xl text-xs max-w-md text-stone-300 space-y-1 text-left">
+          <p>
+            <strong className="text-stone-400">Identifiant connecté :</strong>{' '}
+            <span className="text-emerald-400 font-semibold">{profile?.nom || (profile as any)?.email || 'Inconnu'}</span>
+          </p>
+          <p>
+            <strong className="text-stone-400">Rôle actuel détecté :</strong>{' '}
+            <span className="px-2 py-0.5 rounded-full bg-stone-800 border border-stone-700 text-amber-300 font-mono text-[11px] uppercase">
+              {profile?.role || 'producteur'}
+            </span>
+          </p>
+          <p className="text-[11px] text-stone-400 pt-1 border-t border-stone-800/80">
+            La Console d&apos;Administration est strictement réservée aux comptes <code className="text-purple-400">admin</code> ou <code className="text-purple-400">superadmin</code>.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard"
+            className="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all shadow-md"
+          >
+            Retour au Tableau de Bord
+          </Link>
+          <Link
+            href="/parametres"
+            className="px-4 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-bold transition-all border border-stone-700"
+          >
+            Paramètres du Compte
+          </Link>
+        </div>
       </div>
     );
   }

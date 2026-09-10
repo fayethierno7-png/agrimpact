@@ -227,43 +227,39 @@ export default function ParametresPage() {
           </p>
         </div>
 
-        {/* Accès rapide Console Admin et Gestion des Droits Système */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-50 via-indigo-50/40 to-stone-50 dark:from-purple-950/40 dark:via-purple-900/20 dark:to-stone-900 border border-purple-200 dark:border-purple-800 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-purple-700 text-white flex items-center justify-center shrink-0 shadow-xs ring-2 ring-purple-300 dark:ring-purple-700">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-sm sm:text-base font-bold text-purple-950 dark:text-purple-100">
-                  Console d&apos;Administration AgrImpact
-                </h2>
-                <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                    profile?.role === 'superadmin'
-                      ? 'bg-amber-100 dark:bg-amber-950 text-amber-900 dark:text-amber-200 ring-1 ring-amber-400'
-                      : profile?.role === 'admin'
-                      ? 'bg-purple-200 dark:bg-purple-900 text-purple-900 dark:text-purple-200'
-                      : 'bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300'
-                  }`}
-                >
-                  {profile?.role === 'superadmin'
-                    ? 'Super Administrateur Actif'
-                    : profile?.role === 'admin'
-                    ? 'Rôle Administrateur Actif'
-                    : 'Rôle Producteur'}
-                </span>
+        {/* Accès rapide Console Admin et Gestion des Droits Système (visible uniquement pour les administrateurs) */}
+        {(profile?.role === 'superadmin' ||
+          profile?.role === 'admin' ||
+          (profile as any)?.is_admin === true) && (
+          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-50 via-indigo-50/40 to-stone-50 dark:from-purple-950/40 dark:via-purple-900/20 dark:to-stone-900 border border-purple-200 dark:border-purple-800 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-purple-700 text-white flex items-center justify-center shrink-0 shadow-xs ring-2 ring-purple-300 dark:ring-purple-700">
+                <ShieldCheck className="w-6 h-6" />
               </div>
-              <p className="text-xs text-purple-700 dark:text-purple-300 mt-0.5">
-                Pilotez la validation des exploitants, les finances MRR/ARR, les remboursements, le funnel et les signalements.
-              </p>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-sm sm:text-base font-bold text-purple-950 dark:text-purple-100">
+                    Console d&apos;Administration AgrImpact
+                  </h2>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                      profile?.role === 'superadmin'
+                        ? 'bg-amber-100 dark:bg-amber-950 text-amber-900 dark:text-amber-200 ring-1 ring-amber-400'
+                        : 'bg-purple-200 dark:bg-purple-900 text-purple-900 dark:text-purple-200'
+                    }`}
+                  >
+                    {profile?.role === 'superadmin'
+                      ? 'Super Administrateur Actif'
+                      : 'Rôle Administrateur Actif'}
+                  </span>
+                </div>
+                <p className="text-xs text-purple-700 dark:text-purple-300 mt-0.5">
+                  Pilotez la validation des exploitants, les finances MRR/ARR, les remboursements, le funnel et les signalements.
+                </p>
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            {(profile?.role === 'superadmin' ||
-              profile?.role === 'admin' ||
-              (profile as any)?.is_admin === true) && (
+            <div className="flex items-center gap-2 shrink-0">
               <Link
                 href="/admin"
                 className="px-4 py-2.5 bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 shadow-xs transition-all hover:scale-105 cursor-pointer ring-2 ring-purple-300"
@@ -273,9 +269,9 @@ export default function ParametresPage() {
                 </span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
-            )}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="space-y-6">
           {/* SECTION 1 : PHOTO DE PROFIL (AVATAR) */}

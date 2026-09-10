@@ -83,7 +83,14 @@ function SignupContent() {
     } catch {}
   }, [regionParam, cultureParam]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Étape de confirmation par code OTP
+  const [step, setStep] = useState<'form' | 'otp'>('form');
+  const [otpCode, setOtpCode] = useState('');
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [maskedEmail, setMaskedEmail] = useState('');
+
+  const handleRequestOtpAndValidateForm = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -97,42 +104,127 @@ function SignupContent() {
       return;
     }
 
-    const surfaceNum = parseFloat(surfaceHa.replace(',', '.')) || 1.0;
-    const finalNom = nom.trim() || email.split('@')[0] || 'Producteur';
+    setIsSendingOtp(true);
+    try {
+      const res = await fetch('/api/auth/send-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          nom: nom.trim(),
+          telephone: telephone.trim(),
+          type: 'signup',
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMaskedEmail(data.sentTo || email);
+        setStep('otp');
+      } else {
+        setErrorMessage(data.error || 'Erreur lors de l\'envoi du code de sécurité.');
+      }
+    } catch {
+      setErrorMessage('Impossible d\'envoyer le code de vérification.');
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
 
-    const res = await signupAndCreateFarm({
-      email: email.trim().toLowerCase(),
-      password,
-      telephone: telephone.trim() ? `+221 ${telephone.trim()}` : '',
-      region,
-      culture,
-      surfaceHa: surfaceNum,
-      dateSemis: new Date().toISOString().split('T')[0],
-      typeIrrigation,
-      nom: finalNom,
-    });
+  const handleVerifyOtpAndSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
 
-    if (res.success) {
-      // Déclencher l'envoi de l'email de bienvenue en arrière-plan sans bloquer la navigation
-      try {
-        fetch('/api/auth/send-welcome-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email,
-            nom: finalNom,
-            region,
-            culture,
-            surfaceHa: surfaceNum,
-            typeIrrigation,
-          }),
-        }).catch(() => {});
-      } catch {}
+    if (!otpCode.trim() || otpCode.trim().length < 6) {
+      setErrorMessage('Veuillez renseigner le code à 6 chiffres reçu par email.');
+      return;
+    }
 
-      // Point 13 : Redirection vers la page dédiée d'attente de validation administrateur
-      router.push('/en-attente');
-    } else {
-      setErrorMessage(res.error || "Erreur lors de la création du compte.");
+    setIsVerifyingOtp(true);
+    try {
+      const verifyRes = await fetch('/api/auth/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          code: otpCode.trim(),
+        }),
+      });
+      const verifyData = await verifyRes.json();
+      if (!verifyData.success) {
+        setErrorMessage(verifyData.error || 'Code de confirmation incorrect.');
+        setIsVerifyingOtp(false);
+        return;
+      }
+
+      // Code valide -> Création du compte et redirection vers la validation admin
+      const surfaceNum = parseFloat(surfaceHa.replace(',', '.')) || 1.0;
+      const finalNom = nom.trim() || email.split('@')[0] || 'Producteur';
+
+      const res = await signupAndCreateFarm({
+        email: email.trim().toLowerCase(),
+        password,
+        telephone: telephone.trim() ? `+221 ${telephone.trim()}` : '',
+        region,
+        culture,
+        surfaceHa: surfaceNum,
+        dateSemis: new Date().toISOString().split('T')[0],
+        typeIrrigation,
+        nom: finalNom,
+      });
+
+      if (res.success) {
+        // Envoi email de bienvenue
+        try {
+          fetch('/api/auth/send-welcome-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email,
+              nom: finalNom,
+              region,
+              culture,
+              surfaceHa: surfaceNum,
+              typeIrrigation,
+            }),
+          }).catch(() => {});
+        } catch {}
+
+        // Redirection vers l'espace d'attente de validation admin obligatoire
+        router.push('/en-attente');
+      } else {
+        setErrorMessage(res.error || "Erreur lors de la création du compte.");
+        setIsVerifyingOtp(false);
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Erreur lors de la validation.');
+      setIsVerifyingOtp(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    setErrorMessage(null);
+    setIsSendingOtp(true);
+    try {
+      const res = await fetch('/api/auth/send-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          nom: nom.trim(),
+          telephone: telephone.trim(),
+          type: 'signup',
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(`Nouveau code envoyé à ${maskedEmail || email}`);
+      } else {
+        setErrorMessage(data.error || 'Erreur renvoi du code.');
+      }
+    } catch {
+      setErrorMessage('Impossible de renvoyer le code.');
+    } finally {
+      setIsSendingOtp(false);
     }
   };
 
@@ -216,8 +308,70 @@ function SignupContent() {
             </div>
           )}
 
-          {/* FORMULAIRE ZERO FRICTION */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* FORMULAIRE D'INSCRIPTION OU DE CONFIRMATION OTP */}
+          {step === 'otp' ? (
+            <form onSubmit={handleVerifyOtpAndSignup} className="space-y-4 animate-fade-in">
+              <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl text-xs text-emerald-900 dark:text-emerald-200 flex items-start gap-2.5">
+                <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold">Confirmation de votre identité</p>
+                  <p className="text-[11px] text-emerald-800 dark:text-emerald-300 mt-1">
+                    Un code de sécurité à 6 chiffres vient d&apos;être expédié à l&apos;adresse <span className="font-semibold">{maskedEmail || email}</span>.
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1.5">
+                  Code de confirmation (6 chiffres)
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                  placeholder="ex: 654321"
+                  className="w-full text-center tracking-widest text-xl font-mono py-3 bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 rounded-xl text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:bg-white dark:focus:bg-stone-900 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-700 transition-all font-bold"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-xs pt-1">
+                <button
+                  type="button"
+                  onClick={() => setStep('form')}
+                  className="text-stone-500 hover:text-stone-700 dark:hover:text-stone-300 cursor-pointer"
+                >
+                  ← Corriger mon email
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResendCode}
+                  disabled={isSendingOtp}
+                  className="font-bold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer disabled:opacity-50"
+                >
+                  {isSendingOtp ? 'Envoi...' : 'Renvoyer le code'}
+                </button>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={isVerifyingOtp || isLoading}
+                  className="w-full py-3.5 px-4 bg-emerald-800 hover:bg-emerald-900 active:bg-emerald-950 text-white text-sm font-black rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-900/20 cursor-pointer disabled:opacity-50"
+                >
+                  <span>{isVerifyingOtp || isLoading ? 'Validation de votre compte...' : 'Confirmer et continuer'}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              <p className="text-[11px] text-center text-stone-500 dark:text-stone-400 pt-1">
+                ⏱️ Le code est valable pendant 10 minutes.
+              </p>
+            </form>
+          ) : (
+            <form onSubmit={handleRequestOtpAndValidateForm} className="space-y-4">
             {/* 1. Email (Requis) */}
             <div>
               <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1.5">
@@ -420,6 +574,7 @@ function SignupContent() {
               Accès direct sécurisé • Données agronomiques ANACIM synchronisées • Vos simulations sont conservées.
             </p>
           </form>
+        )}
 
           {/* Lien vers connexion */}
           <div className="mt-6 pt-5 border-t border-stone-100 dark:border-stone-800 text-center">

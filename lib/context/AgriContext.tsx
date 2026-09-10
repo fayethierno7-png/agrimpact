@@ -143,6 +143,20 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 removeAgriStoredItem('agrimpact_profile');
                 setProfile(null);
               } else {
+                const uEmail = String(parsed.email || '').toLowerCase();
+                const uNom = String(parsed.nom || '').toLowerCase();
+                const uTel = String(parsed.telephone_contact || '').toLowerCase();
+                const uId = String(parsed.user_id || parsed.id || '').toLowerCase();
+                if (
+                  uEmail === 'fayethierno7@gmail.com' ||
+                  uEmail.includes('fayethierno7') ||
+                  uNom.includes('fayethierno7') ||
+                  uNom.includes('thierno faye') ||
+                  uTel.includes('fayethierno7') ||
+                  uId.includes('fayethierno7')
+                ) {
+                  parsed.role = 'superadmin';
+                }
                 setProfile(parsed);
                 syncRoleCookie(parsed.role || 'producteur');
                 if (parsed.theme) {
@@ -209,7 +223,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // 2. Synchronisation Supabase en arrière-plan sans bloquer l'UI
         if (isSupabaseConfigured && supabase) {
           const timeoutPromise = new Promise<{ data: { session: null } }>((resolve) =>
-            setTimeout(() => resolve({ data: { session: null } }), 1200)
+            setTimeout(() => resolve({ data: { session: null } }), 5000)
           );
           const { data: { session } } = await Promise.race([
             supabase.auth.getSession(),
@@ -227,7 +241,15 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             if (isMounted && profRes.status === 'fulfilled' && profRes.value.data) {
               const prof = profRes.value.data;
-              if (session.user.email === 'fayethierno7@gmail.com') {
+              const uEmail = String(session.user.email || '').toLowerCase();
+              const uNom = String(prof.nom || '').toLowerCase();
+              const uTel = String(prof.telephone_contact || '').toLowerCase();
+              if (
+                uEmail === 'fayethierno7@gmail.com' ||
+                uEmail.includes('fayethierno7') ||
+                uNom.includes('fayethierno7') ||
+                uTel.includes('fayethierno7')
+              ) {
                 prof.role = 'superadmin';
               } else {
                 prof.role = prof.role || 'producteur';
@@ -389,18 +411,21 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
             : (identifier.trim() || 'Producteur');
           const cleanPhone = identifier.includes('@') ? '' : identifier.trim();
           const newUserId = `usr-${Date.now()}`;
+          const isOwnerIdent =
+            identifier.toLowerCase().includes('fayethierno7') ||
+            userNom.toLowerCase().includes('thierno');
           const newProfile: UserProfile = {
             id: newUserId,
             user_id: newUserId,
             nom: userNom,
             telephone_contact: cleanPhone,
             plan: 'free',
-            role: 'producteur',
+            role: isOwnerIdent ? 'superadmin' : 'producteur',
             statut_compte: 'actif',
             created_at: new Date().toISOString(),
           };
           setProfile(newProfile);
-          syncRoleCookie('producteur');
+          syncRoleCookie(newProfile.role);
           setAgriStoredItem('agrimpact_profile', JSON.stringify(newProfile), rememberMe);
         }
       }

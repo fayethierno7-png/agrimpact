@@ -164,7 +164,7 @@ export default function ProfilePage() {
                 </Link>
               </div>
 
-              {profile?.role === 'superadmin' && (
+              {(profile?.role === 'superadmin' || profile?.role === 'admin' || (profile as any)?.is_admin === true) && (
                 <div className="mt-2.5">
                   <Link
                     href="/admin"

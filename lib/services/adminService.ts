@@ -15,8 +15,8 @@ import {
   PeriodFilterValue,
 } from '../types';
 
-// Helper de timeout robuste (6000ms) pour garantir la fiabilité réseau
-async function withTimeout<T>(promiseLike: PromiseLike<T>, timeoutMs = 6000): Promise<T> {
+// Helper de timeout robuste (10000ms) pour garantir la fiabilité réseau
+async function withTimeout<T>(promiseLike: PromiseLike<T>, timeoutMs = 10000): Promise<T> {
   return Promise.race([
     Promise.resolve(promiseLike),
     new Promise<T>((_, reject) =>
@@ -72,7 +72,7 @@ export async function getAdminUsers(period?: PeriodFilterValue): Promise<AdminUs
     try {
       const profilesRes: any = await withTimeout<any>(
         supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(100),
-        1500
+        8000
       );
 
       if (profilesRes && profilesRes.data) {
@@ -83,7 +83,7 @@ export async function getAdminUsers(period?: PeriodFilterValue): Promise<AdminUs
         if (userIds.length > 0) {
           const farmsRes: any = await withTimeout<any>(
             supabase.from('farms').select('id, user_id, nom, region').in('user_id', userIds),
-            1500
+            8000
           );
           if (farmsRes && farmsRes.data) {
             farms = farmsRes.data;
@@ -130,7 +130,7 @@ export async function updateUserAccountStatus(params: {
           .from('profiles')
           .update({ statut_compte: newStatus, updated_at: new Date().toISOString() })
           .eq('user_id', targetUserId),
-        1500
+        8000
       );
 
       if (error) throw error;
@@ -287,19 +287,19 @@ export async function getConversionFunnel(period: PeriodFilterValue): Promise<Fu
             .select('*')
             .gte('created_at', period.startDate)
             .lte('created_at', period.endDate),
-          1200
+          8000
         ),
         withTimeout<any>(
           supabase.from('profiles').select('id', { count: 'exact', head: true }),
-          1200
+          8000
         ),
         withTimeout<any>(
           supabase.from('farms').select('id', { count: 'exact', head: true }),
-          1200
+          8000
         ),
         withTimeout<any>(
           supabase.from('subscriptions').select('id', { count: 'exact', head: true }).eq('statut', 'active'),
-          1200
+          8000
         ),
       ]);
 
@@ -399,7 +399,7 @@ export async function getAuditLogs(params: {
         query = query.gte('created_at', params.period.startDate).lte('created_at', params.period.endDate);
       }
 
-      const { data, error } = await withTimeout<any>(query, 1200);
+      const { data, error } = await withTimeout<any>(query, 8000);
       if (!error && data) {
         allLogs = data;
       }
@@ -449,7 +449,7 @@ export async function logAdminAction(entry: {
   invalidateAdminCache('audit_');
 
   if (isSupabaseConfigured && supabase) {
-    withTimeout<any>(supabase.from('audit_log').insert([entry]), 1500).catch((err) => {
+    withTimeout<any>(supabase.from('audit_log').insert([entry]), 8000).catch((err) => {
       console.warn('Erreur logAdminAction Supabase:', err);
     });
   }
@@ -486,7 +486,7 @@ export async function getAdminPayments(period?: PeriodFilterValue): Promise<Paym
         query = query.gte('created_at', period.startDate).lte('created_at', period.endDate);
       }
 
-      const { data, error } = await withTimeout<any>(query, 1200);
+      const { data, error } = await withTimeout<any>(query, 8000);
       if (!error && data) {
         return setAdminCached(cacheKey, data);
       }
@@ -507,7 +507,7 @@ export async function getAdminSubscriptions(period?: PeriodFilterValue): Promise
     try {
       const { data, error } = await withTimeout<any>(
         supabase.from('subscriptions').select('*').order('created_at', { ascending: false }).limit(100),
-        1200
+        8000
       );
       if (!error && data) {
         return setAdminCached(cacheKey, data);
@@ -548,7 +548,7 @@ export async function processPaymentRefund(params: {
             remboursement_date: new Date().toISOString(),
           })
           .eq('id', paymentId),
-        1500
+        8000
       );
 
       if (pError) throw pError;
@@ -560,7 +560,7 @@ export async function processPaymentRefund(params: {
             .from('subscriptions')
             .update({ statut: 'annule', updated_at: new Date().toISOString() })
             .eq('id', subscriptionId),
-          1500
+          8000
         ).catch(() => {});
       }
 
@@ -622,7 +622,7 @@ export async function getAdminReports(period?: PeriodFilterValue): Promise<UserR
         query = query.gte('created_at', period.startDate).lte('created_at', period.endDate);
       }
 
-      const { data, error } = await withTimeout<any>(query, 1200);
+      const { data, error } = await withTimeout<any>(query, 8000);
       if (!error && data) {
         return setAdminCached(cacheKey, data);
       }
@@ -656,7 +656,7 @@ export async function updateAdminReport(params: {
 
       const { error } = await withTimeout<any>(
         supabase.from('reports').update(updatePayload).eq('id', reportId),
-        1500
+        8000
       );
 
       if (error) throw error;
