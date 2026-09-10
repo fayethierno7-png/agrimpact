@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const verification = verifyOtp(targetEmail, code);
+    const verification = await verifyOtp(targetEmail, code);
 
     if (!verification.valid) {
       return NextResponse.json(

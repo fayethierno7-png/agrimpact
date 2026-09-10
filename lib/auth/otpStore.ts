@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { supabase, isSupabaseConfigured } from '../supabase/client';
 
 // Store OTP en mémoire (clé: email/téléphone normalisé, valeur: { code, expiresAt, attempts })
 interface OtpEntry {
@@ -15,43 +16,91 @@ export function generateOtpCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-export function saveOtp(identifier: string, code: string, type: 'signup' | 'login' = 'login'): void {
+export async function saveOtp(identifier: string, code: string, type: 'signup' | 'login' = 'login'): Promise<void> {
   const key = identifier.trim().toLowerCase();
+  const expiresAt = Date.now() + 10 * 60 * 1000; // Valide 10 minutes
+
+  // Toujours enregistrer dans le cache rapide
   otpMemoryStore.set(key, {
     code,
-    expiresAt: Date.now() + 10 * 60 * 1000, // Valide 10 minutes
+    expiresAt,
     attempts: 0,
     type,
   });
+
+  // Sauvegarde miroir en base de données Supabase (si table disponible)
+  if (isSupabaseConfigured && supabase) {
+    supabase
+      .from('auth_otp_codes')
+      .upsert({
+        identifier: key,
+        code,
+        type,
+        expires_at: new Date(expiresAt).toISOString(),
+        used: false,
+        created_at: new Date().toISOString(),
+      }, { onConflict: 'identifier' })
+      .then(() => {}, () => {});
+  }
 }
 
-export function verifyOtp(identifier: string, inputCode: string): { valid: boolean; error?: string } {
+export async function verifyOtp(identifier: string, inputCode: string): Promise<{ valid: boolean; error?: string }> {
   const key = identifier.trim().toLowerCase();
   const entry = otpMemoryStore.get(key);
 
-  if (!entry) {
-    return { valid: false, error: 'Aucun code de confirmation en attente ou le code a expiré.' };
-  }
+  // Vérification primaire mémoire
+  if (entry) {
+    if (Date.now() > entry.expiresAt) {
+      otpMemoryStore.delete(key);
+      return { valid: false, error: 'Le code de confirmation a expiré (durée de validité 10 minutes). Veuillez en demander un nouveau.' };
+    }
 
-  if (Date.now() > entry.expiresAt) {
+    if (entry.attempts >= 5) {
+      otpMemoryStore.delete(key);
+      return { valid: false, error: 'Trop de tentatives erronées. Veuillez redemander un nouveau code.' };
+    }
+
+    entry.attempts += 1;
+
+    if (entry.code !== inputCode.trim()) {
+      return { valid: false, error: `Code incorrect (${5 - entry.attempts} tentative(s) restante(s)).` };
+    }
+
+    // Code valide : consommé à usage unique
     otpMemoryStore.delete(key);
-    return { valid: false, error: 'Le code de confirmation a expiré (durée de validité 10 minutes). Veuillez en demander un nouveau.' };
+    if (isSupabaseConfigured && supabase) {
+      supabase.from('auth_otp_codes').update({ used: true }).eq('identifier', key).then(() => {}, () => {});
+    }
+    return { valid: true };
   }
 
-  if (entry.attempts >= 5) {
-    otpMemoryStore.delete(key);
-    return { valid: false, error: 'Trop de tentatives erronées. Veuillez redemander un nouveau code.' };
+  // Vérification de secours Supabase
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('auth_otp_codes')
+        .select('*')
+        .eq('identifier', key)
+        .eq('used', false)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && data) {
+        if (new Date(data.expires_at).getTime() < Date.now()) {
+          return { valid: false, error: 'Le code de confirmation a expiré (durée de validité 10 minutes). Veuillez en demander un nouveau.' };
+        }
+        if (data.code === inputCode.trim()) {
+          await supabase.from('auth_otp_codes').update({ used: true }).eq('id', data.id);
+          return { valid: true };
+        } else {
+          return { valid: false, error: 'Code de confirmation incorrect.' };
+        }
+      }
+    } catch {}
   }
 
-  entry.attempts += 1;
-
-  if (entry.code !== inputCode.trim()) {
-    return { valid: false, error: `Code incorrect (${5 - entry.attempts} tentative(s) restante(s)).` };
-  }
-
-  // Code valide : on le consomme
-  otpMemoryStore.delete(key);
-  return { valid: true };
+  return { valid: false, error: 'Aucun code de confirmation en attente ou le code a expiré.' };
 }
 
 /**

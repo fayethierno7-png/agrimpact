@@ -120,17 +120,12 @@ function SignupContent() {
       const data = await res.json();
       if (data.success) {
         setMaskedEmail(data.sentTo || email);
-        if (data.devCode) {
-          setDevCode(data.devCode);
-        } else {
-          setDevCode(null);
-        }
         setStep('otp');
       } else {
-        setErrorMessage(data.error || 'Erreur lors de l\'envoi du code de sécurité.');
+        setErrorMessage(data.error || "Impossible d'envoyer le code par email via Resend.");
       }
-    } catch {
-      setErrorMessage('Impossible d\'envoyer le code de vérification.');
+    } catch (err: any) {
+      setErrorMessage(err?.message || "Erreur de connexion au service d'envoi d'email.");
     } finally {
       setIsSendingOtp(false);
     }
@@ -322,13 +317,8 @@ function SignupContent() {
                 <div className="flex-1">
                   <p className="font-bold">Confirmation de votre identité</p>
                   <p className="text-[11px] text-emerald-800 dark:text-emerald-300 mt-1">
-                    Un code de sécurité à 6 chiffres a été généré pour l&apos;adresse <span className="font-semibold">{maskedEmail || email}</span>.
+                    Un code de sécurité à 6 chiffres a été expédié par email à l&apos;adresse <span className="font-semibold">{maskedEmail || email}</span>.
                   </p>
-                  {devCode && (
-                    <div className="mt-2.5 p-2 bg-amber-100/80 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 rounded-lg text-amber-900 dark:text-amber-200 text-[11px]">
-                      <span className="font-bold">Mode Test/Développement :</span> Serveur SMTP non connecté dans .env.local. Votre code de validation immédiat est : <strong className="font-mono text-sm px-1.5 py-0.5 bg-white dark:bg-stone-900 rounded border border-amber-400 text-emerald-700">{devCode}</strong>
-                    </div>
-                  )}
                 </div>
               </div>
 
