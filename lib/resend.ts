@@ -9,6 +9,8 @@
 
 export {
   resend,
+  getResendClient,
+  getFromEmail,
   sendOtpViaResend,
   notifyAdminViaResend,
   FROM_EMAIL,

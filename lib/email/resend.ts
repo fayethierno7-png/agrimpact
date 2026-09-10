@@ -1,18 +1,37 @@
 import { Resend } from 'resend';
 
-// Initialisation du client Resend côté serveur uniquement
-const resendApiKey = process.env.RESEND_API_KEY;
-export const resend = resendApiKey ? new Resend(resendApiKey) : null;
+/**
+ * Récupère ou instancie le client Resend dynamiquement à l'exécution.
+ * Cela garantit que si RESEND_API_KEY est injecté ou rechargé dans .env.local,
+ * la clé est prise en compte immédiatement sans nécessiter de redémarrage complet.
+ */
+export function getResendClient(): Resend | null {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey || apiKey.trim() === '') return null;
+  return new Resend(apiKey.trim());
+}
 
-// Expéditeur officiel ou domaine de test Resend
-// Note : Si aucun domaine personnalisé n'est encore vérifié sur resend.com,
-// Resend impose d'utiliser 'onboarding@resend.dev' et d'envoyer vers l'adresse email du compte Resend.
-// Une fois le domaine agrimpact.sn vérifié, définissez RESEND_FROM_EMAIL="AGRIMPACT <securite@agrimpact.sn>"
-export const FROM_EMAIL =
-  process.env.RESEND_FROM_EMAIL ||
-  (process.env.NODE_ENV === 'production' && process.env.VERIFIED_DOMAIN
-    ? `AGRIMPACT <securite@${process.env.VERIFIED_DOMAIN}>`
-    : 'AGRIMPACT <onboarding@resend.dev>');
+// Instance de compatibilité
+export const resend = process.env.RESEND_API_KEY
+  ? new Resend(process.env.RESEND_API_KEY.trim())
+  : null;
+
+/**
+ * Détermine dynamiquement l'adresse d'expéditeur.
+ * Si RESEND_FROM_EMAIL est défini (ex: "AGRIMPACT <securite@agrimpact.sn>"), il est utilisé en priorité.
+ * Sinon, repli sur l'expéditeur de test officiel Resend 'onboarding@resend.dev'.
+ */
+export function getFromEmail(): string {
+  if (process.env.RESEND_FROM_EMAIL && process.env.RESEND_FROM_EMAIL.trim()) {
+    return process.env.RESEND_FROM_EMAIL.trim();
+  }
+  if (process.env.VERIFIED_DOMAIN && process.env.VERIFIED_DOMAIN.trim()) {
+    return `AGRIMPACT <securite@${process.env.VERIFIED_DOMAIN.trim()}>`;
+  }
+  return 'AGRIMPACT <onboarding@resend.dev>';
+}
+
+export const FROM_EMAIL = getFromEmail();
 
 export interface SendOtpEmailParams {
   to: string;
@@ -33,10 +52,12 @@ export interface ResendDeliveryResult {
 export async function sendOtpViaResend(params: SendOtpEmailParams): Promise<ResendDeliveryResult> {
   const { to, code, type, nom } = params;
 
-  if (!resend) {
+  const client = getResendClient() || resend;
+
+  if (!client) {
     return {
       success: false,
-      error: "Clé API Resend non configurée (variable d'environnement RESEND_API_KEY manquante).",
+      error: "Clé API Resend non configurée (variable d'environnement RESEND_API_KEY manquante dans .env.local ou Vercel).",
     };
   }
 
@@ -100,8 +121,8 @@ export async function sendOtpViaResend(params: SendOtpEmailParams): Promise<Rese
   `;
 
   try {
-    const { data, error } = await resend.emails.send({
-      from: FROM_EMAIL,
+    const { data, error } = await client.emails.send({
+      from: getFromEmail(),
       to: [to],
       subject,
       html: htmlContent,
@@ -141,7 +162,8 @@ export async function notifyAdminViaResend(params: {
 }): Promise<void> {
   const { type, userNom, userEmail, userPhone, ip, userAgent } = params;
 
-  if (!resend) return;
+  const client = getResendClient() || resend;
+  if (!client) return;
 
   const adminEmail = process.env.ADMIN_ALERT_EMAIL || 'fayethierno7@gmail.com';
   const now = new Date().toLocaleString('fr-FR', { timeZone: 'Africa/Dakar' });
@@ -173,8 +195,8 @@ export async function notifyAdminViaResend(params: {
   `;
 
   try {
-    await resend.emails.send({
-      from: FROM_EMAIL,
+    await client.emails.send({
+      from: getFromEmail(),
       to: [adminEmail],
       subject,
       html,
