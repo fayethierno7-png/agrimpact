@@ -28,6 +28,7 @@ interface PaymentModalProps {
   userPhone?: string;
   userName?: string;
   userId?: string;
+  initialProvider?: PaymentProvider;
 }
 
 type PaymentProvider = 'wave' | 'orange_money';
@@ -40,8 +41,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   userPhone = '78 017 88 18',
   userName = 'Producteur',
   userId = 'usr-client',
+  initialProvider = 'wave',
 }) => {
-  const [provider, setProvider] = useState<PaymentProvider>('wave');
+  const [provider, setProvider] = useState<PaymentProvider>(initialProvider);
+
+  React.useEffect(() => {
+    if (initialProvider) {
+      setProvider(initialProvider);
+    }
+  }, [initialProvider, isOpen]);
   const [phoneNumber, setPhoneNumber] = useState(
     userPhone ? userPhone.replace('+221', '').trim() : '78 017 88 18'
   );

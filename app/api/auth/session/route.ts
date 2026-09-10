@@ -9,9 +9,11 @@ export async function POST(req: NextRequest) {
       userId,
       email,
       nom,
+      plan = 'free',
       statut_compte = 'actif',
       statut_abonnement = 'actif',
       date_limite_grace = null,
+      rememberMe = false,
     } = body;
 
     if (!userId) {
@@ -21,9 +23,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // SÉCURITÉ : Récupérer le rôle RÉEL depuis la base de données
+    // SÉCURITÉ : Récupérer le rôle RÉEL et le plan depuis la base de données
     // Ne JAMAIS faire confiance au champ 'role' envoyé par le client
     let verifiedRole = 'producteur';
+    let verifiedPlan = plan;
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -48,7 +51,7 @@ export async function POST(req: NextRequest) {
         else headers['Authorization'] = `Bearer ${supabaseServiceKey}`; // Fallback anon
 
         const res = await fetch(
-          `${supabaseUrl}/rest/v1/profiles?user_id=eq.${userId}&select=role`,
+          `${supabaseUrl}/rest/v1/profiles?user_id=eq.${userId}&select=role,plan`,
           {
             headers,
             signal: AbortSignal.timeout(2000),
@@ -59,10 +62,13 @@ export async function POST(req: NextRequest) {
           if (profiles?.[0]?.role) {
             verifiedRole = profiles[0].role;
           }
+          if (profiles?.[0]?.plan) {
+            verifiedPlan = profiles[0].plan;
+          }
         }
       }
     } catch (e) {
-      console.warn('Erreur vérification rôle serveur:', e);
+      console.warn('Erreur vérification profil serveur:', e);
     }
 
     // Garantie absolue pour le compte propriétaire (côté serveur, inviolable)
@@ -75,6 +81,7 @@ export async function POST(req: NextRequest) {
       email: email || '',
       nom: nom || '',
       role: verifiedRole,
+      plan: verifiedPlan,
       statut_compte,
       statut_abonnement,
       date_limite_grace,
@@ -90,22 +97,26 @@ export async function POST(req: NextRequest) {
     // Encodage signé cryptographiquement HMAC-SHA256
     const sessionToken = await signSessionToken(sessionPayload);
 
-    // Déposer le cookie de session serveur sécurisé (7 jours)
-    response.cookies.set('agri_session', sessionToken, {
+    // Option "Rester connecté" :
+    // - Si rememberMe est coché : session longue de 30 jours (plusieurs semaines).
+    // - Si non coché : vrai cookie de session navigateur (sans maxAge), détruit à la fermeture du navigateur.
+    const cookieOptions = {
       path: '/',
-      maxAge: 60 * 60 * 24 * 7, // 7 jours
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-    });
+      sameSite: 'lax' as const,
+      ...(rememberMe ? { maxAge: 60 * 60 * 24 * 30 } : {}),
+    };
+
+    response.cookies.set('agri_session', sessionToken, cookieOptions);
 
     // Cookie de rôle informatif (non suffisant seul pour autoriser l'admin)
     response.cookies.set('agri_user_role', verifiedRole, {
       path: '/',
-      maxAge: 60 * 60 * 24 * 7,
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'lax' as const,
+      ...(rememberMe ? { maxAge: 60 * 60 * 24 * 30 } : {}),
     });
 
     return response;

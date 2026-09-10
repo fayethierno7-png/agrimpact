@@ -88,6 +88,7 @@ export default function AdminConsolePage() {
 
   // États de chargement et données
   const [isLoadingData, setIsLoadingData] = useState(false);
+  const [dataError, setDataError] = useState<string | null>(null);
   const [users, setUsers] = useState<AdminUserListItem[]>([]);
   const [revenue, setRevenue] = useState<RevenueMetrics | null>(null);
   const [funnel, setFunnel] = useState<FunnelStep[]>([]);
@@ -134,6 +135,7 @@ export default function AdminConsolePage() {
 
   // Chargement des données selon l'onglet et la période
   const loadModuleData = async (forceSpinner = false) => {
+    setDataError(null);
     const hasData =
       (activeTab === 'users' && users.length > 0) ||
       (activeTab === 'revenue' && revenue !== null) ||
@@ -169,8 +171,9 @@ export default function AdminConsolePage() {
         const reps = await getAdminReports(period);
         setReports(reps);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erreur chargement données admin:', err);
+      setDataError(err?.message || 'Erreur lors du chargement des données administratives.');
     } finally {
       setIsLoadingData(false);
     }
@@ -324,27 +327,52 @@ export default function AdminConsolePage() {
     { key: 'settings', label: '7. Coordonnées Contact', icon: Sliders },
   ];
 
+  const isAdmin =
+    profile?.role === 'superadmin' ||
+    profile?.role === 'admin' ||
+    (profile as any)?.is_admin === true;
+
   // Garde RBAC client-side stricte (Point 9)
   useEffect(() => {
     if (!isAuthLoading) {
       if (!profile) {
         router.replace('/login?redirect=/admin');
-      } else if (profile.role !== 'superadmin') {
+      } else if (!isAdmin) {
         router.replace('/dashboard');
       }
     }
-  }, [profile, isAuthLoading, router]);
+  }, [profile, isAuthLoading, isAdmin, router]);
 
-  if (isAuthLoading || !profile || profile.role !== 'superadmin') {
+  if (isAuthLoading) {
     return (
       <div className="min-h-screen bg-stone-900 text-white flex flex-col items-center justify-center p-6 text-center">
         <div className="w-14 h-14 rounded-2xl bg-purple-950/70 border border-purple-500/30 text-purple-300 flex items-center justify-center mb-4 shadow-xl">
-          <Lock className="w-7 h-7 animate-pulse text-purple-400" />
+          <Loader2 className="w-7 h-7 animate-spin text-purple-400" />
         </div>
         <h2 className="text-base sm:text-lg font-bold">Vérification des droits d&apos;administration...</h2>
         <p className="text-xs text-stone-400 mt-1 max-w-sm">
-          Redirection immédiate si votre compte ne dispose pas des privilèges administrateur certifiés.
+          Initialisation sécurisée de la session administrateur.
         </p>
+      </div>
+    );
+  }
+
+  if (!profile || !isAdmin) {
+    return (
+      <div className="min-h-screen bg-stone-900 text-white flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-red-950/70 border border-red-500/30 text-red-300 flex items-center justify-center mb-4 shadow-xl">
+          <Lock className="w-7 h-7 text-red-400" />
+        </div>
+        <h2 className="text-base sm:text-lg font-bold">Accès Administrateur Requis</h2>
+        <p className="text-xs text-stone-400 mt-1 max-w-sm mb-4">
+          Votre compte ne dispose pas des privilèges administrateur nécessaires pour accéder à cette console.
+        </p>
+        <Link
+          href="/dashboard"
+          className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all shadow-md"
+        >
+          Retour au Tableau de Bord
+        </Link>
       </div>
     );
   }
@@ -450,12 +478,36 @@ export default function AdminConsolePage() {
             type="button"
             onClick={() => loadModuleData(true)}
             disabled={isLoadingData}
-            className="self-start sm:self-auto px-3 py-1.5 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 hover:bg-stone-50 dark:hover:bg-stone-800 text-xs font-semibold flex items-center gap-1.5 shadow-2xs"
+            className="self-start sm:self-auto px-3 py-1.5 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 hover:bg-stone-50 dark:hover:bg-stone-800 text-xs font-semibold flex items-center gap-1.5 shadow-2xs cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoadingData ? 'animate-spin' : ''}`} />
             <span>Actualiser</span>
           </button>
         </div>
+
+        {/* Bannière d'erreur explicite avec bouton Réessayer */}
+        {dataError && (
+          <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fade-in shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-red-900 dark:text-red-200">
+                  Erreur de chargement des données
+                </p>
+                <p className="text-[11px] text-red-700 dark:text-red-300">{dataError}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => loadModuleData(true)}
+              className="px-3 py-1.5 rounded-xl bg-red-700 hover:bg-red-800 text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs"
+            >
+              Réessayer
+            </button>
+          </div>
+        )}
 
         {/* ------------------------------------------------------------- */}
         {/* SECTION 1 : VALIDATION DES UTILISATEURS                       */}
@@ -486,7 +538,16 @@ export default function AdminConsolePage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
-                    {users.length === 0 ? (
+                    {isLoadingData ? (
+                      <tr>
+                        <td colSpan={7} className="py-12 text-center text-stone-500 font-sans">
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
+                            <span className="text-xs font-medium">Chargement des comptes producteurs...</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : users.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="py-12 text-center text-stone-400 font-sans">
                           Aucun compte utilisateur enregistré dans la base de données pour le moment.
@@ -590,7 +651,41 @@ export default function AdminConsolePage() {
         {/* ------------------------------------------------------------- */}
         {/* SECTION 2 : REVENUS (MRR, ARR, CHURN, LTV, GRAPHIQUE)         */}
         {/* ------------------------------------------------------------- */}
-        {activeTab === 'revenue' && revenue && (
+        {activeTab === 'revenue' && (
+          isLoadingData && !revenue ? (
+            <div className="space-y-6 animate-fade-in">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="p-5 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-xs h-32 flex flex-col justify-between animate-pulse">
+                    <div className="w-20 h-4 bg-stone-200 dark:bg-stone-800 rounded" />
+                    <div className="w-32 h-8 bg-stone-200 dark:bg-stone-800 rounded" />
+                    <div className="w-24 h-3 bg-stone-100 dark:bg-stone-800/60 rounded" />
+                  </div>
+                ))}
+              </div>
+              <div className="p-8 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-xs h-64 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-2 text-stone-400">
+                  <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
+                  <span className="text-xs font-medium">Calcul et agrégation des revenus MRR / ARR...</span>
+                </div>
+              </div>
+            </div>
+          ) : !revenue ? (
+            <div className="p-12 text-center bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 space-y-3">
+              <DollarSign className="w-10 h-10 text-stone-400 mx-auto" />
+              <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">Aucune donnée financière disponible</h3>
+              <p className="text-xs text-stone-500 max-w-sm mx-auto">
+                Impossible de calculer les métriques financières pour cette sélection de période.
+              </p>
+              <button
+                type="button"
+                onClick={() => loadModuleData(true)}
+                className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+              >
+                Calculer les métriques
+              </button>
+            </div>
+          ) : (
           <div className="space-y-6 animate-fade-in">
             {/* 4 Cartes Métriques */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -709,6 +804,7 @@ export default function AdminConsolePage() {
               </div>
             </div>
           </div>
+          )
         )}
 
         {/* ------------------------------------------------------------- */}
@@ -727,16 +823,34 @@ export default function AdminConsolePage() {
               </div>
 
               {/* Étapes du Funnel */}
-              <div className="space-y-4">
-                {funnel.map((step, idx) => {
-                  return (
-                    <div
-                      key={step.key}
-                      className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800/50 border border-stone-200 dark:border-stone-800 space-y-2.5"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div>
-                          <div className="text-sm font-extrabold text-stone-900 dark:text-stone-100">
+              {isLoadingData && funnel.length === 0 ? (
+                <div className="py-12 flex flex-col items-center justify-center gap-2 text-stone-500">
+                  <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
+                  <span className="text-xs font-medium">Calcul du funnel de conversion...</span>
+                </div>
+              ) : funnel.length === 0 ? (
+                <div className="p-8 text-center bg-stone-50 dark:bg-stone-800/40 rounded-2xl border border-dashed border-stone-200 dark:border-stone-700 text-stone-500 space-y-2">
+                  <Filter className="w-8 h-8 text-stone-400 mx-auto" />
+                  <p className="text-xs font-semibold">Aucun événement de conversion enregistré pour cette période.</p>
+                  <button
+                    type="button"
+                    onClick={() => loadModuleData(true)}
+                    className="px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                  >
+                    Actualiser le funnel
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {funnel.map((step, idx) => {
+                    return (
+                      <div
+                        key={step.key}
+                        className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800/50 border border-stone-200 dark:border-stone-800 space-y-2.5"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div>
+                            <div className="text-sm font-extrabold text-stone-900 dark:text-stone-100">
                             {step.title}
                           </div>
                           <div className="text-xs text-stone-500 dark:text-stone-400">
@@ -787,7 +901,8 @@ export default function AdminConsolePage() {
                     </div>
                   );
                 })}
-              </div>
+                </div>
+              )}
 
               {/* Bilan de conversion global */}
               {funnel.length >= 4 && (
@@ -862,7 +977,16 @@ export default function AdminConsolePage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-stone-100 dark:divide-stone-800 font-mono text-[11px]">
-                    {auditLogs.length === 0 ? (
+                    {isLoadingData ? (
+                      <tr>
+                        <td colSpan={5} className="py-10 text-center text-stone-500 font-sans">
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            <Loader2 className="w-5 h-5 animate-spin text-emerald-600" />
+                            <span className="text-xs">Chargement du journal d&apos;audit...</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : auditLogs.length === 0 ? (
                       <tr>
                         <td colSpan={5} className="py-8 text-center text-stone-400 font-sans">
                           Aucun enregistrement d&apos;audit pour cette période.
@@ -927,7 +1051,16 @@ export default function AdminConsolePage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
-                    {payments.length === 0 ? (
+                    {isLoadingData ? (
+                      <tr>
+                        <td colSpan={7} className="py-12 text-center text-stone-500 font-sans">
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
+                            <span className="text-xs">Chargement des transactions financières...</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : payments.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="py-12 text-center text-stone-400 font-sans">
                           Aucune transaction financière enregistrée pour cette période.
@@ -1034,7 +1167,14 @@ export default function AdminConsolePage() {
             </div>
 
             <div className="space-y-3">
-              {reports.filter((r) => reportStatusFilter === 'all' || r.statut === reportStatusFilter).length === 0 ? (
+              {isLoadingData && reports.length === 0 ? (
+                <div className="p-12 text-center bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 text-stone-500">
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
+                    <span className="text-xs font-medium">Chargement des signalements utilisateurs...</span>
+                  </div>
+                </div>
+              ) : reports.filter((r) => reportStatusFilter === 'all' || r.statut === reportStatusFilter).length === 0 ? (
                 <div className="p-12 text-center bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 text-stone-400">
                   Aucun signalement utilisateur pour cette sélection.
                 </div>

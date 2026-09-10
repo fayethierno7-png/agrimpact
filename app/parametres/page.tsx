@@ -261,12 +261,16 @@ export default function ParametresPage() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {profile?.role === 'superadmin' && (
+            {(profile?.role === 'superadmin' ||
+              profile?.role === 'admin' ||
+              (profile as any)?.is_admin === true) && (
               <Link
                 href="/admin"
                 className="px-4 py-2.5 bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 shadow-xs transition-all hover:scale-105 cursor-pointer ring-2 ring-purple-300"
               >
-                <span>Console SuperAdmin</span>
+                <span>
+                  {profile?.role === 'superadmin' ? 'Console SuperAdmin' : 'Console Admin'}
+                </span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             )}

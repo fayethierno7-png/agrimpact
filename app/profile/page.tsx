@@ -20,6 +20,12 @@ import {
   Settings,
   Flag,
   Building2,
+  Calendar,
+  Gauge,
+  Users,
+  Zap,
+  HelpCircle,
+  ArrowRight,
 } from 'lucide-react';
 import { AppHeader } from '../../components/AppHeader';
 import { BottomNav } from '../../components/BottomNav';
@@ -36,19 +42,23 @@ export default function ProfilePage() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isEditFarmOpen, setIsEditFarmOpen] = useState(false);
   const [targetCheckoutPlan, setTargetCheckoutPlan] = useState<UserPlan>('pro');
+  const [targetCheckoutProvider, setTargetCheckoutProvider] = useState<'wave' | 'orange_money'>('wave');
   const [paymentSuccessMessage, setPaymentSuccessMessage] = useState<string | null>(null);
+  const [paymentProviderByPlan, setPaymentProviderByPlan] = useState<
+    Record<string, 'wave' | 'orange_money'>
+  >({
+    solo: 'wave',
+    pro: 'wave',
+    cooperative: 'wave',
+  });
 
-  const handlePlanClick = (plan: UserPlan) => {
+  const handleStartPlanPayment = (plan: UserPlan) => {
+    const prov = paymentProviderByPlan[plan] || 'wave';
     setSelectedPlan(plan);
+    setTargetCheckoutPlan(plan);
+    setTargetCheckoutProvider(prov);
     setPaymentSuccessMessage(null);
-
-    if (plan === 'free') {
-      updatePlan('free');
-      setPaymentSuccessMessage('Votre compte a été basculé sur le forfait Gratuit Pilote.');
-    } else {
-      setTargetCheckoutPlan(plan);
-      setIsPaymentModalOpen(true);
-    }
+    setIsPaymentModalOpen(true);
   };
 
   const handlePaymentSuccess = (plan: UserPlan) => {
@@ -67,7 +77,7 @@ export default function ProfilePage() {
     <div className="flex-1 flex flex-col bg-stone-50/70 dark:bg-stone-950 min-h-screen transition-colors duration-200">
       <AppHeader statusText="En ligne" title="Profil & Forfaits" />
 
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-24 md:pb-8 space-y-6">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-24 md:pb-8 space-y-6">
         {/* Titre */}
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
@@ -79,9 +89,9 @@ export default function ProfilePage() {
         </div>
 
         {/* Layout Responsive (Grille 12 colonnes sur desktop) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Colonne Gauche : Fiche Utilisateur & Exploitation (4 colonnes) */}
-          <div className="lg:col-span-4 space-y-5">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 xl:gap-6 items-start">
+          {/* Colonne Gauche : Fiche Utilisateur & Exploitation */}
+          <div className="lg:col-span-4 xl:col-span-3 space-y-4">
             <div className="p-5 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-xs space-y-4">
               <div className="flex items-center gap-3.5">
                 <div className="w-14 h-14 rounded-2xl bg-emerald-800 text-white flex items-center justify-center font-black text-lg shadow-sm overflow-hidden shrink-0">
@@ -117,7 +127,13 @@ export default function ProfilePage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-stone-500 dark:text-stone-400">Forfait actuel :</span>
-                  <span className="font-black text-emerald-900 dark:text-emerald-300 uppercase">{profile?.plan || 'free'}</span>
+                  {profile?.plan === 'free' ? (
+                    <span className="font-black text-rose-600 dark:text-rose-400 uppercase text-xs">Aucun (Expiré)</span>
+                  ) : (
+                    <span className="font-black text-emerald-900 dark:text-emerald-300 uppercase text-xs">
+                      {PLAN_LIMITS[profile?.plan || 'solo']?.name || profile?.plan}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -204,18 +220,18 @@ export default function ProfilePage() {
             </button>
           </div>
 
-          {/* Colonne Droite : Grille des Plans & Abonnements (8 colonnes) */}
-          <div className="lg:col-span-8 space-y-4">
+          {/* Colonne Droite : Grille des Plans & Abonnements (Élargie sur Desktop) */}
+          <div className="lg:col-span-8 xl:col-span-9 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <h3 className="text-sm font-extrabold text-stone-900 dark:text-stone-100 tracking-tight flex items-center gap-2">
-                <Crown className="w-4 h-4 text-amber-500" />
+              <h3 className="text-base font-extrabold text-stone-900 dark:text-stone-100 tracking-tight flex items-center gap-2">
+                <Crown className="w-5 h-5 text-amber-500" />
                 <span>Choisir votre Forfait d&apos;Exploitation</span>
               </h3>
               
               {/* Badge opérateurs Sénégal */}
               <div className="flex items-center gap-2 text-[11px] font-bold">
                 <span className="text-stone-500 dark:text-stone-400">Paiement Mobile :</span>
-                <span className="px-2 py-1 rounded-lg bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-2xs flex items-center gap-1.5">
+                <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-2xs flex items-center gap-1.5">
                   <img
                     src="/logos/wave.jpg"
                     alt="Wave"
@@ -226,7 +242,7 @@ export default function ProfilePage() {
                   />
                   <span className="text-stone-800 dark:text-stone-200 text-xs">Wave</span>
                 </span>
-                <span className="px-2 py-1 rounded-lg bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-2xs flex items-center gap-1.5">
+                <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-2xs flex items-center gap-1.5">
                   <img
                     src="/logos/orange-money.png"
                     alt="Orange Money"
@@ -247,289 +263,482 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* Grille des 3 Plans alignés sur Desktop */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-stretch">
-              {/* Plan 1 : Free */}
+            {/* Grille des 3 Plans au gabarit compact (Solo, Pro Producteur, Coopérative & GIE) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 xl:gap-4 items-stretch pt-1">
+              
+              {/* PLAN 1 : SOLO (1 490 FCFA) */}
               <div
-                onClick={() => handlePlanClick('free')}
-                className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
-                  profile?.plan === 'free'
-                    ? 'bg-emerald-50/60 dark:bg-emerald-950/40 border-emerald-700 dark:border-emerald-600 shadow-sm'
-                    : 'bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700'
+                className={`rounded-3xl p-4.5 sm:p-5 flex flex-col justify-between transition-all duration-200 ${
+                  profile?.plan === 'solo'
+                    ? 'bg-stone-50 dark:bg-stone-900 border-2 border-emerald-600 dark:border-emerald-500 shadow-md ring-2 ring-emerald-600/20'
+                    : 'bg-[#FAF9F5] dark:bg-stone-900 border border-stone-200/90 dark:border-stone-800 shadow-xs hover:border-stone-300 dark:hover:border-stone-700 hover:shadow-md'
                 }`}
               >
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-black uppercase text-stone-600 dark:text-stone-400">Pilote</span>
-                    {profile?.plan === 'free' && (
-                      <span className="text-[10px] font-bold bg-emerald-800 text-white px-2 py-0.5 rounded">Actif</span>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">Solo</h4>
+                    {profile?.plan === 'solo' && (
+                      <span className="text-[9px] font-bold bg-emerald-800 text-white px-2 py-0.5 rounded-full">Actif</span>
                     )}
                   </div>
-                  <div className="text-xl font-black text-stone-900 dark:text-stone-100">0 FCFA</div>
-                  <div className="text-[10px] text-stone-400 dark:text-stone-500">Gratuit sans engagement</div>
+                  <p className="text-[11px] sm:text-xs text-stone-600 dark:text-stone-400 mt-0.5 leading-snug line-clamp-2 min-h-[30px]">
+                    Le socle agronomique essentiel pour le producteur individuel autonome.
+                  </p>
 
-                  <ul className="mt-4 pt-3 border-t border-stone-100 dark:border-stone-800 space-y-2 text-xs text-stone-600 dark:text-stone-300">
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>1 parcelle</span>
+                  <div className="mt-3 pb-3 border-b border-stone-200/80 dark:border-stone-800">
+                    <div className="flex items-baseline gap-1.5 flex-nowrap whitespace-nowrap overflow-hidden">
+                      <span className="text-3xl sm:text-3xl xl:text-4xl font-extrabold text-stone-900 dark:text-stone-100 tracking-tight font-sans shrink-0">
+                        1 490
+                      </span>
+                      <span className="text-[10px] xl:text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400 shrink-0">
+                        FCFA / MOIS
+                      </span>
+                    </div>
+                    <p className="text-[10.5px] text-stone-400 dark:text-stone-500 mt-0.5 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                      Sans engagement • Reconduction mensuelle
+                    </p>
+                  </div>
+
+                  <div className="text-[10px] sm:text-[10.5px] font-black uppercase tracking-wider text-[#963E1B] dark:text-amber-500 mt-3.5 mb-2.5 whitespace-nowrap">
+                    LIMITES &amp; CAPACITÉS INCLUSES
+                  </div>
+
+                  <ul className="space-y-1.5 sm:space-y-2 text-[11px] sm:text-[11.5px] leading-snug text-stone-700 dark:text-stone-300">
+                    <li className="flex items-start gap-2">
+                      <Layers className="w-3.5 h-3.5 text-stone-500 shrink-0 mt-0.5" />
+                      <span>Jusqu&apos;à <strong className="font-bold text-stone-900 dark:text-stone-100">3 parcelles</strong> cartographiées</span>
                     </li>
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>Conseils quotidiens</span>
+                    <li className="flex items-start gap-2">
+                      <Calendar className="w-3.5 h-3.5 text-stone-500 shrink-0 mt-0.5" />
+                      <span><strong className="font-bold text-stone-900 dark:text-stone-100">0 jour de projection</strong> (temps réel)</span>
                     </li>
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>Météo de base</span>
+                    <li className="flex items-start gap-2">
+                      <Gauge className="w-3.5 h-3.5 text-stone-500 shrink-0 mt-0.5" />
+                      <span><strong className="font-bold text-stone-900 dark:text-stone-100">5 fenêtres</strong> de traitement / mois</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Users className="w-3.5 h-3.5 text-stone-500 shrink-0 mt-0.5" />
+                      <span><strong className="font-bold text-stone-900 dark:text-stone-100">1 compte</strong> collaborateur inclus</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Smartphone className="w-3.5 h-3.5 text-stone-500 shrink-0 mt-0.5" />
+                      <span><strong className="font-bold text-stone-900 dark:text-stone-100">10 alertes SMS</strong> / mois (urgences)</span>
+                    </li>
+                  </ul>
+
+                  {/* Encart IA Solo */}
+                  <div className="bg-stone-100/90 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 rounded-xl p-2.5 my-2.5">
+                    <div className="flex items-center justify-between text-stone-900 dark:text-stone-100">
+                      <div className="flex items-center gap-1.5 font-bold text-[11px]">
+                        <Zap className="w-3.5 h-3.5 text-amber-600 fill-amber-500 shrink-0" />
+                        <span className="whitespace-nowrap">8 000 tokens IA / mois</span>
+                      </div>
+                      <HelpCircle className="w-3 h-3 text-stone-400 shrink-0" />
+                    </div>
+                    <p className="text-[10px] text-stone-500 dark:text-stone-400 mt-0.5 pl-5 font-medium whitespace-nowrap">
+                      ≈ <strong className="text-stone-700 dark:text-stone-300">16 messages</strong> avec l&apos;IA AgriImpact
+                    </p>
+                  </div>
+
+                  <ul className="space-y-1 text-[10px] sm:text-[10.5px] text-stone-500 dark:text-stone-400 pl-1 mb-3.5">
+                    <li className="flex items-center gap-1.5 whitespace-nowrap">
+                      <span className="text-stone-400">•</span>
+                      <span>1 exploitation gérée</span>
+                    </li>
+                    <li className="flex items-center gap-1.5 whitespace-nowrap">
+                      <span className="text-stone-400">•</span>
+                      <span>7 jours d&apos;historique analysable</span>
                     </li>
                   </ul>
                 </div>
 
-                <button
-                  type="button"
-                  className={`mt-5 w-full py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    profile?.plan === 'free'
-                      ? 'bg-emerald-800 text-white'
-                      : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200 hover:bg-stone-200 dark:hover:bg-stone-700'
-                  }`}
-                >
-                  {profile?.plan === 'free' ? 'Forfait Actuel' : 'Sélectionner Gratuit'}
-                </button>
+                {/* Section Paiement Direct Solo */}
+                <div className="pt-2.5 border-t border-stone-200/80 dark:border-stone-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-black uppercase tracking-wider text-stone-500 dark:text-stone-400 whitespace-nowrap">
+                      PAIEMENT DIRECT :
+                    </span>
+                    <span className="px-1.5 py-0.2 rounded text-[8.5px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                      INSTANT SEN
+                    </span>
+                  </div>
+
+                  {/* Sélecteur Wave / Orange Money */}
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPaymentProviderByPlan((prev) => ({ ...prev, solo: 'wave' }));
+                      }}
+                      className={`py-1.5 px-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border ${
+                        paymentProviderByPlan.solo === 'wave'
+                          ? 'bg-sky-50 dark:bg-sky-950/60 border-sky-400 text-sky-900 dark:text-sky-200 shadow-2xs ring-1 ring-sky-400'
+                          : 'bg-white dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-stone-300'
+                      }`}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0" />
+                      <img src="/logos/wave.jpg" alt="Wave" className="w-3.5 h-3.5 rounded-xs object-cover" />
+                      <span className="text-[11px]">Wave</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPaymentProviderByPlan((prev) => ({ ...prev, solo: 'orange_money' }));
+                      }}
+                      className={`py-1.5 px-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border ${
+                        paymentProviderByPlan.solo === 'orange_money'
+                          ? 'bg-orange-50 dark:bg-orange-950/60 border-orange-400 text-orange-950 dark:text-orange-200 shadow-2xs ring-1 ring-orange-400'
+                          : 'bg-white dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-stone-300'
+                      }`}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0" />
+                      <img src="/logos/orange-money.png" alt="OM" className="w-3.5 h-3.5 rounded-xs object-contain bg-white" />
+                      <span className="text-[11px] truncate">Orange Money</span>
+                    </button>
+                  </div>
+
+                  {/* CTA Button Solo */}
+                  {profile?.plan === 'solo' ? (
+                    <div className="w-full py-2.5 px-3 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 text-[11px] font-black uppercase tracking-wider text-center border border-stone-200 dark:border-stone-700">
+                      Forfait Actuel
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleStartPlanPayment('solo')}
+                      className="w-full py-2.5 px-3 rounded-xl bg-[#963E1B] hover:bg-[#7D3416] text-white text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md hover:shadow-lg transition-all cursor-pointer"
+                    >
+                      <span className="truncate">PAYER AVEC {paymentProviderByPlan.solo === 'wave' ? 'WAVE' : 'ORANGE MONEY'}</span>
+                      <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+                    </button>
+                  )}
+                </div>
               </div>
 
-              {/* Plan 2 : Pro (Recommandé) */}
+              {/* PLAN 2 : PRO PRODUCTEUR (5 900 FCFA - CARTE DU MILIEU MISE EN AVANT) */}
               <div
-                onClick={() => handlePlanClick('pro')}
-                className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between relative ${
-                  profile?.plan === 'pro'
-                    ? 'bg-emerald-50/70 dark:bg-emerald-950/50 border-emerald-800 dark:border-emerald-600 shadow-md ring-2 ring-emerald-800/20'
-                    : 'bg-white dark:bg-stone-900 border-emerald-600/60 hover:border-emerald-600'
-                }`}
+                className="bg-[#0C2B1E] text-white border-2 border-[#1E6B47] rounded-3xl p-4.5 sm:p-5 flex flex-col justify-between shadow-2xl relative lg:-translate-y-2 z-10 ring-2 ring-[#C8EF56]/40"
               >
-                <span className="absolute -top-3 right-4 px-2.5 py-0.5 rounded-full bg-emerald-800 text-white text-[9px] font-black uppercase tracking-wider">
-                  Populaire
-                </span>
+                {/* Badge en haut PRODUCTEURS */}
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#C8EF56] text-[#0C2B1E] text-[10px] font-black uppercase tracking-wider px-3.5 py-0.5 rounded-full shadow-lg border border-[#B8DF44] flex items-center gap-1 whitespace-nowrap">
+                  <Sparkles className="w-3 h-3 fill-[#0C2B1E]" />
+                  <span>PRODUCTEURS</span>
+                </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-black uppercase text-emerald-950 dark:text-emerald-200">Producteur</span>
+                  <div className="flex items-center justify-between pt-0.5">
+                    <h4 className="text-xl sm:text-2xl font-black text-white tracking-tight">Pro Producteur</h4>
                     {profile?.plan === 'pro' && (
-                      <span className="text-[10px] font-bold bg-emerald-800 text-white px-2 py-0.5 rounded">Actif</span>
+                      <span className="text-[9px] font-bold bg-[#C8EF56] text-[#0C2B1E] px-2 py-0.5 rounded-full uppercase">Actif</span>
                     )}
                   </div>
-                  <div className="text-xl font-black text-emerald-900 dark:text-emerald-300">5 900 FCFA</div>
-                  <div className="text-[10px] text-stone-500 dark:text-stone-400 font-semibold flex items-center gap-1.5 mt-0.5">
-                    <span>par mois •</span>
-                    <span className="inline-flex items-center gap-1 bg-stone-50 dark:bg-stone-800 px-1.5 py-0.5 rounded border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 font-bold">
-                      <img
-                        src="/logos/wave.jpg"
-                        alt="Wave"
-                        width={12}
-                        height={12}
-                        style={{ width: '12px', height: '12px', objectFit: 'cover' }}
-                        className="w-3 h-3 object-cover rounded-xs"
-                      />
-                      Wave
-                    </span>
-                    <span className="inline-flex items-center gap-1 bg-stone-50 dark:bg-stone-800 px-1.5 py-0.5 rounded border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 font-bold">
-                      <img
-                        src="/logos/orange-money.png"
-                        alt="OM"
-                        width={12}
-                        height={12}
-                        style={{ width: '12px', height: '12px', objectFit: 'contain' }}
-                        className="w-3 h-3 object-contain rounded-xs bg-white border border-stone-200 dark:border-stone-700 p-0.2"
-                      />
-                      OM
-                    </span>
+                  <p className="text-[11px] sm:text-xs text-stone-300 mt-0.5 leading-snug line-clamp-2 min-h-[30px]">
+                    Le copilote agrométéo et prédictif complet pour sécuriser ses rendements.
+                  </p>
+
+                  <div className="mt-3 pb-3 border-b border-[#1E6B47]/60">
+                    <div className="flex items-baseline gap-1.5 flex-nowrap whitespace-nowrap overflow-hidden">
+                      <span className="text-3xl sm:text-3xl xl:text-4xl font-extrabold text-[#C8EF56] tracking-tight font-sans shrink-0">
+                        5 900
+                      </span>
+                      <span className="text-[10px] xl:text-[11px] font-bold uppercase tracking-wider text-stone-300 shrink-0">
+                        FCFA / MOIS
+                      </span>
+                    </div>
+                    <p className="text-[10.5px] text-stone-400 mt-0.5 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                      Sans engagement • Reconduction mensuelle
+                    </p>
                   </div>
 
-                  <ul className="mt-4 pt-3 border-t border-stone-100 dark:border-stone-800 space-y-2 text-xs text-stone-600 dark:text-stone-300">
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>Jusqu&apos;à 10 parcelles</span>
+                  <div className="text-[10px] sm:text-[10.5px] font-black uppercase tracking-wider text-[#C8EF56] mt-3.5 mb-2.5 whitespace-nowrap">
+                    LIMITES &amp; CAPACITÉS INCLUSES
+                  </div>
+
+                  <ul className="space-y-1.5 sm:space-y-2 text-[11px] sm:text-[11.5px] leading-snug text-stone-200">
+                    <li className="flex items-start gap-2">
+                      <Layers className="w-3.5 h-3.5 text-[#C8EF56] shrink-0 mt-0.5" />
+                      <span>Jusqu&apos;à <strong className="font-bold text-white">10 parcelles</strong> cartographiées</span>
                     </li>
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>Alertes SMS prioritaires</span>
+                    <li className="flex items-start gap-2">
+                      <Calendar className="w-3.5 h-3.5 text-[#C8EF56] shrink-0 mt-0.5" />
+                      <span><strong className="font-bold text-white">14 jours de projection</strong> météo</span>
                     </li>
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>Historique complet</span>
+                    <li className="flex items-start gap-2">
+                      <Gauge className="w-3.5 h-3.5 text-[#C8EF56] shrink-0 mt-0.5" />
+                      <span><strong className="font-bold text-white">28 fenêtres</strong> de traitement / mois</span>
                     </li>
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>Assistance agronomique</span>
+                    <li className="flex items-start gap-2">
+                      <Users className="w-3.5 h-3.5 text-[#C8EF56] shrink-0 mt-0.5" />
+                      <span><strong className="font-bold text-white">2 comptes</strong> collaborateurs inclus</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Smartphone className="w-3.5 h-3.5 text-[#C8EF56] shrink-0 mt-0.5" />
+                      <span><strong className="font-bold text-white">50 alertes SMS</strong> / mois (urgences)</span>
+                    </li>
+                  </ul>
+
+                  {/* Encart IA Pro */}
+                  <div className="bg-[#071F15] border border-[#1B5238] rounded-xl p-2.5 my-2.5">
+                    <div className="flex items-center justify-between text-white">
+                      <div className="flex items-center gap-1.5 font-bold text-[11px] text-[#C8EF56]">
+                        <Zap className="w-3.5 h-3.5 text-[#C8EF56] fill-[#C8EF56] shrink-0" />
+                        <span className="whitespace-nowrap">60 000 tokens IA / mois</span>
+                      </div>
+                      <HelpCircle className="w-3 h-3 text-stone-400 shrink-0" />
+                    </div>
+                    <p className="text-[10px] text-stone-300 mt-0.5 pl-5 font-medium whitespace-nowrap">
+                      ≈ <strong className="text-white font-bold">120 messages</strong> avec l&apos;IA AgriImpact
+                    </p>
+                  </div>
+
+                  <ul className="space-y-1 text-[10px] sm:text-[10.5px] text-stone-300 pl-1 mb-3.5">
+                    <li className="flex items-center gap-1.5 whitespace-nowrap">
+                      <span className="text-[#C8EF56]">•</span>
+                      <span>1 exploitation gérée</span>
+                    </li>
+                    <li className="flex items-center gap-1.5 whitespace-nowrap">
+                      <span className="text-[#C8EF56]">•</span>
+                      <span>30 jours d&apos;historique analysable</span>
                     </li>
                   </ul>
                 </div>
 
-                <button
-                  type="button"
-                  className={`mt-5 w-full py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                    profile?.plan === 'pro'
-                      ? 'bg-emerald-800 text-white shadow-xs'
-                      : 'bg-emerald-800 text-white hover:bg-emerald-900 shadow-sm shadow-emerald-900/20'
-                  }`}
-                >
+                {/* Section Paiement Direct Pro */}
+                <div className="pt-2.5 border-t border-[#1E6B47]/60 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-black uppercase tracking-wider text-stone-300 whitespace-nowrap">
+                      PAIEMENT DIRECT :
+                    </span>
+                    <span className="px-1.5 py-0.2 rounded text-[8.5px] font-black uppercase tracking-wider bg-[#C8EF56] text-[#0C2B1E]">
+                      INSTANT SEN
+                    </span>
+                  </div>
+
+                  {/* Sélecteur Wave / Orange Money */}
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPaymentProviderByPlan((prev) => ({ ...prev, pro: 'wave' }));
+                      }}
+                      className={`py-1.5 px-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border ${
+                        paymentProviderByPlan.pro === 'wave'
+                          ? 'bg-[#071F15] border-sky-400 text-sky-200 shadow-2xs ring-1 ring-sky-400'
+                          : 'bg-[#071F15]/70 border-[#1B5238] text-stone-300 hover:border-[#287A53]'
+                      }`}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0" />
+                      <img src="/logos/wave.jpg" alt="Wave" className="w-3.5 h-3.5 rounded-xs object-cover" />
+                      <span className="text-[11px]">Wave</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPaymentProviderByPlan((prev) => ({ ...prev, pro: 'orange_money' }));
+                      }}
+                      className={`py-1.5 px-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border ${
+                        paymentProviderByPlan.pro === 'orange_money'
+                          ? 'bg-[#071F15] border-orange-400 text-orange-200 shadow-2xs ring-1 ring-orange-400'
+                          : 'bg-[#071F15]/70 border-[#1B5238] text-stone-300 hover:border-[#287A53]'
+                      }`}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-orange-400 shrink-0" />
+                      <img src="/logos/orange-money.png" alt="OM" className="w-3.5 h-3.5 rounded-xs object-contain bg-white" />
+                      <span className="text-[11px] truncate">Orange Money</span>
+                    </button>
+                  </div>
+
+                  {/* CTA Button Pro */}
                   {profile?.plan === 'pro' ? (
-                    'Forfait Actuel'
+                    <div className="w-full py-2.5 px-3 rounded-xl bg-white/20 text-white text-[11px] font-black uppercase tracking-wider text-center border border-white/30">
+                      Forfait Actuel
+                    </div>
                   ) : (
-                    <>
-                      <span className="flex items-center gap-1">
-                        <img
-                          src="/logos/wave.jpg"
-                          alt="Wave"
-                          width={14}
-                          height={14}
-                          style={{ width: '14px', height: '14px', objectFit: 'cover' }}
-                          className="w-3.5 h-3.5 object-cover rounded-xs"
-                        />
-                        <img
-                          src="/logos/orange-money.png"
-                          alt="OM"
-                          width={14}
-                          height={14}
-                          style={{ width: '14px', height: '14px', objectFit: 'contain' }}
-                          className="w-3.5 h-3.5 object-contain rounded-xs bg-white border border-stone-200 p-0.5"
-                        />
-                      </span>
-                      <span>Payer avec Wave / OM</span>
-                    </>
+                    <button
+                      type="button"
+                      onClick={() => handleStartPlanPayment('pro')}
+                      className="w-full py-2.5 px-3 rounded-xl bg-[#C8EF56] hover:bg-[#D6F569] text-[#0C2B1E] text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                    >
+                      <span className="truncate">PAYER AVEC {paymentProviderByPlan.pro === 'wave' ? 'WAVE' : 'ORANGE MONEY'}</span>
+                      <ArrowRight className="w-3.5 h-3.5 text-[#0C2B1E] shrink-0" />
+                    </button>
                   )}
-                </button>
+                </div>
               </div>
 
-              {/* Plan 3 : Business / Coopérative */}
+              {/* PLAN 3 : COOPÉRATIVE & GIE (49 900 FCFA) */}
               <div
-                onClick={() => handlePlanClick('business')}
-                className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
-                  profile?.plan === 'business'
-                    ? 'bg-emerald-50/60 dark:bg-emerald-950/40 border-emerald-700 dark:border-emerald-600 shadow-sm'
-                    : 'bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700'
+                className={`rounded-3xl p-4.5 sm:p-5 flex flex-col justify-between transition-all duration-200 ${
+                  profile?.plan === 'cooperative' || profile?.plan === 'business'
+                    ? 'bg-stone-50 dark:bg-stone-900 border-2 border-emerald-600 dark:border-emerald-500 shadow-md ring-2 ring-emerald-600/20'
+                    : 'bg-[#FAF9F5] dark:bg-stone-900 border border-stone-200/90 dark:border-stone-800 shadow-xs hover:border-stone-300 dark:hover:border-stone-700 hover:shadow-md'
                 }`}
               >
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-black uppercase text-stone-600 dark:text-stone-400">Coopérative</span>
-                    {profile?.plan === 'business' && (
-                      <span className="text-[10px] font-bold bg-emerald-800 text-white px-2 py-0.5 rounded">Actif</span>
-                    )}
+                  <div className="flex items-center justify-between gap-1.5">
+                    <h4 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight truncate">Coopérative &amp; GIE</h4>
+                    <span className="shrink-0 text-[9px] font-bold px-2 py-0.5 rounded-full bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
+                      Multi-comptes
+                    </span>
                   </div>
-                  <div className="text-xl font-black text-stone-900 dark:text-stone-100">54 900 FCFA</div>
-                  <div className="text-[10px] text-stone-500 dark:text-stone-400 font-semibold flex items-center gap-1.5 mt-0.5">
-                    <span>par mois •</span>
-                    <span className="inline-flex items-center gap-1 bg-stone-50 dark:bg-stone-800 px-1.5 py-0.5 rounded border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 font-bold">
-                      <img
-                        src="/logos/wave.jpg"
-                        alt="Wave"
-                        width={12}
-                        height={12}
-                        style={{ width: '12px', height: '12px', objectFit: 'cover' }}
-                        className="w-3 h-3 object-cover rounded-xs"
-                      />
-                      Wave
-                    </span>
-                    <span className="inline-flex items-center gap-1 bg-stone-50 dark:bg-stone-800 px-1.5 py-0.5 rounded border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 font-bold">
-                      <img
-                        src="/logos/orange-money.png"
-                        alt="OM"
-                        width={12}
-                        height={12}
-                        style={{ width: '12px', height: '12px', objectFit: 'contain' }}
-                        className="w-3 h-3 object-contain rounded-xs bg-white border border-stone-200 dark:border-stone-700 p-0.2"
-                      />
-                      OM
-                    </span>
+                  <p className="text-[11px] sm:text-xs text-stone-600 dark:text-stone-400 mt-0.5 leading-snug line-clamp-2 min-h-[30px]">
+                    La plateforme de pilotage mutualisée pour groupements et unions paysannes.
+                  </p>
+
+                  <div className="mt-3 pb-3 border-b border-stone-200/80 dark:border-stone-800">
+                    <div className="flex items-baseline gap-1.5 flex-nowrap whitespace-nowrap overflow-hidden">
+                      <span className="text-3xl sm:text-3xl xl:text-4xl font-extrabold text-stone-900 dark:text-stone-100 tracking-tight font-sans shrink-0">
+                        49 900
+                      </span>
+                      <span className="text-[10px] xl:text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400 shrink-0">
+                        FCFA / MOIS
+                      </span>
+                    </div>
+                    <p className="text-[10.5px] text-stone-400 dark:text-stone-500 mt-0.5 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                      Sans engagement • Reconduction mensuelle
+                    </p>
                   </div>
 
-                  <ul className="mt-4 pt-3 border-t border-stone-100 dark:border-stone-800 space-y-2 text-xs text-stone-600 dark:text-stone-300">
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>Parcelles illimitées</span>
+                  <div className="text-[10px] sm:text-[10.5px] font-black uppercase tracking-wider text-[#963E1B] dark:text-amber-500 mt-3.5 mb-2.5 whitespace-nowrap">
+                    LIMITES &amp; CAPACITÉS INCLUSES
+                  </div>
+
+                  <ul className="space-y-1.5 sm:space-y-2 text-[11px] sm:text-[11.5px] leading-snug text-stone-700 dark:text-stone-300">
+                    <li className="flex items-start gap-2">
+                      <Layers className="w-3.5 h-3.5 text-stone-500 shrink-0 mt-0.5" />
+                      <span>Jusqu&apos;à <strong className="font-bold text-stone-900 dark:text-stone-100">100 parcelles</strong> cartographiées</span>
                     </li>
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>Tableau multi-membres</span>
+                    <li className="flex items-start gap-2">
+                      <Calendar className="w-3.5 h-3.5 text-stone-500 shrink-0 mt-0.5" />
+                      <span><strong className="font-bold text-stone-900 dark:text-stone-100">21 jours de projection</strong> météo</span>
                     </li>
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>Export rapports ANACIM</span>
+                    <li className="flex items-start gap-2">
+                      <Gauge className="w-3.5 h-3.5 text-stone-500 shrink-0 mt-0.5" />
+                      <span><strong className="font-bold text-stone-900 dark:text-stone-100">60 fenêtres</strong> de traitement / mois</span>
                     </li>
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>Agronome attitré</span>
+                    <li className="flex items-start gap-2">
+                      <Users className="w-3.5 h-3.5 text-stone-500 shrink-0 mt-0.5" />
+                      <span><strong className="font-bold text-stone-900 dark:text-stone-100">15 comptes</strong> collaborateurs inclus</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Smartphone className="w-3.5 h-3.5 text-stone-500 shrink-0 mt-0.5" />
+                      <span><strong className="font-bold text-stone-900 dark:text-stone-100">200 alertes SMS</strong> / mois (urgences)</span>
+                    </li>
+                  </ul>
+
+                  {/* Encart IA Coopérative */}
+                  <div className="bg-stone-100/90 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 rounded-xl p-2.5 my-2.5">
+                    <div className="flex items-center justify-between text-stone-900 dark:text-stone-100">
+                      <div className="flex items-center gap-1.5 font-bold text-[11px]">
+                        <Zap className="w-3.5 h-3.5 text-amber-600 fill-amber-500 shrink-0" />
+                        <span className="whitespace-nowrap">300 000 tokens IA / mois</span>
+                      </div>
+                      <HelpCircle className="w-3 h-3 text-stone-400 shrink-0" />
+                    </div>
+                    <p className="text-[10px] text-stone-500 dark:text-stone-400 mt-0.5 pl-5 font-medium whitespace-nowrap">
+                      ≈ <strong className="text-stone-700 dark:text-stone-300">600 messages</strong> avec l&apos;IA AgriImpact
+                    </p>
+                  </div>
+
+                  <ul className="space-y-1 text-[10px] sm:text-[10.5px] text-stone-500 dark:text-stone-400 pl-1 mb-3.5">
+                    <li className="flex items-center gap-1.5 whitespace-nowrap">
+                      <span className="text-stone-400">•</span>
+                      <span>15 exploitations gérées</span>
+                    </li>
+                    <li className="flex items-center gap-1.5 whitespace-nowrap">
+                      <span className="text-stone-400">•</span>
+                      <span>90 jours d&apos;historique analysable</span>
                     </li>
                   </ul>
                 </div>
 
-                <button
-                  type="button"
-                  className={`mt-5 w-full py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                    profile?.plan === 'business'
-                      ? 'bg-emerald-800 text-white'
-                      : 'bg-stone-900 dark:bg-stone-800 text-white hover:bg-black dark:hover:bg-stone-700 border border-transparent dark:border-stone-700'
-                  }`}
-                >
-                  {profile?.plan === 'business' ? (
-                    'Forfait Actuel'
+                {/* Section Paiement Direct Coopérative */}
+                <div className="pt-2.5 border-t border-stone-200/80 dark:border-stone-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-black uppercase tracking-wider text-stone-500 dark:text-stone-400 whitespace-nowrap">
+                      PAIEMENT DIRECT :
+                    </span>
+                    <span className="px-1.5 py-0.2 rounded text-[8.5px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                      INSTANT SEN
+                    </span>
+                  </div>
+
+                  {/* Sélecteur Wave / Orange Money */}
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPaymentProviderByPlan((prev) => ({ ...prev, cooperative: 'wave' }));
+                      }}
+                      className={`py-1.5 px-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border ${
+                        paymentProviderByPlan.cooperative === 'wave'
+                          ? 'bg-sky-50 dark:bg-sky-950/60 border-sky-400 text-sky-900 dark:text-sky-200 shadow-2xs ring-1 ring-sky-400'
+                          : 'bg-white dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-stone-300'
+                      }`}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0" />
+                      <img src="/logos/wave.jpg" alt="Wave" className="w-3.5 h-3.5 rounded-xs object-cover" />
+                      <span className="text-[11px]">Wave</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPaymentProviderByPlan((prev) => ({ ...prev, cooperative: 'orange_money' }));
+                      }}
+                      className={`py-1.5 px-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border ${
+                        paymentProviderByPlan.cooperative === 'orange_money'
+                          ? 'bg-orange-50 dark:bg-orange-950/60 border-orange-400 text-orange-950 dark:text-orange-200 shadow-2xs ring-1 ring-orange-400'
+                          : 'bg-white dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-stone-300'
+                      }`}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0" />
+                      <img src="/logos/orange-money.png" alt="OM" className="w-3.5 h-3.5 rounded-xs object-contain bg-white" />
+                      <span className="text-[11px] truncate">Orange Money</span>
+                    </button>
+                  </div>
+
+                  {/* CTA Button Coopérative */}
+                  {(profile?.plan === 'cooperative' || profile?.plan === 'business') ? (
+                    <div className="w-full py-2.5 px-3 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 text-[11px] font-black uppercase tracking-wider text-center border border-stone-200 dark:border-stone-700">
+                      Forfait Actuel
+                    </div>
                   ) : (
-                    <>
-                      <span className="flex items-center gap-1">
-                        <img
-                          src="/logos/wave.jpg"
-                          alt="Wave"
-                          width={14}
-                          height={14}
-                          style={{ width: '14px', height: '14px', objectFit: 'cover' }}
-                          className="w-3.5 h-3.5 object-cover rounded-xs"
-                        />
-                        <img
-                          src="/logos/orange-money.png"
-                          alt="OM"
-                          width={14}
-                          height={14}
-                          style={{ width: '14px', height: '14px', objectFit: 'contain' }}
-                          className="w-3.5 h-3.5 object-contain rounded-xs bg-white border border-stone-200 p-0.5"
-                        />
-                      </span>
-                      <span>Payer avec Wave / OM</span>
-                    </>
+                    <button
+                      type="button"
+                      onClick={() => handleStartPlanPayment('cooperative')}
+                      className="w-full py-2.5 px-3 rounded-xl bg-[#0C2B1E] hover:bg-stone-900 text-white text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md hover:shadow-lg transition-all cursor-pointer"
+                    >
+                      <span className="truncate">PAYER AVEC {paymentProviderByPlan.cooperative === 'wave' ? 'WAVE' : 'ORANGE MONEY'}</span>
+                      <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+                    </button>
                   )}
-                </button>
+                </div>
               </div>
+
             </div>
 
-            {/* GESTION TRANSPARENTE DE L'ABONNEMENT ET RÉSILIATION (ZÉRO DARK PATTERN) */}
-            <div className="mt-8 pt-6 border-t border-stone-200 dark:border-stone-800">
-              <div className="p-5 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200/80 dark:border-stone-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            {/* GESTION TRANSPARENTE DE L'ABONNEMENT */}
+            <div className="mt-6 pt-5 border-t border-stone-200 dark:border-stone-800">
+              <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200/80 dark:border-stone-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
                   <div className="text-xs font-black uppercase tracking-wider text-stone-700 dark:text-stone-300">
-                    Gestion de l&apos;Abonnement & Résiliation
+                    Gestion de l&apos;Abonnement &amp; Facturation
                   </div>
                   <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 max-w-xl leading-relaxed">
                     {profile?.plan === 'free'
-                      ? "Vous bénéficiez actuellement du forfait Gratuit Pilote. Aucun prélèvement n'est actif sur votre compte."
-                      : `Votre abonnement ${PLAN_LIMITS[profile?.plan || 'pro'].name} est actif. Vous pouvez le résilier à tout moment d'un simple clic sans pénalité.`}
+                      ? "Votre exploitation ne dispose d'aucun abonnement actif. Sélectionnez l'un des 3 forfaits professionnels ci-dessus pour activer vos alertes météo, analyses parcellaires et l'assistant IA."
+                      : `Votre abonnement ${PLAN_LIMITS[profile?.plan || 'pro']?.name} est actif. Règlement direct et renouvellement sécurisé par Wave ou Orange Money.`}
                   </p>
                 </div>
-
-                {profile?.plan !== 'free' && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (
-                        confirm(
-                          "Êtes-vous sûr de vouloir résilier votre abonnement ? Votre compte basculera immédiatement sur le forfait Gratuit Pilote sans aucun frais."
-                        )
-                      ) {
-                        handlePlanClick('free');
-                      }
-                    }}
-                    className="px-4 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 text-xs font-bold rounded-xl border border-red-200 dark:border-red-800 transition-colors cursor-pointer shrink-0"
-                  >
-                    Résilier mon abonnement
-                  </button>
-                )}
               </div>
             </div>
           </div>
@@ -545,6 +754,7 @@ export default function ProfilePage() {
         userPhone={profile?.telephone_contact || ''}
         userName={profile?.nom || 'Producteur'}
         userId={profile?.user_id || 'usr-anonymous'}
+        initialProvider={targetCheckoutProvider}
       />
 
       {/* MODAL DE MODIFICATION DE L'EXPLOITATION (Point 5) */}

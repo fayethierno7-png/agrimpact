@@ -3,6 +3,7 @@ export interface SessionPayload {
   email?: string;
   nom?: string;
   role?: string;
+  plan?: string;
   statut_compte?: string;
   statut_abonnement?: string;
   date_limite_grace?: string | null;

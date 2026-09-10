@@ -28,6 +28,7 @@ function LoginContent() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,7 +40,7 @@ function LoginContent() {
       return;
     }
 
-    const res = await login(identifier, password);
+    const res = await login(identifier, password, rememberMe);
     if (res.success) {
       router.push(redirectUrl);
     } else {
@@ -177,6 +178,25 @@ function LoginContent() {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+            </div>
+
+            {/* Option Rester connecté (non cochée par défaut) */}
+            <div className="flex items-center justify-between pt-0.5 pb-1">
+              <label className="flex items-center gap-2 cursor-pointer select-none group">
+                <input
+                  type="checkbox"
+                  id="remember-me"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 rounded-md border-stone-300 dark:border-stone-700 text-emerald-700 focus:ring-emerald-600 focus:ring-offset-0 cursor-pointer accent-emerald-700"
+                />
+                <span className="text-xs font-medium text-stone-700 dark:text-stone-300 group-hover:text-emerald-800 dark:group-hover:text-emerald-400 transition-colors">
+                  Rester connecté
+                </span>
+              </label>
+              <span className="text-[11px] text-stone-400 dark:text-stone-500">
+                (sur cet appareil)
+              </span>
             </div>
 
             {/* Bouton de soumission */}

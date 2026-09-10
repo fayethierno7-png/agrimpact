@@ -63,16 +63,16 @@ export const PLAN_LIMITS: Record<UserPlan, PlanFeatureLimits> = {
     priceMonthlyCFA: 49900, // Alias pour rétrocompatibilité
   },
   free: {
-    maxFarms: 1,
-    maxPlots: 3,
+    maxFarms: 0,
+    maxPlots: 0,
     fullHistoryAccess: false,
     advancedAlerts: false,
     smsAlerts: false,
     multiUsers: false,
     exportReports: false,
-    offlineSync: true,
-    name: 'Solo (Initial)',
-    priceMonthlyCFA: 1490,
+    offlineSync: false,
+    name: 'Aucun forfait actif',
+    priceMonthlyCFA: 0,
   },
 };
 
@@ -94,6 +94,15 @@ export function checkPlanAccess(
   feature: FeatureKey,
   currentCount?: { farmsCount?: number; plotsCount?: number }
 ): { allowed: boolean; reason?: string; upgradeRequired?: UserPlan } {
+  // Le plan gratuit est supprimé : tout accès aux fonctionnalités requiert un forfait payant
+  if (userPlan === 'free') {
+    return {
+      allowed: false,
+      reason: "Aucun forfait actif. Veuillez souscrire à un forfait payant (Solo, Pro ou Coopérative) pour débloquer les fonctionnalités.",
+      upgradeRequired: 'solo',
+    };
+  }
+
   const limits = PLAN_LIMITS[userPlan];
 
   switch (feature) {
@@ -107,7 +116,7 @@ export function checkPlanAccess(
           };
         }
       }
-      return { allowed: userPlan !== 'free' || limits.maxPlots > 1, upgradeRequired: 'pro' };
+      return { allowed: limits.maxPlots > 1, upgradeRequired: 'pro' };
 
     case 'multiple_farms':
       if (currentCount && currentCount.farmsCount !== undefined) {

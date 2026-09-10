@@ -16,7 +16,7 @@ interface AgriContextType {
   theme: UserTheme;
   setTheme: (theme: UserTheme) => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
-  login: (identifier: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (identifier: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
   signupAndCreateFarm: (data: {
     email: string;
     password: string;
@@ -70,6 +70,41 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const getAgriStoredItem = (key: string): string | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const isRemember = window.localStorage.getItem('agrimpact_remember_me') === 'true';
+      if (isRemember) {
+        return window.localStorage.getItem(key) ?? window.sessionStorage.getItem(key);
+      }
+      return window.sessionStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  };
+
+  const setAgriStoredItem = (key: string, value: string, remember?: boolean): void => {
+    if (typeof window === 'undefined') return;
+    try {
+      const isRemember = remember !== undefined ? remember : window.localStorage.getItem('agrimpact_remember_me') === 'true';
+      if (isRemember) {
+        window.localStorage.setItem(key, value);
+        window.sessionStorage.removeItem(key);
+      } else {
+        window.sessionStorage.setItem(key, value);
+        window.localStorage.removeItem(key);
+      }
+    } catch {}
+  };
+
+  const removeAgriStoredItem = (key: string): void => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.removeItem(key);
+      window.sessionStorage.removeItem(key);
+    } catch {}
+  };
+
   useEffect(() => {
     const savedTheme = (localStorage.getItem('agrimpact_theme') as UserTheme) || 'system';
     setThemeState(savedTheme);
@@ -94,18 +129,18 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         // 1. Initialisation locale SYNCHRONE IMMÉDIATE (0ms de latence perçue)
         if (isMounted) {
-          const savedProfile = localStorage.getItem('agrimpact_profile');
-          const savedFarm = localStorage.getItem('agrimpact_farm');
-          const savedPlot = localStorage.getItem('agrimpact_plot');
-          const savedRecs = localStorage.getItem('agrimpact_recs');
-          const savedAlerts = localStorage.getItem('agrimpact_alerts');
+          const savedProfile = getAgriStoredItem('agrimpact_profile');
+          const savedFarm = getAgriStoredItem('agrimpact_farm');
+          const savedPlot = getAgriStoredItem('agrimpact_plot');
+          const savedRecs = getAgriStoredItem('agrimpact_recs');
+          const savedAlerts = getAgriStoredItem('agrimpact_alerts');
 
           // Purger toute donnée fictive legacy en cache local
           if (savedProfile) {
             try {
               const parsed = JSON.parse(savedProfile);
               if (parsed.id === 'usr-exploitant-1' || parsed.nom === 'Mamadou Diallo' || parsed.telephone_contact === '78 017 88 18') {
-                localStorage.removeItem('agrimpact_profile');
+                removeAgriStoredItem('agrimpact_profile');
                 setProfile(null);
               } else {
                 setProfile(parsed);
@@ -116,7 +151,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
               }
             } catch {
-              localStorage.removeItem('agrimpact_profile');
+              removeAgriStoredItem('agrimpact_profile');
             }
           }
 
@@ -124,13 +159,13 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
             try {
               const parsed = JSON.parse(savedFarm);
               if (parsed.id === 'farm-default' || parsed.nom === 'Exploitation Thiès Agro') {
-                localStorage.removeItem('agrimpact_farm');
+                removeAgriStoredItem('agrimpact_farm');
                 setFarm(null);
               } else {
                 setFarm(parsed);
               }
             } catch {
-              localStorage.removeItem('agrimpact_farm');
+              removeAgriStoredItem('agrimpact_farm');
             }
           }
 
@@ -138,13 +173,13 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
             try {
               const parsed = JSON.parse(savedPlot);
               if (parsed.id === 'plot-default' || parsed.nom === 'Parcelle Principale') {
-                localStorage.removeItem('agrimpact_plot');
+                removeAgriStoredItem('agrimpact_plot');
                 setPlot(null);
               } else {
                 setPlot(parsed);
               }
             } catch {
-              localStorage.removeItem('agrimpact_plot');
+              removeAgriStoredItem('agrimpact_plot');
             }
           }
 
@@ -200,7 +235,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setProfile(prof);
               syncRoleCookie(prof.role);
               try {
-                localStorage.setItem('agrimpact_profile', JSON.stringify(prof));
+                setAgriStoredItem('agrimpact_profile', JSON.stringify(prof));
               } catch {}
               if (prof.theme) {
                 setThemeState(prof.theme);
@@ -215,7 +250,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
               const userFarm = farmsRes.value.data[0];
               setFarm(userFarm);
               try {
-                localStorage.setItem('agrimpact_farm', JSON.stringify(userFarm));
+                setAgriStoredItem('agrimpact_farm', JSON.stringify(userFarm));
               } catch {}
 
               const [plotsRes, alertsRes] = await Promise.allSettled([
@@ -227,7 +262,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 const userPlot = plotsRes.value.data[0];
                 setPlot(userPlot);
                 try {
-                  localStorage.setItem('agrimpact_plot', JSON.stringify(userPlot));
+                  setAgriStoredItem('agrimpact_plot', JSON.stringify(userPlot));
                 } catch {}
 
                 supabase
@@ -239,7 +274,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     if (userRecs && isMounted) {
                       setRecommendations(userRecs);
                       try {
-                        localStorage.setItem('agrimpact_recs', JSON.stringify(userRecs));
+                        setAgriStoredItem('agrimpact_recs', JSON.stringify(userRecs));
                       } catch {}
                     }
                   }, () => {});
@@ -248,7 +283,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
               if (isMounted && alertsRes.status === 'fulfilled' && alertsRes.value.data) {
                 setAlerts(alertsRes.value.data);
                 try {
-                  localStorage.setItem('agrimpact_alerts', JSON.stringify(alertsRes.value.data));
+                  setAgriStoredItem('agrimpact_alerts', JSON.stringify(alertsRes.value.data));
                 } catch {}
               }
             }
@@ -288,10 +323,18 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const login = async (identifier: string, password: string) => {
+  const login = async (identifier: string, password: string, rememberMe = false) => {
     setIsLoading(true);
     try {
       localStorage.removeItem('agrimpact_logged_out');
+      if (rememberMe) {
+        localStorage.setItem('agrimpact_remember_me', 'true');
+        sessionStorage.removeItem('agrimpact_remember_me');
+      } else {
+        localStorage.removeItem('agrimpact_remember_me');
+        sessionStorage.setItem('agrimpact_remember_me', 'false');
+      }
+
       let loggedIn = false;
 
       if (isSupabaseConfigured && supabase) {
@@ -308,17 +351,17 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }
               setProfile(prof);
               syncRoleCookie(prof.role || 'producteur');
-              localStorage.setItem('agrimpact_profile', JSON.stringify(prof));
+              setAgriStoredItem('agrimpact_profile', JSON.stringify(prof), rememberMe);
             }
 
             const { data: farms } = await supabase.from('farms').select('*').eq('user_id', userId).order('created_at', { ascending: false });
             if (farms && farms.length > 0) {
               setFarm(farms[0]);
-              localStorage.setItem('agrimpact_farm', JSON.stringify(farms[0]));
+              setAgriStoredItem('agrimpact_farm', JSON.stringify(farms[0]), rememberMe);
               const { data: plots } = await supabase.from('plots').select('*').eq('farm_id', farms[0].id).order('created_at', { ascending: false });
               if (plots && plots.length > 0) {
                 setPlot(plots[0]);
-                localStorage.setItem('agrimpact_plot', JSON.stringify(plots[0]));
+                setAgriStoredItem('agrimpact_plot', JSON.stringify(plots[0]), rememberMe);
               }
             }
           }
@@ -328,7 +371,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (!loggedIn) {
-        const saved = localStorage.getItem('agrimpact_profile');
+        const saved = getAgriStoredItem('agrimpact_profile');
         if (saved) {
           try {
             const parsed = JSON.parse(saved);
@@ -358,13 +401,13 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
           setProfile(newProfile);
           syncRoleCookie('producteur');
-          localStorage.setItem('agrimpact_profile', JSON.stringify(newProfile));
+          setAgriStoredItem('agrimpact_profile', JSON.stringify(newProfile), rememberMe);
         }
       }
 
       // Synchronisation du cookie de session serveur HttpOnly
       try {
-        const savedProfileRaw = localStorage.getItem('agrimpact_profile');
+        const savedProfileRaw = getAgriStoredItem('agrimpact_profile');
         const parsedProfile = savedProfileRaw ? JSON.parse(savedProfileRaw) : null;
         if (parsedProfile?.user_id) {
           const sendSession = (token?: string) => {
@@ -379,6 +422,11 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 email: identifier.includes('@') ? identifier : '',
                 nom: parsedProfile.nom || 'Producteur',
                 role: parsedProfile.role || 'producteur',
+                plan: parsedProfile.plan || 'free',
+                statut_compte: parsedProfile.statut_compte || 'actif',
+                statut_abonnement: parsedProfile.statut_abonnement || 'actif',
+                date_limite_grace: parsedProfile.date_limite_grace || null,
+                rememberMe,
               }),
             }).catch(() => {});
           };
@@ -561,11 +609,12 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAlerts([]);
     setRecommendations([]);
     localStorage.setItem('agrimpact_logged_out', 'true');
-    localStorage.removeItem('agrimpact_profile');
-    localStorage.removeItem('agrimpact_farm');
-    localStorage.removeItem('agrimpact_plot');
-    localStorage.removeItem('agrimpact_recs');
-    localStorage.removeItem('agrimpact_alerts');
+    removeAgriStoredItem('agrimpact_remember_me');
+    removeAgriStoredItem('agrimpact_profile');
+    removeAgriStoredItem('agrimpact_farm');
+    removeAgriStoredItem('agrimpact_plot');
+    removeAgriStoredItem('agrimpact_recs');
+    removeAgriStoredItem('agrimpact_alerts');
   };
 
   const saveSimulationResult = async (simResult: any): Promise<boolean> => {
@@ -606,15 +655,36 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updatePlan = (newPlan: UserPlan) => {
+    if (newPlan === 'free') {
+      console.warn("Le plan gratuit n'est plus disponible sur AGRIMPACT.");
+      return;
+    }
     if (profile) {
-      const updated = { ...profile, plan: newPlan };
+      const updated = { ...profile, plan: newPlan, statut_abonnement: 'actif' as const };
       setProfile(updated);
       try {
-        localStorage.setItem('agrimpact_profile', JSON.stringify(updated));
+        setAgriStoredItem('agrimpact_profile', JSON.stringify(updated));
       } catch {}
       if (isSupabaseConfigured && supabase && profile.user_id) {
         supabase.from('profiles').update({ plan: newPlan }).eq('user_id', profile.user_id).then(() => {}, () => {});
       }
+
+      // Synchroniser immédiatement la session serveur
+      try {
+        fetch('/api/auth/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: profile.user_id,
+            email: profile.telephone_contact?.includes('@') ? profile.telephone_contact : '',
+            nom: profile.nom,
+            role: profile.role || 'producteur',
+            plan: newPlan,
+            statut_compte: profile.statut_compte || 'actif',
+            statut_abonnement: 'actif',
+          }),
+        }).catch(() => {});
+      } catch {}
     }
   };
 

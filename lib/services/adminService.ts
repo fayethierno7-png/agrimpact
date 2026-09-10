@@ -15,8 +15,8 @@ import {
   PeriodFilterValue,
 } from '../types';
 
-// Helper de timeout rapide (1200ms) pour ne jamais bloquer l'UI
-async function withTimeout<T>(promiseLike: PromiseLike<T>, timeoutMs = 1200): Promise<T> {
+// Helper de timeout robuste (6000ms) pour garantir la fiabilité réseau
+async function withTimeout<T>(promiseLike: PromiseLike<T>, timeoutMs = 6000): Promise<T> {
   return Promise.race([
     Promise.resolve(promiseLike),
     new Promise<T>((_, reject) =>

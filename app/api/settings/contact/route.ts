@@ -100,7 +100,7 @@ export async function GET() {
 export async function PUT(req: NextRequest) {
   try {
     const user = await getAuthenticatedUser(req);
-    if (!user || user.role !== 'superadmin') {
+    if (!user || (user.role !== 'superadmin' && user.role !== 'admin')) {
       return NextResponse.json(
         { success: false, error: 'Accès réservé aux administrateurs.' },
         { status: 403 }
