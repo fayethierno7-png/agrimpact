@@ -5,16 +5,25 @@ import { supabase as defaultClient } from '../../../../lib/supabase/client';
 
 export const dynamic = 'force-dynamic';
 
-function getAdminClient() {
+function getAdminClient(authHeader?: string | null) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
   if (url && serviceKey) {
     return createClient(url, serviceKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
   }
-  return defaultClient;
+
+  // Fallback avec JWT de l'admin
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const client = createClient(url!, anonKey!, {
+    auth: { persistSession: false },
+    global: {
+      headers: authHeader ? { Authorization: authHeader } : {},
+    },
+  });
+  return client;
 }
 
 /**
@@ -47,7 +56,8 @@ export async function GET(req: NextRequest) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 
-    const supabase = getAdminClient();
+    const authHeader = req.headers.get('authorization');
+    const supabase = getAdminClient(authHeader);
     if (!supabase) {
       return NextResponse.json({ success: false, error: 'Client base de données non disponible.' }, { status: 500 });
     }

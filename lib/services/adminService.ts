@@ -60,6 +60,33 @@ export function invalidateAdminCache(prefix?: string) {
   }
 }
 
+// Helper interne pour injecter le token d'authentification
+async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
+  let authToken: string | null = null;
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session?.access_token) {
+        authToken = data.session.access_token;
+      }
+    } catch {}
+  }
+
+  const headers = new Headers(options.headers || {});
+  if (!headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+  if (authToken) {
+    headers.set('Authorization', `Bearer ${authToken}`);
+  }
+
+  return fetch(url, {
+    ...options,
+    headers,
+    credentials: 'include',
+  });
+}
+
 // =========================================================================
 // 1. GESTION DES UTILISATEURS (VALIDATION / SUSPENSION)
 // =========================================================================
@@ -77,7 +104,7 @@ export async function getAdminUsers(period?: PeriodFilterValue): Promise<AdminUs
 
   // 1. Appel API serveur unifiée
   try {
-    const res = await fetch('/api/admin/data?tab=users', {
+    const res = await fetchWithAuth('/api/admin/data?tab=users', {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
@@ -95,7 +122,7 @@ export async function getAdminUsers(period?: PeriodFilterValue): Promise<AdminUs
 
   // 2. Fallback API users dédiée
   try {
-    const res = await fetch('/api/admin/users', {
+    const res = await fetchWithAuth('/api/admin/users', {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
@@ -184,7 +211,7 @@ export async function updateUserAccountStatus(params: {
 
   // 1. Appel API serveur unifiée prioritaire (/api/admin/actions)
   try {
-    const res = await fetch('/api/admin/actions', {
+    const res = await fetchWithAuth('/api/admin/actions', {
       method: 'POST',
       headers,
       credentials: 'include',
@@ -208,7 +235,7 @@ export async function updateUserAccountStatus(params: {
 
   // 2. Fallback /api/admin/users
   try {
-    const res = await fetch('/api/admin/users', {
+    const res = await fetchWithAuth('/api/admin/users', {
       method: 'PATCH',
       headers,
       credentials: 'include',
@@ -307,7 +334,7 @@ export async function getRevenueMetrics(period: PeriodFilterValue): Promise<Reve
 
   // 1. Appel API serveur prioritaire
   try {
-    const res = await fetch(`/api/admin/data?tab=revenue&startDate=${encodeURIComponent(period.startDate)}&endDate=${encodeURIComponent(period.endDate)}`, {
+    const res = await fetchWithAuth(`/api/admin/data?tab=revenue&startDate=${encodeURIComponent(period.startDate)}&endDate=${encodeURIComponent(period.endDate)}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
@@ -416,7 +443,7 @@ export async function getConversionFunnel(period: PeriodFilterValue): Promise<Fu
 
   // 1. Appel API serveur prioritaire
   try {
-    const res = await fetch(`/api/admin/data?tab=funnel&startDate=${encodeURIComponent(period.startDate)}&endDate=${encodeURIComponent(period.endDate)}`, {
+    const res = await fetchWithAuth(`/api/admin/data?tab=funnel&startDate=${encodeURIComponent(period.startDate)}&endDate=${encodeURIComponent(period.endDate)}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
@@ -497,7 +524,7 @@ export async function getAuditLogs(params: {
   // 1. Appel API serveur prioritaire
   try {
     const periodParams = params.period ? `&startDate=${encodeURIComponent(params.period.startDate)}&endDate=${encodeURIComponent(params.period.endDate)}` : '';
-    const res = await fetch(`/api/admin/data?tab=audit${periodParams}`, {
+    const res = await fetchWithAuth(`/api/admin/data?tab=audit${periodParams}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
@@ -590,7 +617,7 @@ export async function getAdminPayments(period?: PeriodFilterValue): Promise<Paym
   // 1. Appel API serveur
   try {
     const periodParams = period ? `&startDate=${encodeURIComponent(period.startDate)}&endDate=${encodeURIComponent(period.endDate)}` : '';
-    const res = await fetch(`/api/admin/data?tab=refunds${periodParams}`, {
+    const res = await fetchWithAuth(`/api/admin/data?tab=refunds${periodParams}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
@@ -622,7 +649,7 @@ export async function getAdminSubscriptions(period?: PeriodFilterValue): Promise
   if (cached) return cached;
 
   try {
-    const res = await fetch('/api/admin/data?tab=revenue', {
+    const res = await fetchWithAuth('/api/admin/data?tab=revenue', {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
@@ -667,7 +694,7 @@ export async function processPaymentRefund(params: {
 
   // 1. Appel API serveur actions
   try {
-    const res = await fetch('/api/admin/actions', {
+    const res = await fetchWithAuth('/api/admin/actions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -714,7 +741,7 @@ export async function getAdminReports(period?: PeriodFilterValue): Promise<UserR
   // 1. Appel API serveur
   try {
     const periodParams = period ? `&startDate=${encodeURIComponent(period.startDate)}&endDate=${encodeURIComponent(period.endDate)}` : '';
-    const res = await fetch(`/api/admin/data?tab=reports${periodParams}`, {
+    const res = await fetchWithAuth(`/api/admin/data?tab=reports${periodParams}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
@@ -754,7 +781,7 @@ export async function updateAdminReport(params: {
 
   // 1. Appel API serveur actions
   try {
-    const res = await fetch('/api/admin/actions', {
+    const res = await fetchWithAuth('/api/admin/actions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
