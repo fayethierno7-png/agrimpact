@@ -162,30 +162,56 @@ export async function updateUserAccountStatus(params: {
 }): Promise<{ success: boolean; error?: string }> {
   const { adminId, adminNom, targetUserId, targetUserNom, newStatus, reason } = params;
 
-  invalidateAdminCache('users_');
-  invalidateAdminCache('audit_');
+  let lastError: string | undefined;
 
-  // 1. Appel API serveur unifiée prioritaire
+  // Récupérer le token de session Supabase actif pour authentifier l'appel API
+  let authToken: string | null = null;
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session?.access_token) {
+        authToken = data.session.access_token;
+      }
+    } catch {}
+  }
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
+  }
+
+  // 1. Appel API serveur unifiée prioritaire (/api/admin/actions)
   try {
     const res = await fetch('/api/admin/actions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
+      credentials: 'include',
       body: JSON.stringify({
         actionType: 'user_status',
         payload: { targetUserId, targetUserNom, newStatus, reason },
       }),
     });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success) return { success: true };
+    const data = await res.json().catch(() => null);
+    if (res.ok && data?.success) {
+      invalidateAdminCache('users_');
+      invalidateAdminCache('audit_');
+      return { success: true };
     }
-  } catch {}
+    if (data?.error) {
+      lastError = data.error;
+    }
+  } catch (err: any) {
+    lastError = err?.message || 'Erreur réseau lors de la communication avec le serveur';
+  }
 
   // 2. Fallback /api/admin/users
   try {
     const res = await fetch('/api/admin/users', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
+      credentials: 'include',
       body: JSON.stringify({
         targetUserId,
         targetUserNom,
@@ -193,63 +219,81 @@ export async function updateUserAccountStatus(params: {
         reason,
       }),
     });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success) {
-        return { success: true };
-      }
+    const data = await res.json().catch(() => null);
+    if (res.ok && data?.success) {
+      invalidateAdminCache('users_');
+      invalidateAdminCache('audit_');
+      return { success: true };
     }
-  } catch (apiErr) {
+    if (data?.error) {
+      lastError = data.error;
+    }
+  } catch (apiErr: any) {
     console.warn('Erreur appel PATCH /api/admin/users:', apiErr);
   }
 
-  // 2. Fallback direct Supabase
+  // 3. Fallback direct Supabase (si l'administrateur a une session active dans le navigateur)
   if (isSupabaseConfigured && supabase) {
     try {
-      const { error } = await withTimeout<any>(
+      // Tentative par user_id
+      let { data: upData, error: upError } = await withTimeout<any>(
         supabase
           .from('profiles')
           .update({ statut_compte: newStatus, updated_at: new Date().toISOString() })
-          .eq('user_id', targetUserId),
+          .eq('user_id', targetUserId)
+          .select('id, user_id, statut_compte'),
         8000
       );
 
-      if (error) throw error;
+      // Si aucune ligne modifiée, tentative par id
+      if ((!upData || upData.length === 0) && !upError) {
+        const resById = await withTimeout<any>(
+          supabase
+            .from('profiles')
+            .update({ statut_compte: newStatus, updated_at: new Date().toISOString() })
+            .eq('id', targetUserId)
+            .select('id, user_id, statut_compte'),
+          8000
+        );
+        upData = resById.data;
+        upError = resById.error;
+      }
 
-      await logAdminAction({
-        admin_id: adminId,
-        admin_nom: adminNom,
-        action: newStatus === 'actif' ? 'valider_utilisateur' : 'suspendre_utilisateur',
-        cible_type: 'user',
-        cible_id: targetUserId,
-        metadata: {
-          target_nom: targetUserNom,
-          nouveau_statut: newStatus,
-          motif: reason || 'Action administrative manuelle',
-        },
-      });
+      if (upError) throw upError;
 
-      return { success: true };
+      if (upData && upData.length > 0) {
+        invalidateAdminCache('users_');
+        invalidateAdminCache('audit_');
+
+        // Journalisation audit
+        try {
+          await logAdminAction({
+            admin_id: adminId,
+            admin_nom: adminNom,
+            action: newStatus === 'actif' ? 'valider_utilisateur' : 'suspendre_utilisateur',
+            cible_type: 'user',
+            cible_id: targetUserId,
+            metadata: {
+              target_nom: targetUserNom,
+              nouveau_statut: newStatus,
+              motif: reason || 'Action administrative manuelle directe',
+            },
+          });
+        } catch {}
+
+        return { success: true };
+      }
     } catch (err: any) {
-      console.warn('Erreur updateUserAccountStatus (fallback local appliqué):', err);
+      console.warn('Erreur updateUserAccountStatus direct Supabase:', err);
+      lastError = err?.message || lastError;
     }
   }
 
-  // Fallback local
-  await logAdminAction({
-    admin_id: adminId,
-    admin_nom: adminNom,
-    action: newStatus === 'actif' ? 'valider_utilisateur' : 'suspendre_utilisateur',
-    cible_type: 'user',
-    cible_id: targetUserId,
-    metadata: {
-      target_nom: targetUserNom,
-      nouveau_statut: newStatus,
-      motif: reason || 'Action administrative manuelle (Mode Démo)',
-    },
-  });
-
-  return { success: true };
+  // Si tout a échoué, propager l'erreur réelle (ne JAMAIS prétendre un faux succès)
+  return {
+    success: false,
+    error: lastError || 'Échec de la validation de l\'utilisateur dans la base de données.',
+  };
 }
 
 // =========================================================================

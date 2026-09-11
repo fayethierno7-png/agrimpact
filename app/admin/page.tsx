@@ -193,10 +193,16 @@ export default function AdminConsolePage() {
 
   // Action : Valider / Suspendre utilisateur
   const handleUserStatusChange = async (targetUser: AdminUserListItem, newStatus: AccountStatus) => {
+    const targetId = targetUser.user_id || targetUser.id;
+    if (!targetId) {
+      showToast('error', 'Identifiant utilisateur manquant pour cette action.');
+      return;
+    }
+
     const res = await updateUserAccountStatus({
       adminId: currentAdminId,
       adminNom: currentAdminNom,
-      targetUserId: targetUser.user_id,
+      targetUserId: targetId,
       targetUserNom: targetUser.nom,
       newStatus,
       reason: newStatus === 'actif' ? 'Compte vérifié et activé' : 'Suspendu par décision administrative',
@@ -204,15 +210,18 @@ export default function AdminConsolePage() {
 
     if (res.success) {
       setUsers((prev) =>
-        prev.map((u) => (u.user_id === targetUser.user_id ? { ...u, statut_compte: newStatus } : u))
+        prev.map((u) => {
+          const matches = (u.user_id && u.user_id === targetId) || (u.id && u.id === targetId);
+          return matches ? { ...u, statut_compte: newStatus } : u;
+        })
       );
       showToast(
         'success',
-        `Le compte de ${targetUser.nom} est désormais ${newStatus === 'actif' ? 'activé' : 'suspendu'}. Action enregistrée dans l'audit log.`,
+        `Le compte de ${targetUser.nom} est désormais ${newStatus === 'actif' ? 'validé et activé' : 'suspendu'}.`,
         'Statut mis à jour'
       );
     } else {
-      showToast('error', res.error || 'Erreur de mise à jour.');
+      showToast('error', res.error || 'Erreur lors de la mise à jour du statut.');
     }
   };
 

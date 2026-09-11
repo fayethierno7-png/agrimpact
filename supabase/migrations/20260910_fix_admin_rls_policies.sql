@@ -49,12 +49,27 @@ DROP POLICY IF EXISTS "profiles_update_policy" ON public.profiles;
 
 CREATE POLICY "profiles_select_policy" ON public.profiles
     FOR SELECT TO authenticated
-    USING (auth.uid() = user_id OR public.is_admin());
+    USING (
+        auth.uid() = user_id 
+        OR LOWER(COALESCE(auth.jwt() ->> 'email', '')) = 'fayethierno7@gmail.com'
+        OR COALESCE(auth.jwt() -> 'app_metadata' ->> 'role', '') IN ('admin', 'superadmin')
+        OR public.is_admin()
+    );
 
 CREATE POLICY "profiles_update_policy" ON public.profiles
     FOR UPDATE TO authenticated
-    USING (auth.uid() = user_id OR public.is_admin())
-    WITH CHECK (auth.uid() = user_id OR public.is_admin());
+    USING (
+        auth.uid() = user_id 
+        OR LOWER(COALESCE(auth.jwt() ->> 'email', '')) = 'fayethierno7@gmail.com'
+        OR COALESCE(auth.jwt() -> 'app_metadata' ->> 'role', '') IN ('admin', 'superadmin')
+        OR public.is_admin()
+    )
+    WITH CHECK (
+        auth.uid() = user_id 
+        OR LOWER(COALESCE(auth.jwt() ->> 'email', '')) = 'fayethierno7@gmail.com'
+        OR COALESCE(auth.jwt() -> 'app_metadata' ->> 'role', '') IN ('admin', 'superadmin')
+        OR public.is_admin()
+    );
 
 -- 3. POLICIES SUR LA TABLE FARMS (Permet à la console admin de lier les exploitations)
 ALTER TABLE public.farms ENABLE ROW LEVEL SECURITY;

@@ -5,13 +5,22 @@ import { supabase as defaultClient } from '../../../../lib/supabase/client';
 
 export const dynamic = 'force-dynamic';
 
-function getAdminClient() {
+function getAdminClient(authHeader?: string | null) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (url && serviceKey) {
     return createClient(url, serviceKey, {
       auth: { persistSession: false, autoRefreshToken: false },
+    });
+  }
+  if (url && anonKey && authHeader) {
+    const cleanHeader = authHeader.trim();
+    return createClient(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: {
+        headers: cleanHeader ? { Authorization: cleanHeader } : {},
+      },
     });
   }
   return defaultClient;
@@ -147,52 +156,87 @@ export async function PATCH(req: NextRequest) {
     }
 
     const adminNom = user?.nom || 'Administrateur Principal';
-    const adminId = user?.id || 'admin-directeur';
+    const adminId = user?.id || null;
 
-    const supabase = getAdminClient();
+    const authHeader = req.headers.get('authorization');
+    const supabase = getAdminClient(authHeader);
 
     // 1. Mettre à jour le statut dans la table profiles
-    if (supabase) {
-      const { error: updateError } = await supabase
+    if (!supabase) {
+      return NextResponse.json({ success: false, error: 'Client base de données non disponible.' }, { status: 500 });
+    }
+
+    // Tentative par user_id
+    let { data: updatedData, error: updateError } = await supabase
+      .from('profiles')
+      .update({
+        statut_compte: newStatus,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', targetUserId)
+      .select('id, user_id, statut_compte');
+
+    // Tentative par id si aucune ligne affectée
+    if ((!updatedData || updatedData.length === 0) && !updateError) {
+      const resById = await supabase
         .from('profiles')
         .update({
           statut_compte: newStatus,
           updated_at: new Date().toISOString(),
         })
-        .eq('user_id', targetUserId);
+        .eq('id', targetUserId)
+        .select('id, user_id, statut_compte');
+      updatedData = resById.data;
+      updateError = resById.error;
+    }
 
-      if (updateError) {
-        console.warn('Erreur mise à jour profil:', updateError);
-      }
+    if (updateError) {
+      console.error('Erreur mise à jour profil:', updateError);
+      return NextResponse.json(
+        { success: false, error: updateError.message || 'Erreur base de données lors de la mise à jour.' },
+        { status: 500 }
+      );
+    }
 
-      // 2. Consigner l'action dans audit_log
-      try {
-        const actionType =
-          newStatus === 'actif'
-            ? 'validation_utilisateur'
-            : newStatus === 'suspendu'
-            ? 'suspension_utilisateur'
-            : 'mise_a_jour_statut';
+    if (!updatedData || updatedData.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Aucun profil trouvé pour cet identifiant ou permissions insuffisantes.' },
+        { status: 404 }
+      );
+    }
 
-        await supabase.from('audit_log').insert([
-          {
-            admin_id: adminId,
-            admin_nom: adminNom,
-            action: actionType,
-            cible_id: targetUserId,
-            cible_type: 'user',
-            details: {
-              cible_nom: targetUserNom || 'Producteur',
-              nouveau_statut: newStatus,
-              motif: reason || `Compte passé en ${newStatus}`,
-              date: new Date().toISOString(),
-            },
-            created_at: new Date().toISOString(),
+    // 2. Consigner l'action dans audit_log (non-bloquant)
+    try {
+      const isUUID = (id?: any) =>
+        typeof id === 'string' &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+      const safeAdminId = isUUID(adminId) ? adminId : null;
+      const actionType =
+        newStatus === 'actif'
+          ? 'validation_utilisateur'
+          : newStatus === 'suspendu'
+          ? 'suspension_utilisateur'
+          : 'mise_a_jour_statut';
+
+      await supabase.from('audit_log').insert([
+        {
+          admin_id: safeAdminId,
+          admin_nom: adminNom,
+          action: actionType,
+          cible_id: String(targetUserId),
+          cible_type: 'user',
+          details: {
+            cible_nom: targetUserNom || 'Producteur',
+            nouveau_statut: newStatus,
+            motif: reason || `Compte passé en ${newStatus}`,
+            date: new Date().toISOString(),
           },
-        ]);
-      } catch (auditErr) {
-        console.warn('Erreur insertion audit_log:', auditErr);
-      }
+          created_at: new Date().toISOString(),
+        },
+      ]);
+    } catch (auditErr) {
+      console.warn('Erreur insertion audit_log:', auditErr);
     }
 
     return NextResponse.json({
@@ -200,6 +244,7 @@ export async function PATCH(req: NextRequest) {
       message: `Statut de l'utilisateur mis à jour vers "${newStatus}".`,
       targetUserId,
       newStatus,
+      profile: updatedData[0],
     });
   } catch (error: any) {
     console.error('Erreur PATCH /api/admin/users:', error);
