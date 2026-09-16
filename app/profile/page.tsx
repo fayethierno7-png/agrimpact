@@ -70,11 +70,14 @@ export default function ProfilePage() {
     setIsPaymentModalOpen(true);
   };
 
-  const handlePaymentSuccess = (plan: UserPlan) => {
-    updatePlan(plan);
-    setPaymentSuccessMessage(
-      `Félicitations ! Votre abonnement a été activé pour le forfait ${PLAN_LIMITS[plan].name} avec succès via paiement mobile.`
-    );
+  const handlePaymentSuccess = async (plan: UserPlan): Promise<boolean> => {
+    const confirmed = await updatePlan(plan);
+    if (confirmed) {
+      setPaymentSuccessMessage(
+        `Félicitations ! Votre abonnement a été activé pour le forfait ${PLAN_LIMITS[plan].name} avec succès via paiement mobile.`
+      );
+    }
+    return confirmed;
   };
 
   const handleLogout = async () => {

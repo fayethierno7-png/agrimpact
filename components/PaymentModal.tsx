@@ -24,7 +24,7 @@ interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   targetPlan: UserPlan;
-  onSuccess: (plan: UserPlan) => void;
+  onSuccess: (plan: UserPlan) => Promise<boolean>;
   userPhone?: string;
   userName?: string;
   userId?: string;
@@ -144,8 +144,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const handleConfirmMobileAuthorization = async () => {
     setIsSubmitting(true);
+    setErrorMessage(null);
     try {
-      // Déclencher le webhook UnitechPay officiel pour enregistrer en base Supabase
+      // Notifier le serveur qu'une confirmation a été effectuée côté client.
+      // Ceci n'active RIEN par lui-même : seul le webhook de paiement, avec une
+      // signature valide provenant réellement de l'opérateur, peut activer un
+      // forfait en base (verrouillé côté serveur). On vérifie ensuite l'état réel.
       await fetch('/api/webhooks/unitechpay', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -158,17 +162,24 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             status: 'completed',
           },
         }),
-      });
+      }).catch(() => {});
 
-      // Appeler le callback de succès du contexte
-      onSuccess(targetPlan);
+      // onSuccess relit le forfait réel depuis la base et confirme (ou non)
+      // que l'activation a bien eu lieu côté serveur.
+      const confirmed = await onSuccess(targetPlan);
       setIsSubmitting(false);
-      setStep('success');
+      if (confirmed) {
+        setStep('success');
+      } else {
+        setErrorMessage(
+          `Votre paiement n'a pas encore été confirmé automatiquement. Si le débit a bien été effectué sur votre téléphone, votre accès s'activera sous peu, ou contactez le support avec la référence ${orderRef || transactionId}.`
+        );
+        setStep('waiting_approval');
+      }
     } catch (err) {
       console.error('Erreur webhook paiement:', err);
-      onSuccess(targetPlan);
       setIsSubmitting(false);
-      setStep('success');
+      setErrorMessage("Une erreur est survenue lors de la vérification du paiement. Contactez le support si le débit a bien été effectué.");
     }
   };
 
@@ -526,6 +537,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     <ExternalLink className="w-4 h-4 shrink-0" />
                     <span>Ouvrir la page de paiement sécurisée</span>
                   </a>
+                </div>
+              )}
+
+              {errorMessage && (
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-300 text-xs rounded-xl flex items-center gap-2 text-left">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{errorMessage}</span>
                 </div>
               )}
 

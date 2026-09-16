@@ -30,7 +30,7 @@ interface AgriContextType {
   }) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   markRecommendationApplied: (recId: string) => void;
-  updatePlan: (newPlan: UserPlan) => void;
+  updatePlan: (newPlan: UserPlan) => Promise<boolean>;
   setPlot: (plot: Plot | null) => void;
   setRole: (role: UserRole) => Promise<void>;
   saveSimulationResult: (simResult: any) => Promise<boolean>;
@@ -717,37 +717,49 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const updatePlan = (newPlan: UserPlan) => {
+  // Le forfait ne peut JAMAIS être modifié directement par le client : seul le
+  // webhook de paiement serveur (clé service_role) peut écrire `plan` en base
+  // (verrouillé par trigger DB). Cette fonction se contente de relire l'état réel
+  // depuis Supabase après une tentative de paiement, et retourne si le forfait
+  // demandé a bien été activé côté serveur.
+  const updatePlan = async (newPlan: UserPlan): Promise<boolean> => {
     if (newPlan === 'free') {
       console.warn("Le plan gratuit n'est plus disponible sur AGRIMPACT.");
-      return;
+      return false;
     }
-    if (profile) {
-      const updated = { ...profile, plan: newPlan, statut_abonnement: 'actif' as const };
-      setProfile(updated);
-      try {
-        setAgriStoredItem('agrimpact_profile', JSON.stringify(updated));
-      } catch {}
-      if (isSupabaseConfigured && supabase && profile.user_id) {
-        supabase.from('profiles').update({ plan: newPlan }).eq('user_id', profile.user_id).then(() => {}, () => {});
-      }
+    if (!profile?.user_id || !isSupabaseConfigured || !supabase) return false;
 
-      // Synchroniser immédiatement la session serveur
+    try {
+      const { data: freshProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', profile.user_id)
+        .maybeSingle();
+
+      if (!freshProfile) return false;
+
+      setProfile(freshProfile);
       try {
-        fetch('/api/auth/session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: profile.user_id,
-            email: profile.telephone_contact?.includes('@') ? profile.telephone_contact : '',
-            nom: profile.nom,
-            role: profile.role || 'producteur',
-            plan: newPlan,
-            statut_compte: profile.statut_compte || 'actif',
-            statut_abonnement: 'actif',
-          }),
-        }).catch(() => {});
+        setAgriStoredItem('agrimpact_profile', JSON.stringify(freshProfile));
       } catch {}
+
+      fetch('/api/auth/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: freshProfile.user_id,
+          email: freshProfile.telephone_contact?.includes('@') ? freshProfile.telephone_contact : '',
+          nom: freshProfile.nom,
+          role: freshProfile.role || 'producteur',
+          plan: freshProfile.plan,
+          statut_compte: freshProfile.statut_compte || 'actif',
+          essai_expire_le: freshProfile.essai_expire_le || null,
+        }),
+      }).catch(() => {});
+
+      return freshProfile.plan === newPlan;
+    } catch {
+      return false;
     }
   };
 

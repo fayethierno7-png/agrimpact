@@ -1,7 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, isSupabaseConfigured } from '../../../../lib/supabase/client';
+import { createClient } from '@supabase/supabase-js';
+import { supabase as anonClient, isSupabaseConfigured } from '../../../../lib/supabase/client';
 import { UserPlan } from '../../../../lib/types';
 import { verifyWebhookSignature } from '../../../../lib/security/webhookVerifier';
+
+// Les colonnes plan/role/statut_compte/essai_expire_le de `profiles` sont
+// verrouillées en base (trigger) contre toute écriture qui n'utilise pas la
+// clé service_role. Seule cette route serveur, signature vérifiée, doit donc
+// utiliser la clé service_role pour activer un forfait après paiement.
+function getServiceClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (url && serviceKey) {
+    return createClient(url, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+  }
+  return anonClient;
+}
 
 /**
  * Webhook UnitechPay
@@ -82,7 +98,8 @@ export async function POST(req: NextRequest) {
     console.log(`✅ UnitechPay Webhook: Paiement confirmé pour ${userId}, Forfait: ${plan}, Montant: ${amount} FCFA, Réf: ${reference}`);
 
     // Mise à jour de la base de données PostgreSQL / Supabase
-    if (isSupabaseConfigured && supabase) {
+    if (isSupabaseConfigured) {
+      const supabase = getServiceClient();
       // 0. Protection Idempotence & Race Conditions : vérifier si la transaction a déjà été traitée
       const { data: existingSub } = await supabase
         .from('subscriptions')

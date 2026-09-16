@@ -1,7 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, isSupabaseConfigured } from '../../../../lib/supabase/client';
+import { createClient } from '@supabase/supabase-js';
+import { supabase as anonClient, isSupabaseConfigured } from '../../../../lib/supabase/client';
 import { UserPlan } from '../../../../lib/types';
 import { verifyWebhookSignature } from '../../../../lib/security/webhookVerifier';
+
+// Voir app/api/webhooks/unitechpay/route.ts : plan/role/statut_compte/essai_expire_le
+// sont verrouillés en base contre toute écriture hors clé service_role.
+function getServiceClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (url && serviceKey) {
+    return createClient(url, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+  }
+  return anonClient;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,7 +49,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Mise à jour de la table subscriptions et du profil
-    if (isSupabaseConfigured && supabase) {
+    if (isSupabaseConfigured) {
+      const supabase = getServiceClient();
       // 0. Protection Idempotence & Race Conditions
       if (transactionId) {
         const { data: existingSub } = await supabase

@@ -11,6 +11,7 @@ import { PLAN_LIMITS } from '../../../lib/billing/planLimits';
 function SuccessContent() {
   const searchParams = useSearchParams();
   const { updatePlan } = useAgri();
+  const [status, setStatus] = React.useState<'checking' | 'confirmed' | 'pending'>('checking');
 
   const plan = (searchParams.get('plan') as UserPlan) || 'pro';
   const reference = searchParams.get('reference') || `AGRI_${Date.now()}`;
@@ -19,11 +20,54 @@ function SuccessContent() {
   const planInfo = PLAN_LIMITS[plan] || PLAN_LIMITS.pro;
 
   useEffect(() => {
-    // Activer immédiatement le forfait dans le contexte local
-    if (plan) {
-      updatePlan(plan);
-    }
+    // Cette page est atteignable en naviguant simplement vers son URL, sans avoir
+    // payé : on ne déclare donc jamais le forfait actif ici. On relit l'état réel
+    // en base (mis à jour uniquement par le webhook de paiement serveur) pour
+    // confirmer si l'activation a réellement eu lieu.
+    if (!plan) return;
+    let cancelled = false;
+    updatePlan(plan).then((confirmed) => {
+      if (!cancelled) setStatus(confirmed ? 'confirmed' : 'pending');
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [plan, updatePlan]);
+
+  if (status !== 'confirmed') {
+    return (
+      <div className="w-full max-w-lg bg-white p-6 sm:p-8 rounded-3xl border border-stone-200 shadow-sm text-center">
+        <div className="w-16 h-16 rounded-3xl bg-amber-100 text-amber-700 mx-auto flex items-center justify-center mb-4 shadow-xs">
+          <ShieldCheck className="w-9 h-9 stroke-[2.5]" />
+        </div>
+        <h1 className="text-xl sm:text-2xl font-black text-stone-900 tracking-tight mb-2">
+          {status === 'checking' ? 'Vérification du paiement...' : 'Paiement en cours de confirmation'}
+        </h1>
+        <p className="text-xs sm:text-sm text-stone-600 max-w-sm mx-auto leading-relaxed">
+          {status === 'checking'
+            ? 'Merci de patienter pendant que nous vérifions votre transaction auprès du serveur.'
+            : "Votre paiement n'a pas encore été confirmé automatiquement. Si le débit a bien été effectué, votre accès s'activera sous peu. Sinon, contactez le support avec votre référence de commande."}
+        </p>
+        <div className="w-full mt-6 p-4 rounded-2xl bg-stone-50 border border-stone-200 text-left text-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-stone-500">Référence commande :</span>
+            <span className="font-mono font-bold text-stone-900 text-[11px] truncate max-w-[200px]">
+              {reference}
+            </span>
+          </div>
+        </div>
+        <div className="w-full mt-6 space-y-2.5">
+          <Link
+            href="/profile"
+            className="w-full py-3.5 px-4 bg-emerald-800 hover:bg-emerald-900 text-white text-xs sm:text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-900/20"
+          >
+            <span>Voir mon profil & forfaits</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-lg bg-white p-6 sm:p-8 rounded-3xl border border-stone-200 shadow-sm text-center">
