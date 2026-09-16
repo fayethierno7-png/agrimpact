@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       email.toLowerCase().includes('fayethierno7');
 
     const role = isOwner ? 'superadmin' : 'producteur';
-    const statut_compte = isOwner ? 'actif' : 'en_attente';
+    const statut_compte = 'actif';
     const finalNom = nom || email.split('@')[0] || 'Producteur';
 
     const supabase = getAdminClient();

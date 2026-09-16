@@ -157,7 +157,7 @@ function SignupContent() {
         return;
       }
 
-      // Code valide -> Création du compte et redirection vers la validation admin
+      // Code valide -> Création du compte, accès immédiat (pas d'approbation admin requise)
       const surfaceNum = parseFloat(surfaceHa.replace(',', '.')) || 1.0;
       const finalNom = nom.trim() || email.split('@')[0] || 'Producteur';
 
@@ -190,8 +190,7 @@ function SignupContent() {
           }).catch(() => {});
         } catch {}
 
-        // Redirection vers l'espace d'attente de validation admin obligatoire
-        router.push('/en-attente');
+        router.push(redirectParam);
       } else {
         setErrorMessage(res.error || "Erreur lors de la création du compte.");
         setIsVerifyingOtp(false);

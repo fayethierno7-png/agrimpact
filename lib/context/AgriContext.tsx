@@ -512,7 +512,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
         nom: finalNom,
         telephone_contact: selectedPhone,
         plan: 'free',
-        statut_compte: 'en_attente',
+        statut_compte: 'actif',
         created_at: new Date().toISOString(),
       };
 
@@ -582,7 +582,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           // 2. Tentative directe client (si session ou policy active)
           try {
-            await supabase.from('profiles').upsert([{ ...newProfile, user_id: supabaseUserId, statut_compte: 'en_attente' }]);
+            await supabase.from('profiles').upsert([{ ...newProfile, user_id: supabaseUserId, statut_compte: 'actif' }]);
             await supabase.from('farms').insert([{ ...newFarm, user_id: supabaseUserId }]);
             await supabase.from('plots').insert([{ ...newPlot, farm_id: newFarmId }]);
           } catch {}
@@ -602,7 +602,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('agrimpact_alerts');
       localStorage.removeItem('agrimpact_logged_out');
 
-      // 1. Initialisation persistante du cookie de session serveur avec statut en attente
+      // 1. Initialisation persistante du cookie de session serveur avec statut actif
       try {
         let accessToken: string | undefined;
         if (supabase) {
@@ -611,7 +611,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         await fetch('/api/auth/session', {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
             ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
           },
@@ -620,7 +620,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
             email: data.email,
             nom: newProfile.nom,
             role: 'producteur',
-            statut_compte: 'en_attente',
+            statut_compte: 'actif',
           }),
         });
       } catch {}
