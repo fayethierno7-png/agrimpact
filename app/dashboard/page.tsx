@@ -70,6 +70,15 @@ export default function DashboardPage() {
       ? 250000
       : 8000;
 
+  // Essai gratuit de 7 jours : jours restants avant paywall (uniquement forfait 'free')
+  const trialDaysLeft = (() => {
+    const expiresAt = (profile as any)?.essai_expire_le;
+    if (profile?.plan !== 'free' || !expiresAt) return null;
+    const msLeft = new Date(expiresAt).getTime() - Date.now();
+    if (msLeft <= 0) return null;
+    return Math.max(1, Math.ceil(msLeft / (24 * 60 * 60 * 1000)));
+  })();
+
   const [walletData, setWalletData] = useState({
     tokensRemaining: defaultQuota,
     monthlyQuota: defaultQuota,
@@ -309,6 +318,29 @@ export default function DashboardPage() {
                     className="px-4 py-2 bg-[#963e1b] hover:bg-[#7f3214] text-white rounded-xl text-xs font-bold shrink-0 shadow-xs transition-colors"
                   >
                     Régulariser mon forfait
+                  </Link>
+                </div>
+              )}
+
+              {/* Bandeau Essai gratuit 7 jours en cours */}
+              {trialDaysLeft !== null && (
+                <div className="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-200 flex flex-wrap items-center justify-between gap-4 shadow-xs">
+                  <div className="flex items-center gap-3.5">
+                    <Sparkles className="w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                    <div>
+                      <span className="text-xs font-black uppercase tracking-wider block">
+                        Essai gratuit — {trialDaysLeft} jour{trialDaysLeft > 1 ? 's' : ''} restant{trialDaysLeft > 1 ? 's' : ''}
+                      </span>
+                      <p className="text-xs mt-0.5 text-emerald-800/80 dark:text-emerald-300/80">
+                        Profitez d&apos;un accès complet à toutes les fonctionnalités. Choisissez votre forfait avant la fin de l&apos;essai pour ne rien perdre.
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/tarifs"
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shrink-0 shadow-xs transition-colors"
+                  >
+                    Voir les forfaits
                   </Link>
                 </div>
               )}

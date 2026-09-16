@@ -13,6 +13,7 @@ export interface UserProfile {
   theme?: UserTheme;
   role?: UserRole;
   statut_compte?: AccountStatus;
+  essai_expire_le?: string | null;
   created_at: string;
 }
 

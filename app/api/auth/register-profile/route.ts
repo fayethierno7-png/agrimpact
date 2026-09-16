@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
 
     const role = isOwner ? 'superadmin' : 'producteur';
     const statut_compte = 'actif';
+    const essai_expire_le = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     const finalNom = nom || email.split('@')[0] || 'Producteur';
 
     const supabase = getAdminClient();
@@ -66,6 +67,7 @@ export async function POST(req: NextRequest) {
               plan: 'free',
               role,
               statut_compte,
+              essai_expire_le,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
             },
@@ -130,6 +132,7 @@ export async function POST(req: NextRequest) {
         nom: finalNom,
         role,
         statut_compte,
+        essai_expire_le,
       },
     });
   } catch (error: any) {

@@ -52,6 +52,15 @@ export default function ProfilePage() {
     cooperative: 'wave',
   });
 
+  // Essai gratuit de 7 jours : jours restants avant paywall (uniquement forfait 'free')
+  const trialDaysLeft = (() => {
+    const expiresAt = profile?.essai_expire_le;
+    if (profile?.plan !== 'free' || !expiresAt) return null;
+    const msLeft = new Date(expiresAt).getTime() - Date.now();
+    if (msLeft <= 0) return null;
+    return Math.max(1, Math.ceil(msLeft / (24 * 60 * 60 * 1000)));
+  })();
+
   const handleStartPlanPayment = (plan: UserPlan) => {
     const prov = paymentProviderByPlan[plan] || 'wave';
     setSelectedPlan(plan);
@@ -128,7 +137,13 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-between">
                   <span className="text-stone-500 dark:text-stone-400">Forfait actuel :</span>
                   {profile?.plan === 'free' ? (
-                    <span className="font-black text-rose-600 dark:text-rose-400 uppercase text-xs">Aucun (Expiré)</span>
+                    trialDaysLeft !== null ? (
+                      <span className="font-black text-emerald-600 dark:text-emerald-400 uppercase text-xs">
+                        Essai gratuit ({trialDaysLeft} j restant{trialDaysLeft > 1 ? 's' : ''})
+                      </span>
+                    ) : (
+                      <span className="font-black text-rose-600 dark:text-rose-400 uppercase text-xs">Aucun (Expiré)</span>
+                    )
                   ) : (
                     <span className="font-black text-emerald-900 dark:text-emerald-300 uppercase text-xs">
                       {PLAN_LIMITS[profile?.plan || 'solo']?.name || profile?.plan}
@@ -735,7 +750,9 @@ export default function ProfilePage() {
                   </div>
                   <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 max-w-xl leading-relaxed">
                     {profile?.plan === 'free'
-                      ? "Votre exploitation ne dispose d'aucun abonnement actif. Sélectionnez l'un des 3 forfaits professionnels ci-dessus pour activer vos alertes météo, analyses parcellaires et l'assistant IA."
+                      ? trialDaysLeft !== null
+                        ? `Votre essai gratuit se termine dans ${trialDaysLeft} jour${trialDaysLeft > 1 ? 's' : ''}. Sélectionnez l'un des 3 forfaits professionnels ci-dessus pour garder vos alertes météo, analyses parcellaires et l'assistant IA.`
+                        : "Votre exploitation ne dispose d'aucun abonnement actif. Sélectionnez l'un des 3 forfaits professionnels ci-dessus pour activer vos alertes météo, analyses parcellaires et l'assistant IA."
                       : `Votre abonnement ${PLAN_LIMITS[profile?.plan || 'pro']?.name} est actif. Règlement direct et renouvellement sécurisé par Wave ou Orange Money.`}
                   </p>
                 </div>

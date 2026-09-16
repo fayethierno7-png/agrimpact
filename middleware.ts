@@ -135,12 +135,19 @@ export async function middleware(request: NextRequest) {
   }
 
   // 4. SUPPRESSION DU PLAN GRATUIT : CONTRÔLE D'ACCÈS PAYWALL STRICT
-  // Les comptes sur l'ancien forfait gratuit 'free' (hors admin) sont bloqués jusqu'au choix d'un forfait payant.
+  // Les comptes sur l'ancien forfait gratuit 'free' (hors admin) sont bloqués jusqu'au choix d'un forfait payant,
+  // sauf pendant les 7 premiers jours suivant l'inscription (essai gratuit à accès complet).
+  const isTrialActive = Boolean(
+    sessionData?.essai_expire_le &&
+    new Date(sessionData.essai_expire_le).getTime() > Date.now()
+  );
+
   if (
     sessionData?.userId &&
     sessionData?.role !== 'admin' &&
     sessionData?.role !== 'superadmin' &&
-    sessionData?.plan === 'free'
+    sessionData?.plan === 'free' &&
+    !isTrialActive
   ) {
     const isAllowedForNoPlan =
       pathname.startsWith('/profile') ||
@@ -152,7 +159,10 @@ export async function middleware(request: NextRequest) {
     if (!isAllowedForNoPlan) {
       const redirectUrl = new URL('/tarifs', request.url);
       redirectUrl.searchParams.set('paywall', 'true');
-      redirectUrl.searchParams.set('reason', 'subscription_required');
+      redirectUrl.searchParams.set(
+        'reason',
+        sessionData?.essai_expire_le ? 'expired' : 'subscription_required'
+      );
       return NextResponse.redirect(redirectUrl);
     }
   }

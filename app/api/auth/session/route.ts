@@ -13,6 +13,7 @@ export async function POST(req: NextRequest) {
       statut_compte = 'actif',
       statut_abonnement = 'actif',
       date_limite_grace = null,
+      essai_expire_le = null,
       rememberMe = false,
     } = body;
 
@@ -27,6 +28,7 @@ export async function POST(req: NextRequest) {
     // Ne JAMAIS faire confiance au champ 'role' envoyé par le client
     let verifiedRole = 'producteur';
     let verifiedPlan = plan;
+    let verifiedEssaiExpireLe = essai_expire_le;
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -51,7 +53,7 @@ export async function POST(req: NextRequest) {
         else headers['Authorization'] = `Bearer ${supabaseServiceKey}`; // Fallback anon
 
         const res = await fetch(
-          `${supabaseUrl}/rest/v1/profiles?user_id=eq.${userId}&select=role,plan,nom,telephone_contact`,
+          `${supabaseUrl}/rest/v1/profiles?user_id=eq.${userId}&select=role,plan,nom,telephone_contact,essai_expire_le`,
           {
             headers,
             signal: AbortSignal.timeout(5000),
@@ -64,6 +66,9 @@ export async function POST(req: NextRequest) {
           }
           if (profiles?.[0]?.plan) {
             verifiedPlan = profiles[0].plan;
+          }
+          if (profiles?.[0] && 'essai_expire_le' in profiles[0]) {
+            verifiedEssaiExpireLe = profiles[0].essai_expire_le;
           }
           // Si le profil en base correspond à l'administrateur
           const userContact = String(profiles?.[0]?.telephone_contact || '').toLowerCase();
@@ -103,6 +108,7 @@ export async function POST(req: NextRequest) {
       statut_compte,
       statut_abonnement,
       date_limite_grace,
+      essai_expire_le: verifiedEssaiExpireLe,
       createdAt: new Date().toISOString(),
     };
 

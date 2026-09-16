@@ -453,6 +453,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 statut_compte: parsedProfile.statut_compte || 'actif',
                 statut_abonnement: parsedProfile.statut_abonnement || 'actif',
                 date_limite_grace: parsedProfile.date_limite_grace || null,
+                essai_expire_le: parsedProfile.essai_expire_le || null,
                 rememberMe,
               }),
             }).catch(() => {});
@@ -505,6 +506,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const newPlotId = `plot-${Date.now()}`;
 
       const finalNom = data.nom?.trim() || data.email.split('@')[0] || 'Producteur';
+      const essaiExpireLe = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
       const newProfile: UserProfile = {
         id: newUserId,
@@ -513,6 +515,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
         telephone_contact: selectedPhone,
         plan: 'free',
         statut_compte: 'actif',
+        essai_expire_le: essaiExpireLe,
         created_at: new Date().toISOString(),
       };
 
@@ -621,6 +624,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
             nom: newProfile.nom,
             role: 'producteur',
             statut_compte: 'actif',
+            essai_expire_le: essaiExpireLe,
           }),
         });
       } catch {}
