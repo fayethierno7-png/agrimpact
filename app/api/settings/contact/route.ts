@@ -5,13 +5,22 @@ import { supabase as defaultClient, isSupabaseConfigured } from '../../../../lib
 
 export const dynamic = 'force-dynamic';
 
-function getAdminClient() {
+function getAdminClient(authHeader?: string | null) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (url && serviceKey) {
     return createClient(url, serviceKey, {
       auth: { persistSession: false, autoRefreshToken: false },
+    });
+  }
+  // Sans clé service_role, il faut au moins transmettre le JWT de l'admin
+  // pour que les policies RLS (is_admin()) puissent l'identifier — sans quoi
+  // l'écriture est systématiquement bloquée par RLS sans jamais d'erreur claire.
+  if (url && anonKey && authHeader) {
+    return createClient(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: { headers: { Authorization: authHeader.trim() } },
     });
   }
   return defaultClient;
@@ -147,21 +156,40 @@ export async function PUT(req: NextRequest) {
       updated_at: new Date().toISOString(),
     };
 
-    // Mise à jour de la mémoire cache
+    // Persistance dans Supabase — condition du succès annoncé à l'admin
+    if (!isSupabaseConfigured) {
+      return NextResponse.json(
+        { success: false, error: 'Base de données non configurée : les coordonnées ne peuvent pas être enregistrées.' },
+        { status: 500 }
+      );
+    }
+
+    const authHeader = req.headers.get('authorization');
+    const supabase = getAdminClient(authHeader);
+
+    const { data, error: upsertError } = await supabase
+      .from('app_settings')
+      .upsert({ id: 'contact_settings', ...payload, updated_by: user?.id }, { onConflict: 'id' })
+      .select('id, support_phone');
+
+    if (upsertError) {
+      console.error('Erreur upsert app_settings:', upsertError);
+      return NextResponse.json(
+        { success: false, error: upsertError.message || 'Erreur base de données lors de l\'enregistrement.' },
+        { status: 500 }
+      );
+    }
+
+    if (!data || data.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Enregistrement non confirmé en base (permissions insuffisantes).' },
+        { status: 500 }
+      );
+    }
+
+    // Ne mettre à jour le cache mémoire qu'une fois la persistance réellement confirmée
     cachedContactSettings = payload;
     contactCacheExpiresAt = Date.now() + 60 * 60 * 1000;
-
-    // Persistance dans Supabase si la table app_settings existe
-    const supabase = getAdminClient();
-    if (isSupabaseConfigured && supabase) {
-      try {
-        await supabase
-          .from('app_settings')
-          .upsert({ id: 'contact_settings', ...payload, updated_by: user?.id }, { onConflict: 'id' });
-      } catch (upsertErr) {
-        console.warn('Note: app_settings sera persisté dès exécution du script SQL:', upsertErr);
-      }
-    }
 
     return NextResponse.json({
       success: true,

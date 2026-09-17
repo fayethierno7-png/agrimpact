@@ -1,29 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getAuthenticatedUser } from '../../../../lib/auth/serverAuth';
-import { supabase as defaultClient } from '../../../../lib/supabase/client';
 
 export const dynamic = 'force-dynamic';
 
-function getAdminClient(authHeader?: string | null) {
+function getAdminClient(authHeader?: string | null): { client: ReturnType<typeof createClient> | null; usingServiceRole: boolean } {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (url && serviceKey) {
-    return createClient(url, serviceKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+    return {
+      client: createClient(url, serviceKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      }),
+      usingServiceRole: true,
+    };
   }
   if (url && anonKey && authHeader) {
     const cleanHeader = authHeader.trim();
-    return createClient(url, anonKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-      global: {
-        headers: cleanHeader ? { Authorization: cleanHeader } : {},
-      },
-    });
+    return {
+      client: createClient(url, anonKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
+        global: {
+          headers: cleanHeader ? { Authorization: cleanHeader } : {},
+        },
+      }),
+      usingServiceRole: false,
+    };
   }
-  return defaultClient;
+  return { client: null, usingServiceRole: false };
 }
 
 /**
@@ -56,7 +61,7 @@ export async function POST(req: NextRequest) {
     const { actionType, payload } = body;
 
     const authHeader = req.headers.get('authorization');
-    const supabase = getAdminClient(authHeader);
+    const { client: supabase, usingServiceRole } = getAdminClient(authHeader);
     if (!supabase) {
       return NextResponse.json({ success: false, error: 'Client base de données non disponible.' }, { status: 500 });
     }
@@ -71,6 +76,20 @@ export async function POST(req: NextRequest) {
       const { targetUserId, targetUserNom, newStatus, reason } = payload;
       if (!targetUserId || !newStatus) {
         return NextResponse.json({ success: false, error: 'Paramètres manquants.' }, { status: 400 });
+      }
+
+      // profiles.statut_compte est verrouillé en base contre toute écriture qui
+      // n'utilise pas la clé service_role (trigger anti-fraude) : sans elle,
+      // l'UPDATE ci-dessous serait silencieusement annulé tout en renvoyant une
+      // ligne (donc un faux succès). On refuse explicitement plutôt que de mentir.
+      if (!usingServiceRole) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Configuration serveur incomplète : SUPABASE_SERVICE_ROLE_KEY doit être définie pour modifier le statut d\'un compte.',
+          },
+          { status: 500 }
+        );
       }
 
       // 1. Tentative de mise à jour ciblée sur user_id
@@ -103,6 +122,15 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(
           { success: false, error: 'Aucun profil trouvé pour cet identifiant ou permissions insuffisantes.' },
           { status: 404 }
+        );
+      }
+
+      if (updatedData[0].statut_compte !== newStatus) {
+        // Défense en profondeur : si la valeur réellement stockée ne correspond
+        // pas à ce qui a été demandé, ne jamais prétendre un succès.
+        return NextResponse.json(
+          { success: false, error: 'La mise à jour du statut n\'a pas été appliquée en base.' },
+          { status: 500 }
         );
       }
 
@@ -150,39 +178,66 @@ export async function POST(req: NextRequest) {
       }
 
       // Mise à jour du paiement
-      await supabase
+      const { data: refundedPayment, error: refundError } = await supabase
         .from('payments')
         .update({
           statut: 'rembourse',
           remboursement_montant: montant,
           remboursement_date: new Date().toISOString(),
         })
-        .eq('id', paymentId);
+        .eq('id', paymentId)
+        .select('id, statut');
+
+      if (refundError) {
+        console.error('Erreur Supabase update remboursement:', refundError);
+        return NextResponse.json(
+          { success: false, error: refundError.message || 'Erreur base de données lors du remboursement.' },
+          { status: 500 }
+        );
+      }
+
+      if (!refundedPayment || refundedPayment.length === 0 || refundedPayment[0].statut !== 'rembourse') {
+        return NextResponse.json(
+          { success: false, error: 'Paiement introuvable ou remboursement non appliqué en base.' },
+          { status: 404 }
+        );
+      }
 
       // Annulation de l'abonnement si lié
       if (subscriptionId) {
-        await supabase
+        const { error: subError } = await supabase
           .from('subscriptions')
           .update({ statut: 'annule', updated_at: new Date().toISOString() })
           .eq('id', subscriptionId);
+        if (subError) {
+          console.warn('Avertissement: annulation abonnement liée au remboursement a échoué:', subError);
+        }
       }
 
-      // Traçage audit log
-      await supabase.from('audit_log').insert([
-        {
-          admin_id: adminId,
-          admin_nom: adminNom,
-          action: 'remboursement_paiement',
-          cible_id: paymentId,
-          cible_type: 'payment',
-          metadata: {
-            client: targetUserNom || 'Producteur',
-            montant_rembourse: montant,
-            motif: reason || 'Remboursement validé par l\'administrateur',
+      // Traçage audit log (non-bloquant : le remboursement lui-même est déjà confirmé ci-dessus)
+      try {
+        const isUUID = (id?: any) =>
+          typeof id === 'string' &&
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+        await supabase.from('audit_log').insert([
+          {
+            admin_id: isUUID(adminId) ? adminId : null,
+            admin_nom: adminNom,
+            action: 'remboursement_paiement',
+            cible_id: paymentId,
+            cible_type: 'payment',
+            metadata: {
+              client: targetUserNom || 'Producteur',
+              montant_rembourse: montant,
+              motif: reason || 'Remboursement validé par l\'administrateur',
+            },
+            created_at: new Date().toISOString(),
           },
-          created_at: new Date().toISOString(),
-        },
-      ]);
+        ]);
+      } catch (auditErr) {
+        console.warn('Avertissement insertion audit_log (non-bloquant):', auditErr);
+      }
 
       return NextResponse.json({ success: true, message: 'Remboursement effectué et consigné dans l\'audit log.' });
     }
@@ -200,23 +255,50 @@ export async function POST(req: NextRequest) {
       if (adminNote) updateData.admin_note = adminNote;
       if (newStatus === 'resolu') updateData.resolved_at = new Date().toISOString();
 
-      await supabase.from('reports').update(updateData).eq('id', reportId);
+      const { data: updatedReport, error: reportError } = await supabase
+        .from('reports')
+        .update(updateData)
+        .eq('id', reportId)
+        .select('id, statut');
 
-      // Traçage audit log
-      await supabase.from('audit_log').insert([
-        {
-          admin_id: adminId,
-          admin_nom: adminNom,
-          action: 'traitement_signalement',
-          cible_id: reportId,
-          cible_type: 'report',
-          metadata: {
-            nouveau_statut: newStatus,
-            note: adminNote || 'Signalement traité',
+      if (reportError) {
+        console.error('Erreur Supabase update signalement:', reportError);
+        return NextResponse.json(
+          { success: false, error: reportError.message || 'Erreur base de données lors du traitement du signalement.' },
+          { status: 500 }
+        );
+      }
+
+      if (!updatedReport || updatedReport.length === 0 || updatedReport[0].statut !== newStatus) {
+        return NextResponse.json(
+          { success: false, error: 'Signalement introuvable ou mise à jour non appliquée en base.' },
+          { status: 404 }
+        );
+      }
+
+      // Traçage audit log (non-bloquant : le traitement du signalement est déjà confirmé ci-dessus)
+      try {
+        const isUUID = (id?: any) =>
+          typeof id === 'string' &&
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+        await supabase.from('audit_log').insert([
+          {
+            admin_id: isUUID(adminId) ? adminId : null,
+            admin_nom: adminNom,
+            action: 'traitement_signalement',
+            cible_id: reportId,
+            cible_type: 'report',
+            metadata: {
+              nouveau_statut: newStatus,
+              note: adminNote || 'Signalement traité',
+            },
+            created_at: new Date().toISOString(),
           },
-          created_at: new Date().toISOString(),
-        },
-      ]);
+        ]);
+      } catch (auditErr) {
+        console.warn('Avertissement insertion audit_log (non-bloquant):', auditErr);
+      }
 
       return NextResponse.json({ success: true, message: `Signalement mis à jour vers "${newStatus}".` });
     }

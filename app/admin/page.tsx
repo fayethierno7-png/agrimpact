@@ -983,10 +983,10 @@ export default function AdminConsolePage() {
                   className="px-3 py-1.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-xs font-semibold focus:ring-2 focus:ring-emerald-600 outline-none"
                 >
                   <option value="all">Toutes les actions</option>
-                  <option value="valider_utilisateur">Validation compte</option>
-                  <option value="suspendre_utilisateur">Suspension compte</option>
-                  <option value="rembourser_paiement">Remboursement</option>
-                  <option value="traiter_signalement">Traitement signalement</option>
+                  <option value="validation_utilisateur">Validation compte</option>
+                  <option value="suspension_utilisateur">Suspension compte</option>
+                  <option value="remboursement_paiement">Remboursement</option>
+                  <option value="traitement_signalement">Traitement signalement</option>
                 </select>
               </div>
             </div>

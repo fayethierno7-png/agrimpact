@@ -289,26 +289,35 @@ export async function updateUserAccountStatus(params: {
       if (upError) throw upError;
 
       if (upData && upData.length > 0) {
-        invalidateAdminCache('users_');
-        invalidateAdminCache('audit_');
+        // Le trigger anti-fraude en base annule silencieusement ce type
+        // d'écriture si elle ne vient pas de la clé service_role (jamais le cas
+        // depuis le navigateur) : vérifier la valeur réellement stockée plutôt
+        // que la simple présence d'une ligne retournée.
+        if (upData[0].statut_compte !== newStatus) {
+          lastError =
+            "La mise à jour n'a pas été appliquée en base (permissions serveur insuffisantes). Réessayez via la console, ou contactez le support technique.";
+        } else {
+          invalidateAdminCache('users_');
+          invalidateAdminCache('audit_');
 
-        // Journalisation audit
-        try {
-          await logAdminAction({
-            admin_id: adminId,
-            admin_nom: adminNom,
-            action: newStatus === 'actif' ? 'valider_utilisateur' : 'suspendre_utilisateur',
-            cible_type: 'user',
-            cible_id: targetUserId,
-            metadata: {
-              target_nom: targetUserNom,
-              nouveau_statut: newStatus,
-              motif: reason || 'Action administrative manuelle directe',
-            },
-          });
-        } catch {}
+          // Journalisation audit
+          try {
+            await logAdminAction({
+              admin_id: adminId,
+              admin_nom: adminNom,
+              action: newStatus === 'actif' ? 'valider_utilisateur' : 'suspendre_utilisateur',
+              cible_type: 'user',
+              cible_id: targetUserId,
+              metadata: {
+                target_nom: targetUserNom,
+                nouveau_statut: newStatus,
+                motif: reason || 'Action administrative manuelle directe',
+              },
+            });
+          } catch {}
 
-        return { success: true };
+          return { success: true };
+        }
       }
     } catch (err: any) {
       console.warn('Erreur updateUserAccountStatus direct Supabase:', err);
@@ -692,6 +701,8 @@ export async function processPaymentRefund(params: {
   invalidateAdminCache('subscriptions_');
   invalidateAdminCache('audit_');
 
+  let lastError: string | undefined;
+
   // 1. Appel API serveur actions
   try {
     const res = await fetchWithAuth('/api/admin/actions', {
@@ -702,16 +713,17 @@ export async function processPaymentRefund(params: {
         payload: { paymentId, montant, subscriptionId, targetUserNom, reason },
       }),
     });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success) return { success: true };
-    }
-  } catch {}
+    const json = await res.json().catch(() => null);
+    if (res.ok && json?.success) return { success: true };
+    if (json?.error) lastError = json.error;
+  } catch (err: any) {
+    lastError = err?.message || 'Erreur réseau lors de la communication avec le serveur';
+  }
 
-  // 2. Fallback direct
+  // 2. Fallback direct (nécessite les permissions RLS admin sur `payments`)
   if (isSupabaseConfigured && supabase) {
     try {
-      await withTimeout<any>(
+      const { data, error } = await withTimeout<any>(
         supabase
           .from('payments')
           .update({
@@ -719,14 +731,22 @@ export async function processPaymentRefund(params: {
             remboursement_montant: montant,
             remboursement_date: new Date().toISOString(),
           })
-          .eq('id', paymentId),
+          .eq('id', paymentId)
+          .select('id, statut'),
         8000
       );
-      return { success: true };
-    } catch {}
+      if (error) throw error;
+      if (data && data.length > 0 && data[0].statut === 'rembourse') {
+        return { success: true };
+      }
+      lastError = 'Le remboursement n\'a pas été appliqué en base (paiement introuvable ou permissions insuffisantes).';
+    } catch (err: any) {
+      lastError = err?.message || lastError;
+    }
   }
 
-  return { success: true };
+  // Ne JAMAIS prétendre un faux succès si rien n'a été confirmé en base.
+  return { success: false, error: lastError || 'Échec du remboursement.' };
 }
 
 // =========================================================================
@@ -779,6 +799,8 @@ export async function updateAdminReport(params: {
   invalidateAdminCache('reports_');
   invalidateAdminCache('audit_');
 
+  let lastError: string | undefined;
+
   // 1. Appel API serveur actions
   try {
     const res = await fetchWithAuth('/api/admin/actions', {
@@ -789,25 +811,34 @@ export async function updateAdminReport(params: {
         payload: { reportId, newStatus, adminNote },
       }),
     });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success) return { success: true };
-    }
-  } catch {}
+    const json = await res.json().catch(() => null);
+    if (res.ok && json?.success) return { success: true };
+    if (json?.error) lastError = json.error;
+  } catch (err: any) {
+    lastError = err?.message || 'Erreur réseau lors de la communication avec le serveur';
+  }
 
-  // 2. Fallback direct
+  // 2. Fallback direct (nécessite les permissions RLS admin sur `reports`)
   if (isSupabaseConfigured && supabase) {
     try {
       const updatePayload: Record<string, any> = { statut: newStatus };
       if (adminNote !== undefined) updatePayload.admin_note = adminNote;
       if (newStatus === 'resolu') updatePayload.resolved_at = new Date().toISOString();
 
-      await withTimeout<any>(supabase.from('reports').update(updatePayload).eq('id', reportId), 8000);
-      return { success: true };
+      const { data, error } = await withTimeout<any>(
+        supabase.from('reports').update(updatePayload).eq('id', reportId).select('id, statut'),
+        8000
+      );
+      if (error) throw error;
+      if (data && data.length > 0 && data[0].statut === newStatus) {
+        return { success: true };
+      }
+      lastError = 'Le signalement n\'a pas été mis à jour en base (introuvable ou permissions insuffisantes).';
     } catch (err: any) {
-      return { success: false, error: err?.message };
+      lastError = err?.message || lastError;
     }
   }
 
-  return { success: true };
+  // Ne JAMAIS prétendre un faux succès si rien n'a été confirmé en base.
+  return { success: false, error: lastError || 'Échec de la mise à jour du signalement.' };
 }

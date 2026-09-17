@@ -119,6 +119,38 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    // 3bis. Jointure profiles pour peupler le nom/téléphone réel du client sur
+    // les paiements et signalements (sinon l'UI retombe sur un placeholder générique)
+    const profileById = new Map<string, any>(
+      (results.profiles || []).map((p: any) => [p.user_id, p])
+    );
+    const missingProfileIds = new Set<string>();
+    for (const p of results.payments || []) {
+      if (p.user_id && !profileById.has(p.user_id)) missingProfileIds.add(p.user_id);
+    }
+    for (const r of results.reports || []) {
+      if (r.user_id && !profileById.has(r.user_id)) missingProfileIds.add(r.user_id);
+    }
+    if (missingProfileIds.size > 0) {
+      const { data: extraProfiles } = await supabase
+        .from('profiles')
+        .select('user_id, nom, telephone_contact')
+        .in('user_id', Array.from(missingProfileIds));
+      for (const p of extraProfiles || []) {
+        profileById.set(p.user_id, p);
+      }
+    }
+    const withUserInfo = (row: any) => {
+      const p = row.user_id ? profileById.get(row.user_id) : null;
+      return {
+        ...row,
+        user_nom: p?.nom || row.user_nom || 'Producteur',
+        user_phone: p?.telephone_contact || row.user_phone || '',
+      };
+    };
+    results.payments = (results.payments || []).map(withUserInfo);
+    results.reports = (results.reports || []).map(withUserInfo);
+
     // 4. Calcul dynamique des métriques de revenus (MRR, ARR, Churn, LTV)
     const subscriptions = results.subscriptions || [];
     const payments = results.payments || [];

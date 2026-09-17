@@ -1,29 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getAuthenticatedUser } from '../../../../lib/auth/serverAuth';
-import { supabase as defaultClient } from '../../../../lib/supabase/client';
 
 export const dynamic = 'force-dynamic';
 
-function getAdminClient(authHeader?: string | null) {
+function getAdminClient(authHeader?: string | null): { client: ReturnType<typeof createClient> | null; usingServiceRole: boolean } {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (url && serviceKey) {
-    return createClient(url, serviceKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+    return {
+      client: createClient(url, serviceKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      }),
+      usingServiceRole: true,
+    };
   }
   if (url && anonKey && authHeader) {
     const cleanHeader = authHeader.trim();
-    return createClient(url, anonKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-      global: {
-        headers: cleanHeader ? { Authorization: cleanHeader } : {},
-      },
-    });
+    return {
+      client: createClient(url, anonKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
+        global: {
+          headers: cleanHeader ? { Authorization: cleanHeader } : {},
+        },
+      }),
+      usingServiceRole: false,
+    };
   }
-  return defaultClient;
+  return { client: null, usingServiceRole: false };
 }
 
 /**
@@ -50,7 +55,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const supabase = getAdminClient();
+    const { client: supabase } = getAdminClient();
 
     // 2. Tentative via la fonction RPC sécurisée (contourne RLS sans blocage)
     if (supabase) {
@@ -159,11 +164,25 @@ export async function PATCH(req: NextRequest) {
     const adminId = user?.id || null;
 
     const authHeader = req.headers.get('authorization');
-    const supabase = getAdminClient(authHeader);
+    const { client: supabase, usingServiceRole } = getAdminClient(authHeader);
 
     // 1. Mettre à jour le statut dans la table profiles
     if (!supabase) {
       return NextResponse.json({ success: false, error: 'Client base de données non disponible.' }, { status: 500 });
+    }
+
+    // profiles.statut_compte est verrouillé en base contre toute écriture qui
+    // n'utilise pas la clé service_role (trigger anti-fraude) : sans elle,
+    // l'UPDATE serait silencieusement annulé tout en renvoyant une ligne
+    // (donc un faux succès). On refuse explicitement plutôt que de mentir.
+    if (!usingServiceRole) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Configuration serveur incomplète : SUPABASE_SERVICE_ROLE_KEY doit être définie pour modifier le statut d\'un compte.',
+        },
+        { status: 500 }
+      );
     }
 
     // Tentative par user_id
@@ -205,6 +224,13 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
+    if (updatedData[0].statut_compte !== newStatus) {
+      return NextResponse.json(
+        { success: false, error: 'La mise à jour du statut n\'a pas été appliquée en base.' },
+        { status: 500 }
+      );
+    }
+
     // 2. Consigner l'action dans audit_log (non-bloquant)
     try {
       const isUUID = (id?: any) =>
@@ -226,7 +252,7 @@ export async function PATCH(req: NextRequest) {
           action: actionType,
           cible_id: String(targetUserId),
           cible_type: 'user',
-          details: {
+          metadata: {
             cible_nom: targetUserNom || 'Producteur',
             nouveau_statut: newStatus,
             motif: reason || `Compte passé en ${newStatus}`,
