@@ -68,15 +68,20 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // 1. Mettre à jour le plan dans profiles
+      // 1. Mettre à jour le plan et la date d'expiration dans profiles
+      const expiresAt = new Date();
+      expiresAt.setMonth(expiresAt.getMonth() + 1); // +1 mois de validité
+
       await supabase
         .from('profiles')
-        .update({ plan, updated_at: new Date().toISOString() })
+        .update({
+          plan,
+          abonnement_expire_le: expiresAt.toISOString(),
+          updated_at: new Date().toISOString(),
+        })
         .eq('user_id', userId);
 
       // 2. Insérer ou mettre à jour la souscription
-      const expiresAt = new Date();
-      expiresAt.setMonth(expiresAt.getMonth() + 1); // +1 mois de validité
 
       await supabase.from('subscriptions').insert([
         {

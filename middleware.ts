@@ -167,6 +167,38 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // 4bis. EXPIRATION D'UN ABONNEMENT PAYANT (30 jours sans renouvellement)
+  // Un forfait payant activé par le webhook de paiement reste valide jusqu'à
+  // `abonnement_expire_le`. Passé cette date sans nouveau paiement, l'accès est
+  // bloqué jusqu'au renouvellement (même logique que l'essai gratuit expiré).
+  const isPaidPlanExpired = Boolean(
+    sessionData?.plan &&
+    sessionData.plan !== 'free' &&
+    sessionData?.abonnement_expire_le &&
+    new Date(sessionData.abonnement_expire_le).getTime() <= Date.now()
+  );
+
+  if (
+    sessionData?.userId &&
+    sessionData?.role !== 'admin' &&
+    sessionData?.role !== 'superadmin' &&
+    isPaidPlanExpired
+  ) {
+    const isAllowedForExpiredPlan =
+      pathname.startsWith('/profile') ||
+      pathname.startsWith('/tarifs') ||
+      pathname.startsWith('/payment') ||
+      pathname === '/' ||
+      pathname.startsWith('/api/');
+
+    if (!isAllowedForExpiredPlan) {
+      const redirectUrl = new URL('/tarifs', request.url);
+      redirectUrl.searchParams.set('paywall', 'true');
+      redirectUrl.searchParams.set('reason', 'expired');
+      return NextResponse.redirect(redirectUrl);
+    }
+  }
+
   // 4. CONTRÔLE D'AUTHENTIFICATION DES PAGES & APIS PRIVÉES
   const isPrivatePage =
     pathname.startsWith('/dashboard') ||

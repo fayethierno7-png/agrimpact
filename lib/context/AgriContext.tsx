@@ -454,6 +454,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 statut_abonnement: parsedProfile.statut_abonnement || 'actif',
                 date_limite_grace: parsedProfile.date_limite_grace || null,
                 essai_expire_le: parsedProfile.essai_expire_le || null,
+                abonnement_expire_le: parsedProfile.abonnement_expire_le || null,
                 rememberMe,
               }),
             }).catch(() => {});
@@ -754,6 +755,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
           plan: freshProfile.plan,
           statut_compte: freshProfile.statut_compte || 'actif',
           essai_expire_le: freshProfile.essai_expire_le || null,
+          abonnement_expire_le: freshProfile.abonnement_expire_le || null,
         }),
       }).catch(() => {});
 

@@ -8,6 +8,7 @@ export interface SessionPayload {
   statut_abonnement?: string;
   date_limite_grace?: string | null;
   essai_expire_le?: string | null;
+  abonnement_expire_le?: string | null;
   createdAt?: string;
 }
 

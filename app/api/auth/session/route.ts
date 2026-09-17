@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
       statut_abonnement = 'actif',
       date_limite_grace = null,
       essai_expire_le = null,
+      abonnement_expire_le = null,
       rememberMe = false,
     } = body;
 
@@ -29,6 +30,7 @@ export async function POST(req: NextRequest) {
     let verifiedRole = 'producteur';
     let verifiedPlan = plan;
     let verifiedEssaiExpireLe = essai_expire_le;
+    let verifiedAbonnementExpireLe = abonnement_expire_le;
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -53,7 +55,7 @@ export async function POST(req: NextRequest) {
         else headers['Authorization'] = `Bearer ${supabaseServiceKey}`; // Fallback anon
 
         const res = await fetch(
-          `${supabaseUrl}/rest/v1/profiles?user_id=eq.${userId}&select=role,plan,nom,telephone_contact,essai_expire_le`,
+          `${supabaseUrl}/rest/v1/profiles?user_id=eq.${userId}&select=role,plan,nom,telephone_contact,essai_expire_le,abonnement_expire_le`,
           {
             headers,
             signal: AbortSignal.timeout(5000),
@@ -69,6 +71,9 @@ export async function POST(req: NextRequest) {
           }
           if (profiles?.[0] && 'essai_expire_le' in profiles[0]) {
             verifiedEssaiExpireLe = profiles[0].essai_expire_le;
+          }
+          if (profiles?.[0] && 'abonnement_expire_le' in profiles[0]) {
+            verifiedAbonnementExpireLe = profiles[0].abonnement_expire_le;
           }
           // Si le profil en base correspond à l'administrateur
           const userContact = String(profiles?.[0]?.telephone_contact || '').toLowerCase();
@@ -109,6 +114,7 @@ export async function POST(req: NextRequest) {
       statut_abonnement,
       date_limite_grace,
       essai_expire_le: verifiedEssaiExpireLe,
+      abonnement_expire_le: verifiedAbonnementExpireLe,
       createdAt: new Date().toISOString(),
     };
 

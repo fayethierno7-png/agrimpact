@@ -14,6 +14,7 @@ export interface UserProfile {
   role?: UserRole;
   statut_compte?: AccountStatus;
   essai_expire_le?: string | null;
+  abonnement_expire_le?: string | null;
   created_at: string;
 }
 

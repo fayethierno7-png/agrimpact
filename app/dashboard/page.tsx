@@ -79,6 +79,16 @@ export default function DashboardPage() {
     return Math.max(1, Math.ceil(msLeft / (24 * 60 * 60 * 1000)));
   })();
 
+  // Abonnement payant : jours restants avant expiration (affiché si <= 5 jours)
+  const subscriptionDaysLeft = (() => {
+    const expiresAt = (profile as any)?.abonnement_expire_le;
+    if (!profile?.plan || profile.plan === 'free' || !expiresAt) return null;
+    const msLeft = new Date(expiresAt).getTime() - Date.now();
+    if (msLeft <= 0) return null;
+    const days = Math.ceil(msLeft / (24 * 60 * 60 * 1000));
+    return days <= 5 ? Math.max(1, days) : null;
+  })();
+
   const [walletData, setWalletData] = useState({
     tokensRemaining: defaultQuota,
     monthlyQuota: defaultQuota,
@@ -341,6 +351,29 @@ export default function DashboardPage() {
                     className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shrink-0 shadow-xs transition-colors"
                   >
                     Voir les forfaits
+                  </Link>
+                </div>
+              )}
+
+              {/* Bandeau Abonnement payant proche de l'expiration */}
+              {subscriptionDaysLeft !== null && (
+                <div className="p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 flex flex-wrap items-center justify-between gap-4 shadow-xs">
+                  <div className="flex items-center gap-3.5">
+                    <AlertTriangle className="w-5 h-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                    <div>
+                      <span className="text-xs font-black uppercase tracking-wider block">
+                        Renouvellement — {subscriptionDaysLeft} jour{subscriptionDaysLeft > 1 ? 's' : ''} restant{subscriptionDaysLeft > 1 ? 's' : ''}
+                      </span>
+                      <p className="text-xs mt-0.5 text-amber-800/80 dark:text-amber-300/80">
+                        Votre abonnement arrive à échéance. Renouvelez maintenant pour ne pas perdre l&apos;accès à vos outils d&apos;aide à la décision.
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/profile"
+                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shrink-0 shadow-xs transition-colors"
+                  >
+                    Renouveler
                   </Link>
                 </div>
               )}

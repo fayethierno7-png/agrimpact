@@ -120,11 +120,15 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // 1. Mettre à jour le plan dans la table profiles
+      // 1. Mettre à jour le plan et la date d'expiration dans la table profiles
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30); // Validité de 30 jours
+
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
           plan,
+          abonnement_expire_le: expiresAt.toISOString(),
           updated_at: new Date().toISOString(),
         })
         .eq('user_id', userId);
@@ -134,9 +138,6 @@ export async function POST(req: NextRequest) {
       }
 
       // 2. Insérer l'enregistrement de paiement dans la table subscriptions
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 30); // Validité de 30 jours
-
       const { error: subError } = await supabase.from('subscriptions').insert([
         {
           user_id: userId,
