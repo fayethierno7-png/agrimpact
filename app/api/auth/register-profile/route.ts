@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { supabase as defaultClient } from '../../../../lib/supabase/client';
+import { isSuperadminEmail } from '../../../../lib/auth/superadmins';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,9 +43,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const isOwner =
-      email.toLowerCase() === 'fayethierno7@gmail.com' ||
-      email.toLowerCase().includes('fayethierno7');
+    const isOwner = isSuperadminEmail(email);
 
     const role = isOwner ? 'superadmin' : 'producteur';
     const statut_compte = 'actif';

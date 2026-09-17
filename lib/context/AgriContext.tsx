@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserProfile, Farm, Plot, AgriAlert, Recommendation, UserPlan, UserTheme, UserRole } from '../types';
 import { supabase, isSupabaseConfigured } from '../supabase/client';
 import { SENEGAL_REGIONS } from '../constants/senegal';
+import { isSuperadminEmail, textMatchesSuperadmin } from '../auth/superadmins';
 
 interface AgriContextType {
   profile: UserProfile | null;
@@ -143,17 +144,11 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 removeAgriStoredItem('agrimpact_profile');
                 setProfile(null);
               } else {
-                const uEmail = String(parsed.email || '').toLowerCase();
-                const uNom = String(parsed.nom || '').toLowerCase();
-                const uTel = String(parsed.telephone_contact || '').toLowerCase();
-                const uId = String(parsed.user_id || parsed.id || '').toLowerCase();
                 if (
-                  uEmail === 'fayethierno7@gmail.com' ||
-                  uEmail.includes('fayethierno7') ||
-                  uNom.includes('fayethierno7') ||
-                  uNom.includes('thierno faye') ||
-                  uTel.includes('fayethierno7') ||
-                  uId.includes('fayethierno7')
+                  isSuperadminEmail(parsed.email) ||
+                  textMatchesSuperadmin(parsed.nom) ||
+                  textMatchesSuperadmin(parsed.telephone_contact) ||
+                  textMatchesSuperadmin(parsed.user_id || parsed.id)
                 ) {
                   parsed.role = 'superadmin';
                 }
@@ -241,14 +236,10 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             if (isMounted && profRes.status === 'fulfilled' && profRes.value.data) {
               const prof = profRes.value.data;
-              const uEmail = String(session.user.email || '').toLowerCase();
-              const uNom = String(prof.nom || '').toLowerCase();
-              const uTel = String(prof.telephone_contact || '').toLowerCase();
               if (
-                uEmail === 'fayethierno7@gmail.com' ||
-                uEmail.includes('fayethierno7') ||
-                uNom.includes('fayethierno7') ||
-                uTel.includes('fayethierno7')
+                isSuperadminEmail(session.user.email) ||
+                textMatchesSuperadmin(prof.nom) ||
+                textMatchesSuperadmin(prof.telephone_contact)
               ) {
                 prof.role = 'superadmin';
               } else {
@@ -368,7 +359,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const userId = data.user.id;
             const { data: prof } = await supabase.from('profiles').select('*').eq('user_id', userId).maybeSingle();
             if (prof) {
-              if (data.user.email === 'fayethierno7@gmail.com') {
+              if (isSuperadminEmail(data.user.email)) {
                 prof.role = 'superadmin';
               }
               setProfile(prof);
@@ -397,7 +388,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (saved) {
           try {
             const parsed = JSON.parse(saved);
-            if (identifier === 'fayethierno7@gmail.com') {
+            if (isSuperadminEmail(identifier)) {
               parsed.role = 'superadmin';
             }
             if (parsed.id !== 'usr-exploitant-1' && parsed.nom !== 'Mamadou Diallo') {
@@ -412,8 +403,7 @@ export const AgriProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const cleanPhone = identifier.includes('@') ? '' : identifier.trim();
           const newUserId = `usr-${Date.now()}`;
           const isOwnerIdent =
-            identifier.toLowerCase().includes('fayethierno7') ||
-            userNom.toLowerCase().includes('thierno');
+            isSuperadminEmail(identifier) || textMatchesSuperadmin(identifier) || textMatchesSuperadmin(userNom);
           const newProfile: UserProfile = {
             id: newUserId,
             user_id: newUserId,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { signSessionToken, verifySessionToken } from '../../../../lib/auth/sessionSigner';
 import { getSupabaseServerClient } from '../../../../lib/supabase/client';
+import { isSuperadminEmail, textMatchesSuperadmin } from '../../../../lib/auth/superadmins';
 
 export async function POST(req: NextRequest) {
   try {
@@ -76,13 +77,9 @@ export async function POST(req: NextRequest) {
             verifiedAbonnementExpireLe = profiles[0].abonnement_expire_le;
           }
           // Si le profil en base correspond à l'administrateur
-          const userContact = String(profiles?.[0]?.telephone_contact || '').toLowerCase();
-          const userNom = String(profiles?.[0]?.nom || '').toLowerCase();
-          if (
-            userContact.includes('fayethierno7') ||
-            userNom.includes('fayethierno7') ||
-            userNom.includes('thierno')
-          ) {
+          const userContact = String(profiles?.[0]?.telephone_contact || '');
+          const userNom = String(profiles?.[0]?.nom || '');
+          if (textMatchesSuperadmin(userContact) || textMatchesSuperadmin(userNom)) {
             verifiedRole = 'superadmin';
           }
         }
@@ -92,14 +89,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Garantie absolue pour le compte propriétaire (côté serveur, inviolable)
-    const lowerEmail = String(email || '').toLowerCase();
-    const lowerUserId = String(userId || '').toLowerCase();
-    const lowerNom = String(nom || '').toLowerCase();
     if (
-      lowerEmail === 'fayethierno7@gmail.com' ||
-      lowerEmail.includes('fayethierno7') ||
-      lowerUserId.includes('fayethierno7') ||
-      lowerNom.includes('fayethierno7')
+      isSuperadminEmail(email) ||
+      textMatchesSuperadmin(userId) ||
+      textMatchesSuperadmin(nom)
     ) {
       verifiedRole = 'superadmin';
     }

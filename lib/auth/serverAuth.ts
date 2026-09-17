@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServerClient } from '../supabase/client';
 import { verifySessionToken } from './sessionSigner';
+import { isSuperadminEmail } from './superadmins';
 
 export interface AuthenticatedUser {
   id: string;
@@ -53,7 +54,7 @@ export async function getAuthenticatedUser(req: NextRequest): Promise<Authentica
             console.warn('Erreur récupération profil dans serverAuth:', e);
           }
 
-          if (data.user.email === 'fayethierno7@gmail.com') {
+          if (isSuperadminEmail(data.user.email)) {
             verifiedRole = 'superadmin';
           }
 

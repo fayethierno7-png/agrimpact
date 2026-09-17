@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getAuthenticatedUser } from '../../../../lib/auth/serverAuth';
+import { isSuperadminEmail } from '../../../../lib/auth/superadmins';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,7 +45,7 @@ export async function GET(req: NextRequest) {
     const isAdmin =
       user?.role === 'superadmin' ||
       user?.role === 'admin' ||
-      user?.email === 'fayethierno7@gmail.com' ||
+      isSuperadminEmail(user?.email) ||
       roleCookie === 'superadmin' ||
       roleCookie === 'admin';
 
@@ -139,7 +140,7 @@ export async function PATCH(req: NextRequest) {
     const isAdmin =
       user?.role === 'superadmin' ||
       user?.role === 'admin' ||
-      user?.email === 'fayethierno7@gmail.com' ||
+      isSuperadminEmail(user?.email) ||
       roleCookie === 'superadmin' ||
       roleCookie === 'admin';
 

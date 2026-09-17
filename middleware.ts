@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verifySessionToken } from './lib/auth/sessionSigner';
+import { isSuperadminEmail, textMatchesSuperadmin } from './lib/auth/superadmins';
 import './lib/security/envValidator';
 
 export async function middleware(request: NextRequest) {
@@ -42,8 +43,7 @@ export async function middleware(request: NextRequest) {
           if (authRes.ok) {
             const user = await authRes.json();
             if (user?.id) {
-              const uEmail = String(user.email || '').toLowerCase();
-              if (uEmail === 'fayethierno7@gmail.com' || uEmail.includes('fayethierno7')) {
+              if (isSuperadminEmail(user.email)) {
                 isAdmin = true;
               } else {
                 const profileRes = await fetch(
@@ -60,13 +60,13 @@ export async function middleware(request: NextRequest) {
                 if (profileRes.ok) {
                   const profiles = await profileRes.json();
                   const r = profiles?.[0]?.role;
-                  const contact = String(profiles?.[0]?.telephone_contact || '').toLowerCase();
-                  const nom = String(profiles?.[0]?.nom || '').toLowerCase();
+                  const contact = String(profiles?.[0]?.telephone_contact || '');
+                  const nom = String(profiles?.[0]?.nom || '');
                   if (
                     r === 'superadmin' ||
                     r === 'admin' ||
-                    contact.includes('fayethierno7') ||
-                    nom.includes('fayethierno7')
+                    textMatchesSuperadmin(contact) ||
+                    textMatchesSuperadmin(nom)
                   ) {
                     isAdmin = true;
                   }
